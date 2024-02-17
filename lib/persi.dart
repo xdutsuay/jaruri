@@ -9,7 +9,7 @@ class Persi {
       version: 1,
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE transactions(id INTEGER PRIMARY KEY, description TEXT, amount REAL, isIncome INTEGER, category TEXT, modeOfPayment TEXT, remarks TEXT)',
+          'CREATE TABLE transactions(id INTEGER PRIMARY KEY, description TEXT, amount REAL, isIncome INTEGER, category TEXT, modeOfPayment TEXT, remarks TEXT, date TEXT)',
         );
       },
     );
@@ -27,6 +27,7 @@ class Persi {
         category: maps[i]['category'],
         modeOfPayment: maps[i]['modeOfPayment'],
         remarks: maps[i]['remarks'],
+        date: maps[i]['date'],
       ),
     );
   }
@@ -37,7 +38,15 @@ class Persi {
       for (final transaction in transactions) {
         await txn.insert(
           'transactions',
-          transaction.toMap(),
+          {
+            'description': transaction.description,
+            'amount': transaction.amount,
+            'isIncome': transaction.isIncome ? 1 : 0,
+            'category': transaction.category,
+            'modeOfPayment': transaction.modeOfPayment,
+            'remarks': transaction.remarks,
+            'date': DateTime.now().toIso8601String(), // Save current date
+          },
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }

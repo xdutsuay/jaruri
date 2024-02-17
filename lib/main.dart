@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'transaction_form.dart';
 import 'persi.dart';
 
+
 void main() {
   runApp(MyApp());
 }
@@ -35,16 +36,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadTransactions() async {
-    print("_lt fn called");
     final transactions = await Persi.getTransactions();
     setState(() {
       _transactions = transactions;
     });
-    print("_lt fn completed");
   }
 
   @override
   Widget build(BuildContext context) {
+    // Group transactions by date
+    Map<String, List<Transaction>> groupedTransactions = {};
+    _transactions.forEach((transaction) {
+      String date = transaction.date; // Assuming 'date' is a property in the Transaction class
+      groupedTransactions.putIfAbsent(date, () => []);
+      groupedTransactions[date]!.add(transaction);
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Money Manager'),
@@ -99,33 +106,32 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           // Recent transactions
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Recent Transactions',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+            child: ListView.separated(
+              itemCount: groupedTransactions.length,
+              separatorBuilder: (context, index) => const Divider(),
+              itemBuilder: (context, index) {
+                String date = groupedTransactions.keys.elementAt(index);
+                List<Transaction> transactions = groupedTransactions[date]!;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      date,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Display user-added transactions
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _transactions.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(_transactions[index].description),
-                          subtitle: Text('Amount: \$${_transactions[index].amount}'),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 5),
+                    ...transactions.map((transaction) {
+                      return ListTile(
+                        title: Text(transaction.description),
+                        subtitle: Text('Amount: \$${transaction.amount}'),
+                      );
+                    }).toList(),
+                  ],
+                );
+              },
             ),
           ),
         ],

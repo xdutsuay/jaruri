@@ -7,6 +7,7 @@ class Transaction {
   final String category;
   final String modeOfPayment;
   final String remarks;
+  final String date; // Add date property
 
   Transaction({
     required this.description,
@@ -15,6 +16,7 @@ class Transaction {
     required this.category,
     required this.modeOfPayment,
     required this.remarks,
+    required this.date,
   });
 
   // Define a factory method to deserialize JSON into a Transaction object
@@ -26,8 +28,10 @@ class Transaction {
       category: json['category'],
       modeOfPayment: json['modeOfPayment'],
       remarks: json['remarks'],
+      date: json['date'],
     );
   }
+
   Map<String, dynamic> toMap() {
     return {
       'description': description,
@@ -36,6 +40,7 @@ class Transaction {
       'category': category,
       'modeOfPayment': modeOfPayment,
       'remarks': remarks,
+      'date': date,
     };
   }
 }
@@ -55,6 +60,7 @@ class _TransactionFormState extends State<TransactionForm> {
   late TextEditingController _categoryController;
   late TextEditingController _modeOfPaymentController;
   late TextEditingController _remarksController;
+  late TextEditingController _dateController; // Add date controller
 
   @override
   void initState() {
@@ -63,6 +69,7 @@ class _TransactionFormState extends State<TransactionForm> {
     _categoryController = TextEditingController();
     _modeOfPaymentController = TextEditingController();
     _remarksController = TextEditingController();
+    _dateController = TextEditingController(); // Initialize date controller
   }
 
   @override
@@ -71,6 +78,7 @@ class _TransactionFormState extends State<TransactionForm> {
     _categoryController.dispose();
     _modeOfPaymentController.dispose();
     _remarksController.dispose();
+    _dateController.dispose(); // Dispose date controller
     super.dispose();
   }
 
@@ -80,120 +88,118 @@ class _TransactionFormState extends State<TransactionForm> {
       appBar: AppBar(
         title: const Text('Add Transaction'),
       ),
-      body: SingleChildScrollView( // previously i was using padding so overflow was coming with keyboard
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Input fields for transaction details (omitted for brevity)
-              const Text(
-                'Type:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              Row(
-                children: [
-                  Radio(
-                    value: true,
-                    groupValue: _isIncome,
-                    onChanged: (value) {
-                      setState(() {
-                        _isIncome = value as bool;
-                      });
-                    },
-                  ),
-                  const Text('Income'),
-                  const SizedBox(width: 20),
-                  Radio(
-                    value: false,
-                    groupValue: _isIncome,
-                    onChanged: (value) {
-                      setState(() {
-                        _isIncome = value as bool;
-                      });
-                    },
-                  ),
-                  const Text('Expense'),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Amount:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              TextField(
-                controller: _amountController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  hintText: 'Enter amount',
-                  border: OutlineInputBorder(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Type:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Row(
+              children: [
+                Radio(
+                  value: true,
+                  groupValue: _isIncome,
+                  onChanged: (value) {
+                    setState(() {
+                      _isIncome = value as bool;
+                    });
+                  },
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Category:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              TextField(
-                controller: _categoryController,
-                decoration: const InputDecoration(
-                  hintText: 'Enter category',
-                  border: OutlineInputBorder(),
+                const Text('Income'),
+                const SizedBox(width: 20),
+                Radio(
+                  value: false,
+                  groupValue: _isIncome,
+                  onChanged: (value) {
+                    setState(() {
+                      _isIncome = value as bool;
+                    });
+                  },
                 ),
+                const Text('Expense'),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Amount:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            TextField(
+              controller: _amountController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                hintText: 'Enter amount',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: 20),
-              const Text(
-                'Mode of Payment:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Category:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            TextField(
+              controller: _categoryController,
+              decoration: const InputDecoration(
+                hintText: 'Enter category',
+                border: OutlineInputBorder(),
               ),
-              TextField(
-                controller: _modeOfPaymentController,
-                decoration: const InputDecoration(
-                  hintText: 'Enter mode of payment',
-                  border: OutlineInputBorder(),
-                ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Mode of Payment:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            TextField(
+              controller: _modeOfPaymentController,
+              decoration: const InputDecoration(
+                hintText: 'Enter mode of payment',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: 20),
-              const Text(
-                'Remarks:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Remarks:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            TextField(
+              controller: _remarksController,
+              decoration: const InputDecoration(
+                hintText: 'Enter remarks',
+                border: OutlineInputBorder(),
               ),
-              TextField(
-                controller: _remarksController,
-                decoration: const InputDecoration(
-                  hintText: 'Enter remarks',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  // Save the transaction
-                  final transaction = Transaction(
-                    description: 'Sample Transaction', // Change to actual description
-                    amount: double.parse(_amountController.text),
-                    isIncome: _isIncome,
-                    category: _categoryController.text,
-                    modeOfPayment: _modeOfPaymentController.text,
-                    remarks: _remarksController.text,
-                  );
-                  widget.onTransactionAdded(transaction); // Call the callback to add transaction
-                  // Clear text field controllers
-                  _amountController.clear();
-                  _categoryController.clear();
-                  _modeOfPaymentController.clear();
-                  _remarksController.clear();
-                  // Show a snackbar to indicate the transaction is saved
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Transaction saved')),
-                  );
-                },
-                child: const Text('Save'),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Save the transaction
+                final transaction = Transaction(
+                  description: 'Sample Transaction', // Change to actual description
+                  amount: double.parse(_amountController.text),
+                  isIncome: _isIncome,
+                  category: _categoryController.text,
+                  modeOfPayment: _modeOfPaymentController.text,
+                  remarks: _remarksController.text,
+                  date: _dateController.text, // Assign date value
+                );
+                widget.onTransactionAdded(transaction); // Call the callback to add transaction
+                // Clear text field controllers
+                _amountController.clear();
+                _categoryController.clear();
+                _modeOfPaymentController.clear();
+                _remarksController.clear();
+                // Show a snackbar to indicate the transaction is saved
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Transaction saved')),
+                );
+              },
+              child: const Text('Save'),
+            ),
+          ],
         ),
-      ),resizeToAvoidBottomInset: false,
+      ),
     );
   }
 }
