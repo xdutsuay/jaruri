@@ -16,6 +16,28 @@ class Transaction {
     required this.modeOfPayment,
     required this.remarks,
   });
+
+  // Define a factory method to deserialize JSON into a Transaction object
+  factory Transaction.fromJson(Map<String, dynamic> json) {
+    return Transaction(
+      description: json['description'],
+      amount: json['amount'],
+      isIncome: json['isIncome'],
+      category: json['category'],
+      modeOfPayment: json['modeOfPayment'],
+      remarks: json['remarks'],
+    );
+  }
+  Map<String, dynamic> toMap() {
+    return {
+      'description': description,
+      'amount': amount,
+      'isIncome': isIncome ? 1 : 0,
+      'category': category,
+      'modeOfPayment': modeOfPayment,
+      'remarks': remarks,
+    };
+  }
 }
 
 class TransactionForm extends StatefulWidget {
@@ -56,16 +78,16 @@ class _TransactionFormState extends State<TransactionForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Transaction'),
+        title: const Text('Add Transaction'),
       ),
-      body: Padding(
+      body: SingleChildScrollView( // previously i was using padding so overflow was coming with keyboard
         padding: const EdgeInsets.all(16.0),
         child: Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Input fields for transaction details (omitted for brevity)
-              Text(
+              const Text(
                 'Type:',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
@@ -80,8 +102,8 @@ class _TransactionFormState extends State<TransactionForm> {
                       });
                     },
                   ),
-                  Text('Income'),
-                  SizedBox(width: 20),
+                  const Text('Income'),
+                  const SizedBox(width: 20),
                   Radio(
                     value: false,
                     groupValue: _isIncome,
@@ -91,59 +113,59 @@ class _TransactionFormState extends State<TransactionForm> {
                       });
                     },
                   ),
-                  Text('Expense'),
+                  const Text('Expense'),
                 ],
               ),
-              SizedBox(height: 20),
-              Text(
+              const SizedBox(height: 20),
+              const Text(
                 'Amount:',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               TextField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Enter amount',
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 20),
-              Text(
+              const SizedBox(height: 20),
+              const Text(
                 'Category:',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               TextField(
                 controller: _categoryController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Enter category',
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 20),
-              Text(
+              const SizedBox(height: 20),
+              const Text(
                 'Mode of Payment:',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               TextField(
                 controller: _modeOfPaymentController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Enter mode of payment',
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 20),
-              Text(
+              const SizedBox(height: 20),
+              const Text(
                 'Remarks:',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               TextField(
                 controller: _remarksController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Enter remarks',
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
                   // Save the transaction
@@ -163,15 +185,15 @@ class _TransactionFormState extends State<TransactionForm> {
                   _remarksController.clear();
                   // Show a snackbar to indicate the transaction is saved
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Transaction saved')),
+                    const SnackBar(content: Text('Transaction saved')),
                   );
                 },
-                child: Text('Save'),
+                child: const Text('Save'),
               ),
             ],
           ),
         ),
-      ),
+      ),resizeToAvoidBottomInset: false,
     );
   }
 }

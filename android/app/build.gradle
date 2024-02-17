@@ -65,3 +65,19 @@ flutter {
 }
 
 dependencies {}
+
+//signingConfigs {
+//    release {
+//        keyAlias 'your-key-alias'
+//        keyPassword 'your-key-password'
+//        storeFile file('your-keystore-path')
+//        storePassword 'your-keystore-password'
+//    }
+//}
+//buildTypes {
+//    release {
+//        signingConfig signingConfigs.release
+//    }
+//}
+
+

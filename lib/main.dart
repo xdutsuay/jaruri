@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'transaction_form.dart';
+import 'persi.dart';
 
 void main() {
   runApp(MyApp());
@@ -28,23 +29,38 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Transaction> _transactions = [];
 
   @override
+  void initState() {
+    super.initState();
+    _loadTransactions();
+  }
+
+  Future<void> _loadTransactions() async {
+    print("_lt fn called");
+    final transactions = await Persi.getTransactions();
+    setState(() {
+      _transactions = transactions;
+    });
+    print("_lt fn completed");
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Money Manager'),
+        title: const Text('Money Manager'),
       ),
       body: Column(
         children: [
           // Top bar showing income and expense
           Container(
             color: Colors.blue,
-            padding: EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 Column(
                   children: [
-                    Text(
+                    const Text(
                       'Income',
                       style: TextStyle(
                         color: Colors.white,
@@ -53,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     Text(
                       '\$${calculateTotalAmount(true)}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                       ),
@@ -62,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 Column(
                   children: [
-                    Text(
+                    const Text(
                       'Expense',
                       style: TextStyle(
                         color: Colors.white,
@@ -71,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     Text(
                       '\$${calculateTotalAmount(false)}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                       ),
@@ -84,18 +100,18 @@ class _HomeScreenState extends State<HomeScreen> {
           // Recent transactions
           Expanded(
             child: Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
+                  const Text(
                     'Recent Transactions',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   // Display user-added transactions
                   Expanded(
                     child: ListView.builder(
@@ -118,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () {
           _navigateToTransactionForm(context);
         },
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -146,6 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _transactions.add(newTransaction);
       });
+      await Persi.saveTransactions(_transactions);
     }
   }
 
@@ -154,5 +171,6 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _transactions.add(newTransaction);
     });
+    Persi.saveTransactions(_transactions);
   }
 }
