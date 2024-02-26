@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io'; // Import this for File class
 import 'package:sqflite/sqflite.dart';
 import 'transaction_form.dart' as Transaction; // Importing the file where Transaction class is defined
 
@@ -51,5 +52,10 @@ class Persi {
         );
       }
     });
+  }
+
+  static Future<void> saveToJsonLocal(List<Transaction.Transaction> transactions) async {
+    final String data = jsonEncode(transactions);
+    await File('transactions.json').writeAsString(data);
   }
 }

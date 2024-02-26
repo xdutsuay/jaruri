@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'transaction_form.dart';
 import 'persi.dart';
+import 'sidedrawer.dart';
 
 
 void main() {
-  runApp(MyApp());
+  runApp(MyApp()); 
 }
 
 class MyApp extends StatelessWidget {
@@ -137,25 +138,35 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        
         onPressed: () {
           _navigateToTransactionForm(context);
+          // //navigate to sidedrawer #this was only test code to check if side drawer is working
+          //_navigateTosidedrawer(context);
         },
         child: const Icon(Icons.add),
       ),
+      drawer: SideDrawer(), // Add drawer to the screen
+
+
     );
   }
 
-  // Calculate total income or expense
+  // navigate to sidedrawer method unused in this code
+  void _navigateTosidedrawer(BuildContext context) async {
+     // only navigate to sidedrawer when button pressed cal
+    final newTransaction = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SideDrawer()),
+    );
+  }
+
+  // Calculate total income or expense sort based on transaction.isIncome and then return sum of either income or expense
   double calculateTotalAmount(bool isIncome) {
-    double totalAmount = 0;
-    for (var transaction in _transactions) {
-      if (isIncome && transaction.amount > 0) {
-        totalAmount += transaction.amount;
-      } else if (!isIncome && transaction.amount < 0) {
-        totalAmount += transaction.amount;
-      }
-    }
-    return totalAmount;
+    return _transactions
+        .where((transaction) => transaction.isIncome == isIncome)
+        .map((transaction) => transaction.amount)
+        .fold(0, (a, b) => a + b);
   }
 
   // Navigate to transaction form
@@ -179,4 +190,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     Persi.saveTransactions(_transactions);
   }
+
+
+
+
 }
