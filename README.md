@@ -1,16 +1,10 @@
 # jaruri
 
-A new Flutter project for creating a money manager, time manager and small enhancements and addition over time.
+// write a readme for this project
+```
+#jaruri is a simple utility to check if a file exists or not. It is a simple wrapper around the `fs` module in Node.js.
+jaruri is a money manager app that helps you keep track of your expenses and income. It is a simple wrapper around the `fs` module in Node.js.
+```
 
-## Getting Started
+```flutter is used as the library to write the app.```
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
