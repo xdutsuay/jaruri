@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'transaction_form.dart';
 import 'persi.dart';
 import 'sidedrawer.dart';
-
+import 'package:intl/intl.dart'; // Import the intl package to format dates
 
 void main() {
   runApp(MyApp()); 
 }
-
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -21,22 +22,24 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
 class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late String _selectedMonth = DateFormat('MMMM').format(DateTime.now());
   List<Transaction> _transactions = [];
 
-  @override
+  @override // modify this function to call _filterTransactionsByMonth
   void initState() {
     super.initState();
+    //_filterTransactionsByMonth(_selectedMonth);
     _loadTransactions();
   }
 
   Future<void> _loadTransactions() async {
+    await _filterTransactionsByMonth(_selectedMonth); // Call _filterTransactionsByMonth to load transactions for the selected month
     final transactions = await Persi.getTransactions();
     setState(() {
       _transactions = transactions;
@@ -55,11 +58,53 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Money Manager'),
+        title: Row(
+          children: [
+            const Text(
+              'Money Manager',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(width: 8),
+            DropdownButton<String>(
+              value: _selectedMonth,
+              icon: const Icon(Icons.arrow_drop_down),
+              iconSize: 10,
+              elevation: 8,
+              style: const TextStyle(color: Colors.white),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedMonth = newValue!;
+                  _filterTransactionsByMonth(newValue);
+                });
+              },
+              isExpanded: false, // Set isExpanded to false
+              items: <String>[
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+              ].map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              // Add your sync functionality here
+            },
+            icon: const Icon(Icons.sync),
+          ),
+        ],
       ),
       body: Column(
         children: [
-          // Top bar showing income and expense
+          // Top bar showing income, expense, and balance
           Container(
             color: Colors.blue,
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -77,6 +122,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     Text(
                       '\$${calculateTotalAmount(true)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    const Text(
+                      'Balance',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                      ),
+                    ),
+                    Text(
+                      '\$${calculateBalance()}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -138,18 +201,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        
         onPressed: () {
           _navigateToTransactionForm(context);
-          // //navigate to sidedrawer #this was only test code to check if side drawer is working
-          //_navigateTosidedrawer(context);
         },
         child: const Icon(Icons.add),
       ),
       drawer: SideDrawer(), // Add drawer to the screen
-
-
     );
+
+
   }
 
   // navigate to sidedrawer method unused in this code
@@ -160,7 +220,10 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (context) => SideDrawer()),
     );
   }
-
+  //calculate balance function
+  double calculateBalance() {
+    return calculateTotalAmount(true) - calculateTotalAmount(false);
+  }
   // Calculate total income or expense sort based on transaction.isIncome and then return sum of either income or expense
   double calculateTotalAmount(bool isIncome) {
     return _transactions
@@ -191,7 +254,16 @@ class _HomeScreenState extends State<HomeScreen> {
     Persi.saveTransactions(_transactions);
   }
 
+  Future<void> _filterTransactionsByMonth(String month) async {
+    // Get transactions from the database
+    _transactions = await Persi.getTransactions();
 
+    // Filter transactions by the selected month
+    var filteredTransactions = _transactions.where((transaction) {
+      // Extract the month from the transaction date and compare with the selected month
+      return DateFormat('MMMM').format(DateTime.parse(transaction.date)) == month;
+    }).toList();
+  }
 
 
 }

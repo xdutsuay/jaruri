@@ -1,8 +1,5 @@
-import 'package:jaruri/transaction_form.dart';
-import 'persi.dart';
 import 'package:flutter/material.dart';
 
-// 1 button for settings page, 1 for about page
 class SideDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -20,6 +17,26 @@ class SideDrawer extends StatelessWidget {
           ),
           // Divider to separate login from other options
           Divider(),
+          // List title for Upload
+          ListTile(
+            title: const Text('Upload'),
+            onTap: () {
+              Navigator.pushNamed(context, '/upload');
+            },
+          ),
+          ListTile(
+            title: const Text('Categories'),
+            onTap: () {
+              Navigator.pushNamed(context, '/Categories');
+            },
+          ),
+          // List title for Chart
+          ListTile(
+            title: const Text('Chart'),
+            onTap: () {
+              Navigator.pushNamed(context, '/chart');
+            },
+          ),
           ListTile(
             title: const Text('Settings'),
             onTap: () {
