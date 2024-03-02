@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'chart.dart';
 
 class SideDrawer extends StatelessWidget {
   @override
@@ -34,7 +35,10 @@ class SideDrawer extends StatelessWidget {
           ListTile(
             title: const Text('Chart'),
             onTap: () {
-              Navigator.pushNamed(context, '/chart');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => Chart()), // Navigate to the Chart widget
+              );
             },
           ),
           ListTile(

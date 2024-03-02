@@ -28,13 +28,19 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late String _selectedMonth = DateFormat('MMMM').format(DateTime.now());
+  late String _selectedMonth = DateFormat('month').format(DateTime.now());
+  print(_selectedMonth) {
+    // TODO: implement print
+    print(_selectedMonth);
+    throw UnimplementedError();
+  }
   List<Transaction> _transactions = [];
 
   @override // modify this function to call _filterTransactionsByMonth
   void initState() {
     super.initState();
-    //_filterTransactionsByMonth(_selectedMonth);
+    _selectedMonth = DateFormat('MMMM').format(DateTime.now());
+    _filterTransactionsByMonth(_selectedMonth);
     _loadTransactions();
   }
 
@@ -75,22 +81,24 @@ class _HomeScreenState extends State<HomeScreen> {
               elevation: 8,
               style: const TextStyle(color: Colors.white),
               onChanged: (String? newValue) {
-                setState(() {
-                  _selectedMonth = newValue!;
-                  _filterTransactionsByMonth(newValue);
-                });
+                if (newValue != null) {
+                  setState(() {
+                    _selectedMonth = newValue;
+                    _filterTransactionsByMonth(newValue);
+                  });
+                }
               },
               isExpanded: false, // Set isExpanded to false
-              items: <String>[
-                'January', 'February', 'March', 'April', 'May', 'June',
-                'July', 'August', 'September', 'October', 'November', 'December'
-              ].map<DropdownMenuItem<String>>((String value) {
+              items: <String>['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+                  .map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(value),
                 );
               }).toList(),
             ),
+
+
           ],
         ),
         actions: [
