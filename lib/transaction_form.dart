@@ -190,7 +190,7 @@ class _TransactionFormState extends State<TransactionForm> {
                 _categoryController.clear();
                 _modeOfPaymentController.clear();
                 _remarksController.clear();
-                // Show a snackbar to indicate the transaction is saved
+                // Show a snack-bar to indicate the transaction is saved
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Transaction saved')),
                 );

@@ -3,6 +3,7 @@ import 'transaction_form.dart';
 import 'persi.dart';
 import 'sidedrawer.dart';
 import 'package:intl/intl.dart'; // Import the intl package to format dates
+import  'methods.dart';
 
 void main() {
   runApp(MyApp()); 
@@ -29,27 +30,17 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late String _selectedMonth = DateFormat('month').format(DateTime.now());
-  print(_selectedMonth) {
-    // TODO: implement print
-    print(_selectedMonth);
-    throw UnimplementedError();
-  }
+  late Methods methods;
   List<Transaction> _transactions = [];
+
 
   @override // modify this function to call _filterTransactionsByMonth
   void initState() {
     super.initState();
     _selectedMonth = DateFormat('MMMM').format(DateTime.now());
-    _filterTransactionsByMonth(_selectedMonth);
-    _loadTransactions();
-  }
-
-  Future<void> _loadTransactions() async {
-    await _filterTransactionsByMonth(_selectedMonth); // Call _filterTransactionsByMonth to load transactions for the selected month
-    final transactions = await Persi.getTransactions();
-    setState(() {
-      _transactions = transactions;
-    });
+    methods = Methods(setState, _transactions);
+    //methods.loadTransactions(_selectedMonth, context);
+    methods.filterTransactionsByMonth(_selectedMonth);
   }
 
   @override
@@ -57,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Group transactions by date
     Map<String, List<Transaction>> groupedTransactions = {};
     _transactions.forEach((transaction) {
+      print(transaction.amount);
       String date = transaction.date; // Assuming 'date' is a property in the Transaction class
       groupedTransactions.putIfAbsent(date, () => []);
       groupedTransactions[date]!.add(transaction);
@@ -79,12 +71,12 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: const Icon(Icons.arrow_drop_down),
               iconSize: 10,
               elevation: 8,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.black),
               onChanged: (String? newValue) {
                 if (newValue != null) {
                   setState(() {
                     _selectedMonth = newValue;
-                    _filterTransactionsByMonth(newValue);
+                    methods.filterTransactionsByMonth(newValue);
                   });
                 }
               },
@@ -129,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Text(
-                      '\$${calculateTotalAmount(true)}',
+                      '\$${methods.calculateTotalAmount(_transactions,true)}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -147,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Text(
-                      '\$${calculateBalance()}',
+                      '\$${methods.calculateBalance(_transactions)}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -165,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Text(
-                      '\$${calculateTotalAmount(false)}',
+                      '\$${methods.calculateTotalAmount(_transactions,false)}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -210,7 +202,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _navigateToTransactionForm(context);
+          methods.navigateToTransactionForm(context, (transaction) {
+            methods.addTransaction(_transactions, transaction);
+          });
         },
         child: const Icon(Icons.add),
       ),
@@ -219,59 +213,5 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
   }
-
-  // navigate to sidedrawer method unused in this code
-  void _navigateTosidedrawer(BuildContext context) async {
-     // only navigate to sidedrawer when button pressed cal
-    final newTransaction = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => SideDrawer()),
-    );
-  }
-  //calculate balance function
-  double calculateBalance() {
-    return calculateTotalAmount(true) - calculateTotalAmount(false);
-  }
-  // Calculate total income or expense sort based on transaction.isIncome and then return sum of either income or expense
-  double calculateTotalAmount(bool isIncome) {
-    return _transactions
-        .where((transaction) => transaction.isIncome == isIncome)
-        .map((transaction) => transaction.amount)
-        .fold(0, (a, b) => a + b);
-  }
-
-  // Navigate to transaction form
-  void _navigateToTransactionForm(BuildContext context) async {
-    final newTransaction = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => TransactionForm(onTransactionAdded: _addTransaction)),
-    );
-    if (newTransaction != null) {
-      setState(() {
-        _transactions.add(newTransaction);
-      });
-      await Persi.saveTransactions(_transactions);
-    }
-  }
-
-  // Add transaction to the list
-  void _addTransaction(Transaction newTransaction) {
-    setState(() {
-      _transactions.add(newTransaction);
-    });
-    Persi.saveTransactions(_transactions);
-  }
-
-  Future<void> _filterTransactionsByMonth(String month) async {
-    // Get transactions from the database
-    _transactions = await Persi.getTransactions();
-
-    // Filter transactions by the selected month
-    var filteredTransactions = _transactions.where((transaction) {
-      // Extract the month from the transaction date and compare with the selected month
-      return DateFormat('MMMM').format(DateTime.parse(transaction.date)) == month;
-    }).toList();
-  }
-
 
 }

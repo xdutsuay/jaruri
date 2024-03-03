@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'chart.dart';
+import 'login.dart';
 
 class SideDrawer extends StatelessWidget {
   @override
@@ -12,8 +13,10 @@ class SideDrawer extends StatelessWidget {
             leading: const Icon(Icons.login), // Icon for login
             title: const Text('Login'), // Text for login
             onTap: () {
-              // Navigate to the login page when tapped
-              Navigator.pushNamed(context, '/login');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => Login()), // Navigate to the Chart widget
+              );
             },
           ),
           // Divider to separate login from other options
@@ -57,4 +60,6 @@ class SideDrawer extends StatelessWidget {
       ),
     );
   }
+
+
 }
