@@ -5,13 +5,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.example.moneymanager.R;
 import com.github.mikephil.charting.charts.PieChart;
+import com.google.android.material.tabs.TabLayout;
 import java.lang.NullPointerException;
 import java.lang.Override;
 import java.lang.String;
@@ -24,13 +25,22 @@ public final class FragmentChartBinding implements ViewBinding {
   public final PieChart pieChart;
 
   @NonNull
-  public final RecyclerView rvCategoryStats;
+  public final Spinner spinnerMonth;
+
+  @NonNull
+  public final Spinner spinnerYear;
+
+  @NonNull
+  public final TabLayout tabLayoutChart;
 
   private FragmentChartBinding(@NonNull LinearLayout rootView, @NonNull PieChart pieChart,
-      @NonNull RecyclerView rvCategoryStats) {
+      @NonNull Spinner spinnerMonth, @NonNull Spinner spinnerYear,
+      @NonNull TabLayout tabLayoutChart) {
     this.rootView = rootView;
     this.pieChart = pieChart;
-    this.rvCategoryStats = rvCategoryStats;
+    this.spinnerMonth = spinnerMonth;
+    this.spinnerYear = spinnerYear;
+    this.tabLayoutChart = tabLayoutChart;
   }
 
   @Override
@@ -66,13 +76,26 @@ public final class FragmentChartBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.rv_category_stats;
-      RecyclerView rvCategoryStats = ViewBindings.findChildViewById(rootView, id);
-      if (rvCategoryStats == null) {
+      id = R.id.spinner_month;
+      Spinner spinnerMonth = ViewBindings.findChildViewById(rootView, id);
+      if (spinnerMonth == null) {
         break missingId;
       }
 
-      return new FragmentChartBinding((LinearLayout) rootView, pieChart, rvCategoryStats);
+      id = R.id.spinner_year;
+      Spinner spinnerYear = ViewBindings.findChildViewById(rootView, id);
+      if (spinnerYear == null) {
+        break missingId;
+      }
+
+      id = R.id.tab_layout_chart;
+      TabLayout tabLayoutChart = ViewBindings.findChildViewById(rootView, id);
+      if (tabLayoutChart == null) {
+        break missingId;
+      }
+
+      return new FragmentChartBinding((LinearLayout) rootView, pieChart, spinnerMonth, spinnerYear,
+          tabLayoutChart);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

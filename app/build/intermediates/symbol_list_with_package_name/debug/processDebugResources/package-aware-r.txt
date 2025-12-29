@@ -85,6 +85,7 @@ animator nav_default_enter_anim
 animator nav_default_exit_anim
 animator nav_default_pop_enter_anim
 animator nav_default_pop_exit_anim
+array months
 attr SharedValue
 attr SharedValueId
 attr action
@@ -3335,6 +3336,8 @@ id etMemo
 id exitUntilCollapsed
 id expand_activities_button
 id expanded_menu
+id expense_chart
+id expense_layout
 id fab_add
 id fade
 id fill
@@ -3377,6 +3380,8 @@ id image
 id imageView
 id immediateStop
 id included
+id income_chart
+id income_layout
 id indeterminate
 id info
 id invisible
@@ -3543,8 +3548,6 @@ id rounded
 id row_index_key
 id rtl
 id rv_categories
-id rv_category_stats
-id rv_transactions
 id save_non_transition_alpha
 id save_overlay_view
 id sawtooth
@@ -3588,6 +3591,8 @@ id south
 id spCategory
 id spacer
 id special_effects_controller_view_tag
+id spinner_month
+id spinner_year
 id spline
 id split_action_bar
 id spread
@@ -3611,6 +3616,7 @@ id submit_area
 id supportScrollUp
 id tabLayout
 id tabMode
+id tab_layout_chart
 id tag_accessibility_actions
 id tag_accessibility_clickable_spans
 id tag_accessibility_heading
@@ -3665,7 +3671,6 @@ id tvMemo
 id tv_balance
 id tv_expense
 id tv_income
-id tv_warning
 id unchecked
 id uniform
 id unlabeled
@@ -3824,7 +3829,9 @@ layout design_text_input_start_icon
 layout fragment_add_transaction
 layout fragment_category_settings
 layout fragment_chart
+layout fragment_export
 layout fragment_home
+layout fragment_settings
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout item_category

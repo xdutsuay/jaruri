@@ -7,73 +7,59 @@
     android:background="#F5F5F5"
     android:padding="16dp">
 
-    <!-- Chart Card -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout_chart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:tabIndicatorColor="@color/primary_yellow"
+        app:tabSelectedTextColor="@color/black"
+        app:tabTextColor="@color/text_secondary">
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Expense" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Income" />
+    </com.google.android.material.tabs.TabLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="16dp">
+
+        <Spinner
+            android:id="@+id/spinner_month"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:entries="@array/months" />
+
+        <Spinner
+            android:id="@+id/spinner_year"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardCornerRadius="4dp"
         app:cardElevation="2dp"
+        android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp">
 
-        <RelativeLayout
+        <com.github.mikephil.charting.charts.PieChart
+            android:id="@+id/pieChart"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp">
-
-            <!-- Chart View -->
-            <com.github.mikephil.charting.charts.PieChart
-                android:id="@+id/pieChart"
-                android:layout_width="200dp"
-                android:layout_height="200dp"
-                android:layout_centerVertical="true"/>
-
-            <!-- Legend/Stats on the right (simplified for now as native Legend or list) -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_toEndOf="@id/pieChart"
-                android:layout_centerVertical="true"
-                android:layout_marginStart="16dp"
-                android:orientation="vertical">
-                
-                 <!-- Placeholder for dynamic legend items -->
-                <TextView
-                     android:text="Salary   100%"
-                     android:layout_width="wrap_content"
-                     android:layout_height="wrap_content"/>
-
-            </LinearLayout>
-
-        </RelativeLayout>
-    </androidx.cardview.widget.CardView>
-
-    <!-- Detailed List Card -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        app:cardCornerRadius="4dp"
-        app:cardElevation="2dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:text="Income list"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/text_secondary"
-                android:layout_marginBottom="16dp"/>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_category_stats"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
-
-        </LinearLayout>
+            android:layout_height="300dp" />
 
     </androidx.cardview.widget.CardView>
 

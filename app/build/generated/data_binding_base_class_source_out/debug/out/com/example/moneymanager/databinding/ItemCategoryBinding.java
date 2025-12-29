@@ -5,10 +5,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.example.moneymanager.R;
@@ -18,7 +18,7 @@ import java.lang.String;
 
 public final class ItemCategoryBinding implements ViewBinding {
   @NonNull
-  private final LinearLayout rootView;
+  private final ConstraintLayout rootView;
 
   @NonNull
   public final ImageView ivDelete;
@@ -29,7 +29,7 @@ public final class ItemCategoryBinding implements ViewBinding {
   @NonNull
   public final TextView tvCategoryName;
 
-  private ItemCategoryBinding(@NonNull LinearLayout rootView, @NonNull ImageView ivDelete,
+  private ItemCategoryBinding(@NonNull ConstraintLayout rootView, @NonNull ImageView ivDelete,
       @NonNull ImageView ivIcon, @NonNull TextView tvCategoryName) {
     this.rootView = rootView;
     this.ivDelete = ivDelete;
@@ -39,7 +39,7 @@ public final class ItemCategoryBinding implements ViewBinding {
 
   @Override
   @NonNull
-  public LinearLayout getRoot() {
+  public ConstraintLayout getRoot() {
     return rootView;
   }
 
@@ -82,7 +82,7 @@ public final class ItemCategoryBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ItemCategoryBinding((LinearLayout) rootView, ivDelete, ivIcon, tvCategoryName);
+      return new ItemCategoryBinding((ConstraintLayout) rootView, ivDelete, ivIcon, tvCategoryName);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));
