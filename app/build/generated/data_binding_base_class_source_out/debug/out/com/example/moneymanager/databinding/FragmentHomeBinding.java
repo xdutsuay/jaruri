@@ -10,10 +10,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.example.moneymanager.R;
-import com.github.mikephil.charting.charts.PieChart;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.lang.NullPointerException;
 import java.lang.Override;
@@ -27,19 +27,16 @@ public final class FragmentHomeBinding implements ViewBinding {
   public final CardView cardSummary;
 
   @NonNull
-  public final PieChart expenseChart;
-
-  @NonNull
   public final LinearLayout expenseLayout;
 
   @NonNull
   public final FloatingActionButton fabAdd;
 
   @NonNull
-  public final PieChart incomeChart;
+  public final LinearLayout incomeLayout;
 
   @NonNull
-  public final LinearLayout incomeLayout;
+  public final RecyclerView rvTransactions;
 
   @NonNull
   public final TextView tvBalance;
@@ -50,21 +47,24 @@ public final class FragmentHomeBinding implements ViewBinding {
   @NonNull
   public final TextView tvIncome;
 
+  @NonNull
+  public final TextView tvWarning;
+
   private FragmentHomeBinding(@NonNull ConstraintLayout rootView, @NonNull CardView cardSummary,
-      @NonNull PieChart expenseChart, @NonNull LinearLayout expenseLayout,
-      @NonNull FloatingActionButton fabAdd, @NonNull PieChart incomeChart,
-      @NonNull LinearLayout incomeLayout, @NonNull TextView tvBalance, @NonNull TextView tvExpense,
-      @NonNull TextView tvIncome) {
+      @NonNull LinearLayout expenseLayout, @NonNull FloatingActionButton fabAdd,
+      @NonNull LinearLayout incomeLayout, @NonNull RecyclerView rvTransactions,
+      @NonNull TextView tvBalance, @NonNull TextView tvExpense, @NonNull TextView tvIncome,
+      @NonNull TextView tvWarning) {
     this.rootView = rootView;
     this.cardSummary = cardSummary;
-    this.expenseChart = expenseChart;
     this.expenseLayout = expenseLayout;
     this.fabAdd = fabAdd;
-    this.incomeChart = incomeChart;
     this.incomeLayout = incomeLayout;
+    this.rvTransactions = rvTransactions;
     this.tvBalance = tvBalance;
     this.tvExpense = tvExpense;
     this.tvIncome = tvIncome;
+    this.tvWarning = tvWarning;
   }
 
   @Override
@@ -100,12 +100,6 @@ public final class FragmentHomeBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.expense_chart;
-      PieChart expenseChart = ViewBindings.findChildViewById(rootView, id);
-      if (expenseChart == null) {
-        break missingId;
-      }
-
       id = R.id.expense_layout;
       LinearLayout expenseLayout = ViewBindings.findChildViewById(rootView, id);
       if (expenseLayout == null) {
@@ -118,15 +112,15 @@ public final class FragmentHomeBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.income_chart;
-      PieChart incomeChart = ViewBindings.findChildViewById(rootView, id);
-      if (incomeChart == null) {
-        break missingId;
-      }
-
       id = R.id.income_layout;
       LinearLayout incomeLayout = ViewBindings.findChildViewById(rootView, id);
       if (incomeLayout == null) {
+        break missingId;
+      }
+
+      id = R.id.rv_transactions;
+      RecyclerView rvTransactions = ViewBindings.findChildViewById(rootView, id);
+      if (rvTransactions == null) {
         break missingId;
       }
 
@@ -148,8 +142,14 @@ public final class FragmentHomeBinding implements ViewBinding {
         break missingId;
       }
 
-      return new FragmentHomeBinding((ConstraintLayout) rootView, cardSummary, expenseChart,
-          expenseLayout, fabAdd, incomeChart, incomeLayout, tvBalance, tvExpense, tvIncome);
+      id = R.id.tv_warning;
+      TextView tvWarning = ViewBindings.findChildViewById(rootView, id);
+      if (tvWarning == null) {
+        break missingId;
+      }
+
+      return new FragmentHomeBinding((ConstraintLayout) rootView, cardSummary, expenseLayout,
+          fabAdd, incomeLayout, rvTransactions, tvBalance, tvExpense, tvIncome, tvWarning);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

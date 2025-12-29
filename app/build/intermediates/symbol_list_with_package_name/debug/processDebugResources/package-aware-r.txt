@@ -3336,7 +3336,6 @@ id etMemo
 id exitUntilCollapsed
 id expand_activities_button
 id expanded_menu
-id expense_chart
 id expense_layout
 id fab_add
 id fade
@@ -3380,7 +3379,6 @@ id image
 id imageView
 id immediateStop
 id included
-id income_chart
 id income_layout
 id indeterminate
 id info
@@ -3548,6 +3546,7 @@ id rounded
 id row_index_key
 id rtl
 id rv_categories
+id rv_transactions
 id save_non_transition_alpha
 id save_overlay_view
 id sawtooth
@@ -3671,6 +3670,7 @@ id tvMemo
 id tv_balance
 id tv_expense
 id tv_income
+id tv_warning
 id unchecked
 id uniform
 id unlabeled

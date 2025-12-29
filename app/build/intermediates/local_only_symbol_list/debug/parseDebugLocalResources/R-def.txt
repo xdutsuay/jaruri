@@ -33,11 +33,9 @@ id card_summary
 id drawer_layout
 id etAmount
 id etMemo
-id expense_chart
 id expense_layout
 id fab_add
 id imageView
-id income_chart
 id income_layout
 id ivDelete
 id ivIcon
@@ -56,6 +54,7 @@ id rbExpense
 id rbIncome
 id rgType
 id rv_categories
+id rv_transactions
 id spCategory
 id spinner_month
 id spinner_year
@@ -70,6 +69,7 @@ id tvMemo
 id tv_balance
 id tv_expense
 id tv_income
+id tv_warning
 layout activity_main
 layout fragment_add_transaction
 layout fragment_category_settings
