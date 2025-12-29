@@ -8,10 +8,6 @@
         "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/layout/activity_main.xml"
     },
     {
-        "merged": "com.example.moneymanager.app-mergeDebugResources-51:/layout/fragment_home.xml",
-        "source": "com.example.moneymanager.app-main-54:/layout/fragment_home.xml"
-    },
-    {
         "merged": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-mergeDebugResources-51:/layout/nav_header_main.xml",
         "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/layout/nav_header_main.xml"
     },
@@ -38,5 +34,9 @@
     {
         "merged": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-mergeDebugResources-51:/layout/fragment_chart.xml",
         "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/layout/fragment_chart.xml"
+    },
+    {
+        "merged": "com.example.moneymanager.app-mergeDebugResources-51:/layout/item_transaction.xml",
+        "source": "com.example.moneymanager.app-main-54:/layout/item_transaction.xml"
     }
 ]

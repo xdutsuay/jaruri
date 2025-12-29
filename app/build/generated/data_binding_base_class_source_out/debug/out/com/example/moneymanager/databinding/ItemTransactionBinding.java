@@ -4,20 +4,24 @@ package com.example.moneymanager.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.example.moneymanager.R;
-import com.google.android.material.card.MaterialCardView;
 import java.lang.NullPointerException;
 import java.lang.Override;
 import java.lang.String;
 
 public final class ItemTransactionBinding implements ViewBinding {
   @NonNull
-  private final MaterialCardView rootView;
+  private final LinearLayout rootView;
+
+  @NonNull
+  public final ImageView ivIcon;
 
   @NonNull
   public final TextView tvAmount;
@@ -31,9 +35,11 @@ public final class ItemTransactionBinding implements ViewBinding {
   @NonNull
   public final TextView tvMemo;
 
-  private ItemTransactionBinding(@NonNull MaterialCardView rootView, @NonNull TextView tvAmount,
-      @NonNull TextView tvCategory, @NonNull TextView tvDate, @NonNull TextView tvMemo) {
+  private ItemTransactionBinding(@NonNull LinearLayout rootView, @NonNull ImageView ivIcon,
+      @NonNull TextView tvAmount, @NonNull TextView tvCategory, @NonNull TextView tvDate,
+      @NonNull TextView tvMemo) {
     this.rootView = rootView;
+    this.ivIcon = ivIcon;
     this.tvAmount = tvAmount;
     this.tvCategory = tvCategory;
     this.tvDate = tvDate;
@@ -42,7 +48,7 @@ public final class ItemTransactionBinding implements ViewBinding {
 
   @Override
   @NonNull
-  public MaterialCardView getRoot() {
+  public LinearLayout getRoot() {
     return rootView;
   }
 
@@ -67,6 +73,12 @@ public final class ItemTransactionBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.ivIcon;
+      ImageView ivIcon = ViewBindings.findChildViewById(rootView, id);
+      if (ivIcon == null) {
+        break missingId;
+      }
+
       id = R.id.tvAmount;
       TextView tvAmount = ViewBindings.findChildViewById(rootView, id);
       if (tvAmount == null) {
@@ -91,8 +103,8 @@ public final class ItemTransactionBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ItemTransactionBinding((MaterialCardView) rootView, tvAmount, tvCategory, tvDate,
-          tvMemo);
+      return new ItemTransactionBinding((LinearLayout) rootView, ivIcon, tvAmount, tvCategory,
+          tvDate, tvMemo);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));
