@@ -1,12 +1,14 @@
 package com.example.moneymanager.ui
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import androidx.fragment.app.activityViewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.moneymanager.R
 import com.example.moneymanager.databinding.FragmentHomeBinding
@@ -19,41 +21,53 @@ class HomeFragment : Fragment() {
 
     private val viewModel: MainViewModel by activityViewModels()
 
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
-        // Debug Toast to verify deployment
-        android.widget.Toast.makeText(context, "Home Fragment Active", android.widget.Toast.LENGTH_SHORT).show()
+
+        // Debug Toast
+        Toast.makeText(context, "Home Fragment Active", Toast.LENGTH_SHORT).show()
 
         val adapter = TransactionAdapter {
-            // Handle item click (e.g. show details or delete dialog)
-            // For now, maybe just show a toast or nothing?
-            // Or navigate to edit?
+            // Click listener
         }
+        
+        binding.rvTransactions.layoutManager = LinearLayoutManager(requireContext())
         binding.rvTransactions.adapter = adapter
-        // binding.rvTransactions.layoutManager is set by default to LinearLayoutManager if not specified? 
-        // No, need to specify it.
-        binding.rvTransactions.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
 
-        // FAB Click Listener
         binding.fabAdd.setOnClickListener {
-            // Navigate to AddTransactionFragment
-             findNavController().navigate(R.id.action_home_to_addTransaction)
+            findNavController().navigate(R.id.action_home_to_addTransaction)
         }
 
         viewModel.allTransactions.observe(viewLifecycleOwner) { list ->
+            Log.d("DEBUG_UI", "Observed items: ${list.size}")
             adapter.submitList(list)
-            binding.tvWarning.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+            
+            if (list.isEmpty()) {
+                binding.tvWarning.visibility = View.VISIBLE
+                binding.rvTransactions.visibility = View.GONE
+            } else {
+                binding.tvWarning.visibility = View.GONE
+                binding.rvTransactions.visibility = View.VISIBLE
+            }
         }
 
         viewModel.incomeTotal.observe(viewLifecycleOwner) {
             binding.tvIncome.text = String.format("%.0f", it)
         }
         viewModel.expenseTotal.observe(viewLifecycleOwner) {
-             binding.tvExpense.text = String.format("%.0f", it)
+            binding.tvExpense.text = String.format("%.0f", it)
         }
         viewModel.balance.observe(viewLifecycleOwner) {
-             binding.tvBalance.text = String.format("%.0f", it)
+            binding.tvBalance.text = String.format("%.0f", it)
         }
     }
 
