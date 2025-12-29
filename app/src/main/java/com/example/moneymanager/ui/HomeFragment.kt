@@ -35,6 +35,12 @@ class HomeFragment : Fragment() {
         // No, need to specify it.
         binding.rvTransactions.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
 
+        // FAB Click Listener
+        binding.fabAdd.setOnClickListener {
+            // Navigate to AddTransactionFragment
+             findNavController().navigate(R.id.action_home_to_addTransaction)
+        }
+
         viewModel.allTransactions.observe(viewLifecycleOwner) { list ->
             adapter.submitList(list)
             binding.tvWarning.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
