@@ -1,7 +1,7 @@
 [
     {
-        "merged": "com.example.moneymanager.app-mergeDebugResources-51:/layout/fragment_category_settings.xml",
-        "source": "com.example.moneymanager.app-main-54:/layout/fragment_category_settings.xml"
+        "merged": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-mergeDebugResources-51:/layout/fragment_category_settings.xml",
+        "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/layout/fragment_category_settings.xml"
     },
     {
         "merged": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-mergeDebugResources-51:/layout/activity_main.xml",
@@ -12,12 +12,20 @@
         "source": "com.example.moneymanager.app-main-54:/layout/fragment_home.xml"
     },
     {
-        "merged": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-mergeDebugResources-51:/layout/fragment_add_transaction.xml",
-        "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/layout/fragment_add_transaction.xml"
+        "merged": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-mergeDebugResources-51:/layout/nav_header_main.xml",
+        "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/layout/nav_header_main.xml"
     },
     {
-        "merged": "com.example.moneymanager.app-mergeDebugResources-51:/layout/item_category.xml",
-        "source": "com.example.moneymanager.app-main-54:/layout/item_category.xml"
+        "merged": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-mergeDebugResources-51:/layout/fragment_home.xml",
+        "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/layout/fragment_home.xml"
+    },
+    {
+        "merged": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-mergeDebugResources-51:/layout/item_category.xml",
+        "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/layout/item_category.xml"
+    },
+    {
+        "merged": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-mergeDebugResources-51:/layout/fragment_add_transaction.xml",
+        "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/layout/fragment_add_transaction.xml"
     },
     {
         "merged": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-mergeDebugResources-51:/layout/fragment_dashboard.xml",
@@ -28,15 +36,7 @@
         "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/layout/item_transaction.xml"
     },
     {
-        "merged": "com.example.moneymanager.app-mergeDebugResources-51:/layout/activity_main.xml",
-        "source": "com.example.moneymanager.app-main-54:/layout/activity_main.xml"
-    },
-    {
-        "merged": "com.example.moneymanager.app-mergeDebugResources-51:/layout/nav_header_main.xml",
-        "source": "com.example.moneymanager.app-main-54:/layout/nav_header_main.xml"
-    },
-    {
-        "merged": "com.example.moneymanager.app-mergeDebugResources-51:/layout/fragment_chart.xml",
-        "source": "com.example.moneymanager.app-main-54:/layout/fragment_chart.xml"
+        "merged": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-mergeDebugResources-51:/layout/fragment_chart.xml",
+        "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/layout/fragment_chart.xml"
     }
 ]

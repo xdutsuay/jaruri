@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
         // Ensure R.id.nav_chart, R.id.nav_categories etc match menu IDs
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.nav_chart, R.id.nav_categories, R.id.nav_export, 
+                R.id.nav_home, R.id.nav_chart, R.id.nav_categories, R.id.nav_export, 
                 R.id.nav_settings, R.id.nav_rate, R.id.nav_about
             ), drawerLayout
         )
