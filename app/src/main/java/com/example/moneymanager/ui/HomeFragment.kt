@@ -21,6 +21,9 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        
+        // Debug Toast to verify deployment
+        android.widget.Toast.makeText(context, "Home Fragment Active", android.widget.Toast.LENGTH_SHORT).show()
 
         val adapter = TransactionAdapter {
             // Handle item click (e.g. show details or delete dialog)

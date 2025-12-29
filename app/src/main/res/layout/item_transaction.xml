@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
@@ -16,9 +17,7 @@
         android:background="@drawable/circle_shape"
         android:backgroundTint="#80DEEA" 
         android:padding="8dp"
-        app:tint="@color/white" 
-        xmlns:app="http://schemas.android.com/apk/res-auto"/>
-        <!-- Note: Real app would dynamically set icon and bg color based on category -->
+        app:tint="@color/white" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -32,8 +31,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Category"
-            android:textColor="@color/black"
             android:textSize="16sp"
+            android:textColor="#000000"
             android:textStyle="normal"/>
 
         <TextView
@@ -58,7 +57,7 @@
             android:layout_height="wrap_content"
             android:text="- 734"
             android:textSize="16sp"
-            android:textColor="@color/black"/>
+            android:textColor="#000000"/>
 
         <TextView
             android:id="@+id/tvDate"
@@ -68,7 +67,6 @@
             android:textColor="#9E9E9E"
             android:textSize="10sp"
             android:visibility="gone"/> 
-            <!-- Hiding date in item as we might want grouped headers later, or keep it simple -->
     </LinearLayout>
 
 </LinearLayout>
