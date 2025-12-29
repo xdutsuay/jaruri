@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">MoneyManager</string>
+    <string name="appbar_scrolling_view_behavior">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
+    <string name="nav_open">Open navigation drawer</string>
+    <string name="nav_close">Close navigation drawer</string>
+    
+    <!-- Dashboard Strings -->
+    <string name="label_income">Income</string>
+    <string name="label_expenses">Expenses</string>
+    <string name="label_balance">Balance</string>
+    <string name="text_no_data">No data available</string>
 </resources>
