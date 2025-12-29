@@ -1,1 +1,0 @@
-/Users/nehatiwari/localcode/MoneyManager/app/build/intermediates/compiled_navigation_res/debug/compileDebugNavigationResources/navigation_nav_graph.xml.flat 

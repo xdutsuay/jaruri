@@ -18,8 +18,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val balance = MediatorLiveData<Double>()
 
     init {
+        android.util.Log.d("DEBUG_VM", "ViewModel Initialized")
         // Recalculate totals whenever the list changes
-        incomeTotal.addSource(allTransactions) { list -> calculateTotals(list) }
+        incomeTotal.addSource(allTransactions) { list ->
+            android.util.Log.d("DEBUG_VM", "AllTransactions updated: size=${list.size}")
+            calculateTotals(list)
+            if (list.isEmpty()) {
+                android.util.Log.d("DEBUG_VM", "List empty, attempting sample data...")
+                populateSampleData()
+            }
+        }
     }
 
     private fun calculateTotals(list: List<TransactionEntity>) {
@@ -45,7 +53,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             dao.insertTransaction(newTx)
         }
     }
-    
+
+    private fun populateSampleData() {
+        viewModelScope.launch {
+            try {
+                val count = dao.getCount()
+                android.util.Log.d("DEBUG_VM", "Current DB Count: $count")
+                if (count == 0) {
+                     android.util.Log.d("DEBUG_VM", "Inserting Sample Data...")
+                     val samples = listOf(
+                         TransactionEntity(type="INCOME", category="Salary", amount=217333.0, dateTimestamp=System.currentTimeMillis(), memo="Monthly Salary"),
+                         TransactionEntity(type="EXPENSE", category="Bills", amount=734.0, dateTimestamp=System.currentTimeMillis(), memo="Axis Bank"),
+                         TransactionEntity(type="EXPENSE", category="Home", amount=11000.0, dateTimestamp=System.currentTimeMillis(), memo="Advance for grill"),
+                         TransactionEntity(type="EXPENSE", category="Clothing", amount=2094.0, dateTimestamp=System.currentTimeMillis() - 86400000, memo="Baby Cloth"),
+                         TransactionEntity(type="EXPENSE", category="Transportation", amount=340.0, dateTimestamp=System.currentTimeMillis() - 172800000, memo="Bus/Train"),
+                         TransactionEntity(type="EXPENSE", category="Home", amount=17527.0, dateTimestamp=System.currentTimeMillis() - 259200000, memo="Home Loan EMI")
+                     )
+                     samples.forEach { dao.insertTransaction(it) }
+                     android.util.Log.d("DEBUG_VM", "Sample Data Inserted")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("DEBUG_VM", "Error in populateSampleData", e)
+            }
+        }
+    }
+
     fun deleteTransaction(tx: TransactionEntity) {
         viewModelScope.launch {
             dao.deleteTransaction(tx)
