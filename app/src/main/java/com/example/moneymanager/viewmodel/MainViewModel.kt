@@ -19,31 +19,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         // Recalculate totals whenever the list changes
-        incomeTotal.addSource(allTransactions) { list -> 
-            calculateTotals(list) 
-            if (list.isEmpty()) {
-                populateSampleData()
-            }
-        }
-    }
-
-    private fun populateSampleData() {
-        // Prevent infinite loop if still empty after attempt (shouldn't happen if insert works)
-        // But livedata observation might trigger again. 
-        // Better trigger: Check count in background.
-        viewModelScope.launch {
-            if (dao.getCount() == 0) {
-                 val samples = listOf(
-                     TransactionEntity(type="INCOME", category="Salary", amount=217333.0, dateTimestamp=System.currentTimeMillis(), memo="Monthly Salary"),
-                     TransactionEntity(type="EXPENSE", category="Bills", amount=734.0, dateTimestamp=System.currentTimeMillis(), memo="Axis Bank"),
-                     TransactionEntity(type="EXPENSE", category="Home", amount=11000.0, dateTimestamp=System.currentTimeMillis(), memo="Advance for grill"),
-                     TransactionEntity(type="EXPENSE", category="Clothing", amount=2094.0, dateTimestamp=System.currentTimeMillis() - 86400000, memo="Baby Cloth"),
-                     TransactionEntity(type="EXPENSE", category="Transportation", amount=340.0, dateTimestamp=System.currentTimeMillis() - 172800000, memo="Bus/Train"),
-                     TransactionEntity(type="EXPENSE", category="Home", amount=17527.0, dateTimestamp=System.currentTimeMillis() - 259200000, memo="Home Loan EMI")
-                 )
-                 samples.forEach { dao.insertTransaction(it) }
-            }
-        }
+        incomeTotal.addSource(allTransactions) { list -> calculateTotals(list) }
     }
 
     private fun calculateTotals(list: List<TransactionEntity>) {
