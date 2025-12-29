@@ -4,10 +4,11 @@ package com.example.moneymanager.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
@@ -19,7 +20,10 @@ import java.lang.String;
 
 public final class FragmentHomeBinding implements ViewBinding {
   @NonNull
-  private final LinearLayout rootView;
+  private final ConstraintLayout rootView;
+
+  @NonNull
+  public final CardView cardSummary;
 
   @NonNull
   public final FloatingActionButton fabAdd;
@@ -39,10 +43,12 @@ public final class FragmentHomeBinding implements ViewBinding {
   @NonNull
   public final TextView tvWarning;
 
-  private FragmentHomeBinding(@NonNull LinearLayout rootView, @NonNull FloatingActionButton fabAdd,
-      @NonNull RecyclerView rvTransactions, @NonNull TextView tvBalance,
-      @NonNull TextView tvExpense, @NonNull TextView tvIncome, @NonNull TextView tvWarning) {
+  private FragmentHomeBinding(@NonNull ConstraintLayout rootView, @NonNull CardView cardSummary,
+      @NonNull FloatingActionButton fabAdd, @NonNull RecyclerView rvTransactions,
+      @NonNull TextView tvBalance, @NonNull TextView tvExpense, @NonNull TextView tvIncome,
+      @NonNull TextView tvWarning) {
     this.rootView = rootView;
+    this.cardSummary = cardSummary;
     this.fabAdd = fabAdd;
     this.rvTransactions = rvTransactions;
     this.tvBalance = tvBalance;
@@ -53,7 +59,7 @@ public final class FragmentHomeBinding implements ViewBinding {
 
   @Override
   @NonNull
-  public LinearLayout getRoot() {
+  public ConstraintLayout getRoot() {
     return rootView;
   }
 
@@ -78,6 +84,12 @@ public final class FragmentHomeBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.card_summary;
+      CardView cardSummary = ViewBindings.findChildViewById(rootView, id);
+      if (cardSummary == null) {
+        break missingId;
+      }
+
       id = R.id.fab_add;
       FloatingActionButton fabAdd = ViewBindings.findChildViewById(rootView, id);
       if (fabAdd == null) {
@@ -114,8 +126,8 @@ public final class FragmentHomeBinding implements ViewBinding {
         break missingId;
       }
 
-      return new FragmentHomeBinding((LinearLayout) rootView, fabAdd, rvTransactions, tvBalance,
-          tvExpense, tvIncome, tvWarning);
+      return new FragmentHomeBinding((ConstraintLayout) rootView, cardSummary, fabAdd,
+          rvTransactions, tvBalance, tvExpense, tvIncome, tvWarning);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

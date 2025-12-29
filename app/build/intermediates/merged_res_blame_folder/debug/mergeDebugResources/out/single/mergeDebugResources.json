@@ -12,6 +12,10 @@
         "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/layout/fragment_add_transaction.xml"
     },
     {
+        "merged": "com.example.moneymanager.app-debug-52:/layout_fragment_home.xml.flat",
+        "source": "com.example.moneymanager.app-main-54:/layout/fragment_home.xml"
+    },
+    {
         "merged": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-debug-52:/layout_fragment_dashboard.xml.flat",
         "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/layout/fragment_dashboard.xml"
     },
@@ -44,8 +48,8 @@
         "source": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-main-54:/mipmap-xhdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "com.example.moneymanager.app-debug-52:/layout_item_transaction.xml.flat",
-        "source": "com.example.moneymanager.app-main-54:/layout/item_transaction.xml"
+        "merged": "com.example.moneymanager.app-debug-52:/layout_activity_main.xml.flat",
+        "source": "com.example.moneymanager.app-main-54:/layout/activity_main.xml"
     },
     {
         "merged": "/Users/nehatiwari/.gradle/daemon/9.0-milestone-1/com.example.moneymanager.app-debug-52:/mipmap-xxhdpi_ic_launcher_round.webp.flat",

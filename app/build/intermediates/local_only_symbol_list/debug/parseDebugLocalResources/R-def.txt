@@ -28,6 +28,7 @@ id action_home_to_addTransaction
 id addTransactionFragment
 id btnSave
 id btn_add_category
+id card_summary
 id drawer_layout
 id etAmount
 id etMemo
