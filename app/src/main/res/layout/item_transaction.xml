@@ -1,65 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    android:layout_marginHorizontal="4dp"
-    app:cardBackgroundColor="@color/white"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="2dp">
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="16dp"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- Category Icon -->
+    <ImageView
+        android:id="@+id/ivIcon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/circle_shape"
+        android:background="@drawable/circle_shape"
+        android:backgroundTint="#80DEEA" 
+        android:padding="8dp"
+        app:tint="@color/white" 
+        xmlns:app="http://schemas.android.com/apk/res-auto"/>
+        <!-- Note: Real app would dynamically set icon and bg color based on category -->
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:gravity="center_vertical">
+        android:layout_weight="1"
+        android:layout_marginStart="16dp"
+        android:orientation="vertical">
 
-        <!-- Info Column -->
-        <LinearLayout
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/tvCategory"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:text="Category"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="normal"/>
 
-            <TextView
-                android:id="@+id/tvCategory"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Category"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:textSize="16sp" />
+        <TextView
+            android:id="@+id/tvMemo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Memo"
+            android:textColor="#757575"
+            android:textSize="12sp"
+            android:visibility="visible"/>
+    </LinearLayout>
 
-            <TextView
-                android:id="@+id/tvDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Date"
-                android:textSize="12sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginTop="2dp"/>
-                
-            <TextView
-                android:id="@+id/tvMemo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Memo description"
-                android:textSize="13sp"
-                android:textColor="@color/text_secondary"
-                android:visibility="gone"/> <!-- Hiding memo by default for cleaner look, or can keep it -->
-        </LinearLayout>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="end">
 
-        <!-- Amount Column -->
         <TextView
             android:id="@+id/tvAmount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0.00"
+            android:text="- 734"
             android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textColor="@color/black"/>
 
+        <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Today"
+            android:textColor="#9E9E9E"
+            android:textSize="10sp"
+            android:visibility="gone"/> 
+            <!-- Hiding date in item as we might want grouped headers later, or keep it simple -->
     </LinearLayout>
-</com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>
