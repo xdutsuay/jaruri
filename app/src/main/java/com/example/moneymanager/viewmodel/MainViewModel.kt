@@ -3,14 +3,19 @@ package com.example.moneymanager.viewmodel
 import android.app.Application
 import androidx.lifecycle.*
 import com.example.moneymanager.data.AppDatabase
+import com.example.moneymanager.data.CategoryRepository
 import com.example.moneymanager.data.TransactionEntity
+import com.example.moneymanager.models.Category
 import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = AppDatabase.getDatabase(application).transactionDao()
+    private val categoryRepository = CategoryRepository(application)
 
     // Real-time list of transactions observed by UI
     val allTransactions: LiveData<List<TransactionEntity>> = dao.getAllTransactions().asLiveData()
+    val expenseCategories: LiveData<List<Category>> = categoryRepository.expenseCategories.asLiveData()
+    val incomeCategories: LiveData<List<Category>> = categoryRepository.incomeCategories.asLiveData()
 
     // Derived stats for Dashboard
     val incomeTotal = MediatorLiveData<Double>()
@@ -81,6 +86,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteTransaction(tx: TransactionEntity) {
         viewModelScope.launch {
             dao.deleteTransaction(tx)
+        }
+    }
+
+    fun addCategory(name: String, type: String) {
+        viewModelScope.launch {
+            categoryRepository.addCategory(name, type)
+        }
+    }
+
+    fun deleteCategory(category: Category) {
+        viewModelScope.launch {
+            categoryRepository.deleteCategory(category)
         }
     }
 }
