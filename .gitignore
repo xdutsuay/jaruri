@@ -1,0 +1,19 @@
+# Gradle
+.gradle/
+build/
+/*/build/
+/app/build/
+
+# IDE setting files
+.idea/
+.vscode/
+*.iml
+
+# Local properties
+local.properties
+
+# OS files
+.DS_Store
+
+# Log files
+*.log
