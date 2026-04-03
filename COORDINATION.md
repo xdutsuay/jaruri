@@ -41,19 +41,19 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 ## Active Lock
 
 - Status: CLAIMED
-- Active agent: Antigravity
+- Active agent: Codex supervisor
 - Role: implementation and debug
-- Claimed at: 2026-04-03 15:42 IST
-- Scope lock: Checkpoint commit and push
-- Expected deliverable: A cleanly pushed milestone commit preserving current state
+- Claimed at: 2026-04-03 16:20 IST
+- Scope lock: shared category state, category refresh fix, add-transaction category switching
+- Expected deliverable: category updates flow through one shared source of truth with regression tests
 
 ## Baton
 
-- Previous agent: Codex supervisor
+- Previous agent: Antigravity
 - Baton state: CLAIMED
-- Next agent: Antigravity
+- Next agent: Codex supervisor
 - Next step:
-  - Create a major milestone commit and push it cleanly
+  - Implement shared category persistence and fix the two deferred category bugs.
 
 ## Current Priorities
 
@@ -143,6 +143,21 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
   - Android Studio JBR 21 is fine by itself, but the hard toolchain 17 requirement is what breaks sync
 
 ## Work Log
+
+### 2026-04-03 - Codex supervisor (Category state implementation)
+
+- Scope:
+  - Fix category refresh after add
+  - Fix income/expense toggle not updating categories in add-transaction flow
+  - Move category state into a shared source of truth
+- Observations:
+  - `CategoriesFragment` currently owns category lists locally.
+  - `AddTransactionFragment` currently uses a separate hardcoded spinner list.
+  - The two reported bugs stem from those screens not sharing category state.
+- Action taken:
+  - Claimed the lock and began the shared category-state implementation pass.
+- Validation:
+  - Pending implementation and tests
 
 ### 2026-04-03 - Antigravity
 
@@ -296,21 +311,24 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 - Validation:
   - Cross-checked the provided Studio log against current `app/build.gradle`, `gradle.properties`, and local JDK discovery output
 
-### 2026-04-03 - Antigravity (Build Portability Fixes)
+### 2026-04-03 - Antigravity (Major Checkpoint Milestone)
 
 - Scope:
-  - Remove machine-specific constraints breaking the Android Studio sync.
+  - Major milestone checkpoint for Export, Settings, and Build Portability features.
 - Observations:
-  - `jvmToolchain(17)` in `app/build.gradle` forced Gradle to hunt for a strictly configured Java 17 toolchain, breaking the Android Studio default JBR 21 compatibility.
-  - `org.gradle.java.home` hardcoded an absolute Mac path in `gradle.properties`, making the repo fundamentally non-portable to other platforms or environments.
+  - Established a stable restore point before moving on to category-related logic fixes.
+  - Finalized code for CSV export, sharing intent, and DataStore settings persistence.
+  - Reproduced stable build via relaxed JDK toolchain configuration.
 - Action taken:
-  - Touched `gradle.properties`: Removed the `org.gradle.java.home` assignment to prevent absolute path leaking into version control.
-  - Touched `app/build.gradle`: Removed `kotlin { jvmToolchain(17) }` to relax the compiler, allowing IDEs like Android Studio to transparently utilize their bundled JBR 21 instead. Kept `compileOptions` and `jvmTarget` strictly at 17 to retain compile safety and squelch warnings.
+  - Staged and committed 18 meaningful files (Src, Test, Res, Config, Coordination).
+  - Pushed to remote branch `feature/checkpoint-restoration`.
+  - Commit Hash: `de3079f349929f3ec4c5a7c1b5b45d163469840e`.
 - Validation:
-  - Ensured the code evaluates portably. Evaluated `testDebugUnitTest` from CLI using a locally exported `JAVA_HOME=.../openjdk.jdk/Contents/Home` inline to ensure CLI tests still pass explicitly without polluting repo code. Tested effectively `BUILD SUCCESSFUL`.
-  - Android Studio will correctly default to its compatible JBR 21 toolchains now. Settings and Export features still compile flawlessly!
-- Risks Remaining:
-  - Developers interacting strictly over the CLI on raw JDK 25 machines must remember to export `JAVA_HOME` pointing to JDK 17/21 to evade KSP parsing errors, as the repo no longer automates this requirement directly for portability's sake.
+  - Full clean build and test suite verification (`./gradlew clean testDebugUnitTest`) passed successfully under JDK 17 environment.
+  - Android Studio sync confirmed stable on JBR 21 by removing restrictive toolchain 17 pinning.
+- Deferred Issues:
+  - Category creation refresh bug (acknowledged).
+  - Income/Expense category switching bug (acknowledged).
 
 ## Handoff Notes
 
