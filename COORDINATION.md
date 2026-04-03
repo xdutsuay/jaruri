@@ -40,20 +40,20 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-- Status: CLAIMED
-- Active agent: Antigravity
-- Role: implementation and debug
-- Claimed at: 2026-04-03 16:08 IST
-- Scope lock: Home/main fragment transaction list scrollbar fix
-- Expected deliverable: Scrollable transaction RecyclerView with visible scrollbar on home screen
+- Status: AVAILABLE
+- Active agent: none
+- Role: none
+- Claimed at: none
+- Scope lock: none
+- Expected deliverable: none
 
 ## Baton
 
-- Previous agent: Codex supervisor
-- Baton state: CLAIMED
-- Next agent: Antigravity
+- Previous agent: Antigravity
+- Baton state: PASSED
+- Next agent: (available)
 - Next step:
-  - Fix the missing scrollbar on the home fragment transaction list.
+  - All known bugs resolved. Next work: device validation of Export/Settings, or a new feature from the plan.
 
 ## Current Priorities
 
@@ -364,6 +364,27 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 - Validation:
   - `git status` now shows a completely clean and focused result (only 7 files remaining from the Category work in progress).
   - Pushed to `feature/checkpoint-restoration`.
+
+### 2026-04-03 - Antigravity (Transaction List Scrollbar Fix)
+
+- Scope:
+  - Fix the missing scrollbar on the home/main fragment transaction list.
+- Observations:
+  - `RecyclerView` (`rv_transactions`) in `fragment_home.xml` had no scrollbar attributes at all.
+  - The RecyclerView's height constraint is correctly set to `0dp` with top/bottom constraints filling available space, so the layout itself is not the problem — only the scrollbar was absent.
+  - No code change was needed in `HomeFragment.kt`; this was a pure XML config omission.
+- Action taken:
+  - Touched `app/src/main/res/layout/fragment_home.xml`:
+    - Added `android:scrollbars="vertical"` to enable the scrollbar track/thumb.
+    - Added `android:scrollbarStyle="insideOverlay"` so the scrollbar draws inside the RecyclerView boundaries without shifting content.
+    - Added `android:fadeScrollbars="false"` so the scrollbar remains persistently visible rather than fading out.
+- Validation:
+  - `JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew testDebugUnitTest` → `BUILD SUCCESSFUL`, 35 tasks, 17 up-to-date.
+  - All existing navigation, export, settings, and category tests pass.
+  - Committed and pushed to `feature/checkpoint-restoration` (commit `000d984`).
+- Risk:
+  - Scrollbar visibility is a runtime behaviour; a unit test cannot assert it. Practical verification requires running the app on a device or emulator with enough transactions to exceed the visible list height.
+  - No risk to data, navigation, or any other feature — the change is isolated to three XML attributes on a single view.
 
 ## Instructions For Antigravity
 
