@@ -12,8 +12,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
 class HomeFragmentTest {
 
     @Test
@@ -39,5 +41,36 @@ class HomeFragmentTest {
 
         // Verify that we've navigated to the AddTransactionFragment
         assertEquals(R.id.addTransactionFragment, navController.currentDestination?.id)
+    }
+    @Test
+    fun testNavigateToChartOnIncomeClick() {
+        val navController = TestNavHostController(
+            ApplicationProvider.getApplicationContext()
+        )
+        val scenario = launchFragmentInContainer<HomeFragment>(themeResId = R.style.Theme_MoneyManager)
+
+        scenario.onFragment {
+            navController.setGraph(R.navigation.nav_graph)
+            Navigation.setViewNavController(it.requireView(), navController)
+        }
+
+        onView(withId(R.id.income_layout)).perform(click())
+        assertEquals(R.id.nav_chart, navController.currentDestination?.id)
+    }
+
+    @Test
+    fun testNavigateToChartOnExpenseClick() {
+        val navController = TestNavHostController(
+            ApplicationProvider.getApplicationContext()
+        )
+        val scenario = launchFragmentInContainer<HomeFragment>(themeResId = R.style.Theme_MoneyManager)
+
+        scenario.onFragment {
+            navController.setGraph(R.navigation.nav_graph)
+            Navigation.setViewNavController(it.requireView(), navController)
+        }
+
+        onView(withId(R.id.expense_layout)).perform(click())
+        assertEquals(R.id.nav_chart, navController.currentDestination?.id)
     }
 }

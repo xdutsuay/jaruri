@@ -5,10 +5,26 @@
     android:layout_height="match_parent"
     tools:context=".ui.ExportFragment">
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="vertical"
         android:gravity="center"
-        android:text="Export Fragment" />
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Export your transactions to a CSV file. The file will be saved to your Downloads folder and can be shared."
+            android:gravity="center"
+            android:textSize="16sp"
+            android:layout_marginBottom="24dp"/>
+
+        <Button
+            android:id="@+id/btn_export_csv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Export to CSV" />
+    </LinearLayout>
 
 </FrameLayout>

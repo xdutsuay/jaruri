@@ -12,6 +12,9 @@
         <action
             android:id="@+id/action_home_to_addTransaction"
             app:destination="@id/addTransactionFragment" />
+        <action
+            android:id="@+id/action_home_to_chart"
+            app:destination="@id/nav_chart" />
     </fragment>
 
     <fragment
