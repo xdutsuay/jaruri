@@ -49,10 +49,10 @@ class HomeFragment : Fragment() {
         
         // Navigation to Chart Fragment on Summary Click
         binding.incomeLayout.setOnClickListener {
-             findNavController().navigate(R.id.nav_chart)
+             findNavController().navigate(R.id.action_home_to_chart)
         }
         binding.expenseLayout.setOnClickListener {
-             findNavController().navigate(R.id.nav_chart)
+             findNavController().navigate(R.id.action_home_to_chart)
         }
 
         viewModel.allTransactions.observe(viewLifecycleOwner) { list ->

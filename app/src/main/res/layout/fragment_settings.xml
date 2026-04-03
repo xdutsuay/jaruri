@@ -5,10 +5,55 @@
     android:layout_height="match_parent"
     tools:context=".ui.SettingsFragment">
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:text="Settings Fragment" />
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Currency Symbol"
+            android:textColor="?android:textColorSecondary" />
+        <EditText
+            android:id="@+id/et_currency"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Date Format"
+            android:textColor="?android:textColorSecondary" />
+        <EditText
+            android:id="@+id/et_date_format"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
+        <Switch
+            android:id="@+id/switch_sample_data"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Enable Sample Data on Empty DB"
+            android:layout_marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/btn_save_settings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save Settings" />
+            
+    </LinearLayout>
 
 </FrameLayout>
