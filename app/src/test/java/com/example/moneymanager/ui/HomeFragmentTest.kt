@@ -31,6 +31,7 @@ class HomeFragmentTest {
         scenario.onFragment {
             // Set the graph on the NavController
             navController.setGraph(R.navigation.nav_graph)
+            navController.setCurrentDestination(R.id.nav_home)
 
             // Set the NavController on the fragment
             Navigation.setViewNavController(it.requireView(), navController)
@@ -51,6 +52,7 @@ class HomeFragmentTest {
 
         scenario.onFragment {
             navController.setGraph(R.navigation.nav_graph)
+            navController.setCurrentDestination(R.id.nav_home)
             Navigation.setViewNavController(it.requireView(), navController)
         }
 
@@ -67,6 +69,7 @@ class HomeFragmentTest {
 
         scenario.onFragment {
             navController.setGraph(R.navigation.nav_graph)
+            navController.setCurrentDestination(R.id.nav_home)
             Navigation.setViewNavController(it.requireView(), navController)
         }
 

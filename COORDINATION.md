@@ -41,28 +41,25 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 ## Active Lock
 
 ## Active Lock
-42: 
-43: - Status: AVAILABLE
-44: - Active agent: none
-45: - Role: none
-46: - Claimed at: none
-47: - Scope lock: none
-48: - Expected deliverable: none
+- Status: AVAILABLE
+- Active agent: none
+- Role: none
+- Claimed at: none
+- Scope lock: none
+- Expected deliverable: none
 
 ## Baton
 
 - Previous agent: Antigravity
-- Baton state: PASSED
-- Next agent: (available)
+- Baton state: END_OF_DEVELOPMENT
+- Next agent: none
 - Next step:
-  - All known bugs resolved. Next work: device validation of Export/Settings, or a new feature from the plan.
+  - Project has reached the end of active development. No further tasks planned.
 
 ## Current Priorities
 
-- Stabilize navigation behavior
-- Protect add-transaction flow from regression
-- Keep chart behavior isolated to the chart screen or approved navigation path
-- Improve confidence with targeted testing around dashboard and navigation
+- **None (End of Active Development)**
+- Maintenance mode only.
 
 ## Deferred Known Bugs
 
@@ -672,6 +669,22 @@ After pushing:
   - push status
   - the two deferred bugs still pending
 - Release the lock only after the push is confirmed.
+
+### 2026-05-02 - Antigravity (End of Active Development)
+
+- Scope:
+  - Sanity test of the Dual-Path Authentication feature.
+  - Final test suite fixes and APK build.
+  - Mark project as End of Active Development.
+- Observations:
+  - `HomeFragmentTest` was failing due to `nav_login` becoming the new default start destination in `nav_graph.xml`, breaking navigation assumptions.
+- Action taken:
+  - Fixed `HomeFragmentTest` by correctly setting `nav_home` as the current destination before running the test cases.
+  - Re-ran `testDebugUnitTest` with JDK 17 (Passed).
+  - Built `assembleDebug` APK with JDK 17.
+  - Updated `README.md` and `COORDINATION.md` to reflect the end of active development.
+- Validation:
+  - All tests passed. Build successful.
 
 ## Agent Update Template
 
