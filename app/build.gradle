@@ -34,6 +34,18 @@ android {
     buildFeatures {
         viewBinding true
     }
+    packaging {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+            excludes += 'META-INF/DEPENDENCIES'
+            excludes += 'META-INF/LICENSE'
+            excludes += 'META-INF/LICENSE.txt'
+            excludes += 'META-INF/license.txt'
+            excludes += 'META-INF/NOTICE'
+            excludes += 'META-INF/NOTICE.txt'
+            excludes += 'META-INF/notice.txt'
+        }
+    }
     testOptions {
         unitTests {
             includeAndroidResources = true
@@ -70,6 +82,21 @@ dependencies {
     
     // DataStore
     implementation "androidx.datastore:datastore-preferences:1.0.0"
+
+    // Google Sign-In
+    implementation 'com.google.android.gms:play-services-auth:21.0.0'
+    
+    // Google Drive API (for plain-text auth fallback)
+    implementation('com.google.api-client:google-api-client-android:2.2.0') {
+        exclude group: 'org.apache.httpcomponents'
+    }
+    implementation('com.google.apis:google-api-services-drive:v3-rev20231128-2.0.0') {
+        exclude group: 'org.apache.httpcomponents'
+    }
+    implementation 'com.google.http-client:google-http-client-gson:1.43.3'
+
+    // Coroutines integration with Play Services
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3'
     
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.mockito:mockito-core:4.5.1'
