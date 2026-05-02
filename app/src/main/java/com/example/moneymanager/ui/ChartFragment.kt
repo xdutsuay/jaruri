@@ -8,8 +8,11 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import com.example.moneymanager.R
+import com.example.moneymanager.data.TransactionEntity
 import com.example.moneymanager.databinding.FragmentChartBinding
+import com.example.moneymanager.viewmodel.MainViewModel
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
@@ -21,6 +24,9 @@ class ChartFragment : Fragment() {
 
     private var _binding: FragmentChartBinding? = null
     private val binding get() = _binding!!
+    private val viewModel: MainViewModel by activityViewModels()
+
+    private var currentFilteredTransactions: List<TransactionEntity> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -35,7 +41,7 @@ class ChartFragment : Fragment() {
 
         setupTabs()
         setupSpinners()
-        updateChart()
+        // Initial data observation will be triggered by setupSpinners listener
     }
 
     private fun setupTabs() {
@@ -69,7 +75,7 @@ class ChartFragment : Fragment() {
 
         val spinnerListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                updateChart()
+                observeData()
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -79,23 +85,47 @@ class ChartFragment : Fragment() {
         binding.spinnerYear.onItemSelectedListener = spinnerListener
     }
 
+    private fun observeData() {
+        val yearStr = binding.spinnerYear.selectedItem?.toString()
+        val year = yearStr?.toIntOrNull() ?: Calendar.getInstance().get(Calendar.YEAR)
+        val month = binding.spinnerMonth.selectedItemPosition
+        
+        // Remove previous observers if any (though lifecycleOwner handles it, 
+        // we are getting a NEW LiveData here so we should be careful about 
+        // multiple subscriptions if this is called frequently)
+        viewModel.getTransactionsForMonth(year, month).observe(viewLifecycleOwner) { list ->
+            currentFilteredTransactions = list
+            updateChart()
+        }
+    }
+
     private fun updateChart() {
         val isExpense = binding.tabLayoutChart.selectedTabPosition == 0
+        val typeToFilter = if (isExpense) "EXPENSE" else "INCOME"
+
+        val filteredByType = currentFilteredTransactions.filter { it.type == typeToFilter }
+        
+        // Group by category and sum amounts
+        val categoryMap = filteredByType.groupBy { it.category }
+            .mapValues { entry -> entry.value.sumOf { it.amount } }
 
         val entries = ArrayList<PieEntry>()
-        if (isExpense) {
-            entries.add(PieEntry(40f, "Food"))
-            entries.add(PieEntry(20f, "Bills"))
-            entries.add(PieEntry(15f, "Transport"))
-        } else {
-            entries.add(PieEntry(70f, "Salary"))
-            entries.add(PieEntry(30f, "Freelance"))
+        categoryMap.forEach { (category, total) ->
+            if (total > 0) {
+                entries.add(PieEntry(total.toFloat(), category))
+            }
+        }
+
+        if (entries.isEmpty()) {
+            binding.pieChart.clear()
+            binding.pieChart.setNoDataText("No transactions for this selection")
+            return
         }
 
         val dataSet = PieDataSet(entries, if (isExpense) "Expenses" else "Income")
         dataSet.colors = if (isExpense) ColorTemplate.MATERIAL_COLORS.toList() else ColorTemplate.JOYFUL_COLORS.toList()
         dataSet.valueTextColor = Color.BLACK
-        dataSet.valueTextSize = 16f
+        dataSet.valueTextSize = 14f
 
         val data = PieData(dataSet)
         binding.pieChart.data = data

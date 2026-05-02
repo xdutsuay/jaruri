@@ -69,14 +69,23 @@ class HomeFragment : Fragment() {
         }
 
         viewModel.incomeTotal.observe(viewLifecycleOwner) {
-            binding.tvIncome.text = String.format("%.0f", it)
+            binding.tvIncome.text = formatCurrency(it, viewModel.currencySymbol.value ?: "$")
         }
         viewModel.expenseTotal.observe(viewLifecycleOwner) {
-            binding.tvExpense.text = String.format("%.0f", it)
+            binding.tvExpense.text = formatCurrency(it, viewModel.currencySymbol.value ?: "$")
         }
         viewModel.balance.observe(viewLifecycleOwner) {
-            binding.tvBalance.text = String.format("%.0f", it)
+            binding.tvBalance.text = formatCurrency(it, viewModel.currencySymbol.value ?: "$")
         }
+        viewModel.currencySymbol.observe(viewLifecycleOwner) { symbol ->
+            binding.tvIncome.text = formatCurrency(viewModel.incomeTotal.value ?: 0.0, symbol)
+            binding.tvExpense.text = formatCurrency(viewModel.expenseTotal.value ?: 0.0, symbol)
+            binding.tvBalance.text = formatCurrency(viewModel.balance.value ?: 0.0, symbol)
+        }
+    }
+
+    private fun formatCurrency(amount: Double, symbol: String): String {
+        return "$symbol${String.format("%.0f", amount)}"
     }
 
     override fun onDestroyView() {

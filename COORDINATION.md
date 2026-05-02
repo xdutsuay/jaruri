@@ -40,12 +40,14 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-- Status: AVAILABLE
-- Active agent: none
-- Role: none
-- Claimed at: none
-- Scope lock: none
-- Expected deliverable: none
+## Active Lock
+42: 
+43: - Status: AVAILABLE
+44: - Active agent: none
+45: - Role: none
+46: - Claimed at: none
+47: - Scope lock: none
+48: - Expected deliverable: none
 
 ## Baton
 
@@ -76,9 +78,13 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Files Touched
 
-- `COORDINATION.md` - created as the shared control document for all agent work
+- `COORDINATION.md` - updated lock and work log
+- `app/src/main/java/com/example/moneymanager/viewmodel/MainViewModel.kt` - added settings observation and monthly filtering
+- `app/src/main/java/com/example/moneymanager/ui/ChartFragment.kt` - switched to database-backed chart data
+- `app/src/main/java/com/example/moneymanager/ui/HomeFragment.kt` - applied currency symbol setting
+- `app/src/main/java/com/example/moneymanager/ui/ExportFragment.kt` - applied date format setting to export
+- `app/src/main/java/com/example/moneymanager/utils/CsvFormatter.kt` - added dynamic date pattern support
 - `app/src/main/java/com/example/moneymanager/data/CategoryRepository.kt` - shared persisted source of truth for income and expense categories
-- `app/src/main/java/com/example/moneymanager/viewmodel/MainViewModel.kt` - category flows and mutation methods exposed to shared UI
 - `app/src/main/java/com/example/moneymanager/ui/CategoriesFragment.kt` - category management now observes shared category state
 - `app/src/main/java/com/example/moneymanager/ui/AddTransactionFragment.kt` - category spinner now reacts to shared data and type toggles
 - `app/src/test/java/com/example/moneymanager/data/CategoryRepositoryTest.kt` - repository coverage for defaults, add, and delete
@@ -150,7 +156,24 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Work Log
 
-### 2026-04-03 - Codex supervisor (Category state implementation)
+### 2026-04-22 - Antigravity
+152: 
+153: - Scope:
+154:   - Implement real database-backed data for ChartFragment.
+155:   - Apply Settings (Currency Symbol) to the Home dashboard.
+156: - Observations:
+157:   - ChartFragment currently uses hardcoded sample data.
+158:   - HomeFragment uses hardcoded currency format.
+159: - Action taken:
+160:   - Updated `MainViewModel` to integrate `SettingsRepository` and provide monthly transaction filtering logic.
+161:   - Refactored `ChartFragment` to visualize real database data instead of placeholders, including grouping by category.
+162:   - Applied `currencySymbol` from settings to the dashboard in `HomeFragment`.
+163:   - Updated `CsvFormatter` and `ExportFragment` to respect the `dateFormat` setting.
+164: - Validation:
+165:   - Executed `./gradlew testDebugUnitTest` under JDK 17.
+166:   - Result: `BUILD SUCCESSFUL`.
+167: 
+168: ### 2026-04-03 - Codex supervisor (Category state implementation)
 
 - Scope:
   - Fix category refresh after add
