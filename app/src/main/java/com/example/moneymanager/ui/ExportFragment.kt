@@ -69,8 +69,9 @@ class ExportFragment : Fragment() {
 
     private fun exportToCSV() {
         val transactions = viewModel.allTransactions.value ?: return
+        val datePattern = viewModel.dateFormat.value ?: "yyyy-MM-dd"
         
-        val csvData = com.example.moneymanager.utils.CsvFormatter.format(transactions)
+        val csvData = com.example.moneymanager.utils.CsvFormatter.format(transactions, datePattern)
         val filename = "MoneyManager_Export_${System.currentTimeMillis()}.csv"
         
         var fileUri: Uri? = null

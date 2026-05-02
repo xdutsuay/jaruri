@@ -6,11 +6,15 @@ import java.util.Date
 import java.util.Locale
 
 object CsvFormatter {
-    fun format(transactions: List<TransactionEntity>): String {
+    fun format(transactions: List<TransactionEntity>, datePattern: String = "yyyy-MM-dd"): String {
         val sb = StringBuilder()
         sb.append("Type,Category,Amount,Date,Memo\n")
         
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val dateFormat = try {
+            SimpleDateFormat(datePattern, Locale.getDefault())
+        } catch (e: Exception) {
+            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        }
         
         for (t in transactions) {
             val dateStr = dateFormat.format(Date(t.dateTimestamp))
