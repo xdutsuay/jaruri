@@ -1,9 +1,12 @@
 # Money Manager
 
+> **Note**: This project has reached the end of active development. The core features (including dual-path authentication, CSV export, dynamic charts, and settings) are complete and stable.
+
 Money Manager is an Android application designed to help users track their income and expenses. It provides a simple and intuitive interface for managing personal finances.
 
 ## Features
 
+*   **Authentication:** Dual-path authentication (Primary: Google Sign-In, Secondary: Google Drive plain-text fallback).
 *   **Dashboard:** A quick overview of your income, expenses, and current balance.
 *   **Transactions:** Add, view, and manage your income and expense transactions.
 *   **Categories:** Organize your transactions by creating and managing custom categories for both income and expenses.
@@ -23,8 +26,8 @@ To get started with the Money Manager app, you'll need to have Android Studio in
 https://github.com/your-username/money-manager.git
 ```
 
-Once the project is open, you can build and run the app on an Android emulator or a physical device.
+Once the project is open, you can build and run the app on an Android emulator or a physical device. Note that the project is pinned to JDK 17 for build stability.
 
 ## Contributing
 
-Contributions are welcome! If you have any ideas for new features or improvements, feel free to open an issue or submit a pull request.
+This project is no longer in active development. Forking and independent continuation are welcome!
