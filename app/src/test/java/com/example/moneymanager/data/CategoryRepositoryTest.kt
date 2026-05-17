@@ -44,6 +44,17 @@ class CategoryRepositoryTest {
     }
 
     @Test
+    fun testCategoryWithLineBreakPersistsAsSingleCategory() = runBlocking {
+        categoryRepository.addCategory("Travel\nWork", CategoryRepository.TYPE_EXPENSE)
+
+        val expenseCategoryNames = categoryRepository.expenseCategories.first().map { it.name }
+
+        assertTrue(expenseCategoryNames.contains("Travel Work"))
+        assertFalse(expenseCategoryNames.contains("Travel"))
+        assertFalse(expenseCategoryNames.contains("Work"))
+    }
+
+    @Test
     fun testDeletedCategoryIsRemoved() = runBlocking {
         categoryRepository.addCategory("Temporary", CategoryRepository.TYPE_INCOME)
         categoryRepository.deleteCategory(Category("Temporary", CategoryRepository.TYPE_INCOME))

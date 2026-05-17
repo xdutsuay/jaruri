@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
@@ -80,8 +81,12 @@ class MainActivity : AppCompatActivity() {
                         // Also sign out from Google to force re-auth next time
                         GoogleSignInHelper(this@MainActivity).signOut {}
                         DriveBackupAuth(this@MainActivity).signOut {}
-                        // Navigate back to login
-                        navController.navigate(R.id.nav_login)
+                        // Clear authenticated destinations so Back cannot reopen private data.
+                        val loginOptions = NavOptions.Builder()
+                            .setPopUpTo(navController.graph.id, true)
+                            .setLaunchSingleTop(true)
+                            .build()
+                        navController.navigate(R.id.nav_login, null, loginOptions)
                     }
                     drawerLayout.closeDrawers()
                     true

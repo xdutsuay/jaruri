@@ -1,10 +1,16 @@
 package com.example.moneymanager.ui
 
 import android.os.Looper
+import android.widget.EditText
 import android.widget.RadioGroup
 import android.widget.Spinner
 import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
+import androidx.test.espresso.action.ViewActions.typeText
+import androidx.test.espresso.matcher.ViewMatchers.withId
 import com.example.moneymanager.R
 import com.example.moneymanager.data.CategoryRepository
 import kotlinx.coroutines.runBlocking
@@ -68,6 +74,23 @@ class AddTransactionFragmentTest {
             }
 
             assertTrue(spinnerItems.contains("Utilities"))
+        }
+    }
+
+    @Test
+    fun testInvalidAmountShowsErrorInsteadOfCrashing() {
+        val scenario = launchFragmentInContainer<AddTransactionFragment>(
+            themeResId = R.style.Theme_MoneyManager
+        )
+
+        shadowOf(Looper.getMainLooper()).idle()
+
+        onView(withId(R.id.etAmount)).perform(typeText("."), closeSoftKeyboard())
+        onView(withId(R.id.btnSave)).perform(click())
+
+        scenario.onFragment { fragment ->
+            val amount = fragment.requireView().findViewById<EditText>(R.id.etAmount)
+            assertEquals("Enter a valid amount", amount.error.toString())
         }
     }
 }

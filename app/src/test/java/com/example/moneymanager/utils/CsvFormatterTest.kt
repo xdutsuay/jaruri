@@ -20,10 +20,10 @@ class CsvFormatterTest {
         val tx1 = TransactionEntity(
             id = 1,
             type = "INCOME",
-            category = "Salary",
+            category = "Salary, Bonus",
             amount = 5000.0,
             dateTimestamp = dateValue,
-            memo = "March, Salary" // Testing comma replacement
+            memo = "March \"Salary\"\nPaid"
         )
 
         val tx2 = TransactionEntity(
@@ -41,7 +41,7 @@ class CsvFormatterTest {
         val dateStr = dateFormat.format(java.util.Date(dateValue))
         
         val expected = "Type,Category,Amount,Date,Memo\n" +
-                       "INCOME,Salary,5000.0,$dateStr,March  Salary\n" +
+                       "INCOME,\"Salary, Bonus\",5000.0,$dateStr,\"March \"\"Salary\"\"\nPaid\"\n" +
                        "EXPENSE,Food,15.5,$dateStr,Lunch\n"
                        
         assertEquals(expected, csv)

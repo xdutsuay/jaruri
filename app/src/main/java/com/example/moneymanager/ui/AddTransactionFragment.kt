@@ -64,7 +64,11 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
 
             val type = if (rgType.checkedRadioButtonId == R.id.rbIncome) "INCOME" else "EXPENSE"
             val category = spCategory.selectedItem.toString()
-            val amount = amountStr.toDouble()
+            val amount = amountStr.toDoubleOrNull()
+            if (amount == null || !amount.isFinite() || amount <= 0.0) {
+                etAmount.error = "Enter a valid amount"
+                return@setOnClickListener
+            }
             val memo = etMemo.text.toString()
 
             viewModel.addTransaction(

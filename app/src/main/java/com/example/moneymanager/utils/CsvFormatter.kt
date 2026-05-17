@@ -18,8 +18,24 @@ object CsvFormatter {
         
         for (t in transactions) {
             val dateStr = dateFormat.format(Date(t.dateTimestamp))
-            sb.append("${t.type},${t.category},${t.amount},$dateStr,${t.memo.replace(",", " ")}\n")
+            val row = listOf(
+                t.type,
+                t.category,
+                t.amount.toString(),
+                dateStr,
+                t.memo
+            ).joinToString(",") { escapeCsvField(it) }
+            sb.append(row).append('\n')
         }
         return sb.toString()
+    }
+
+    private fun escapeCsvField(value: String): String {
+        val escaped = value.replace("\"", "\"\"")
+        return if (escaped.any { it == ',' || it == '"' || it == '\n' || it == '\r' }) {
+            "\"$escaped\""
+        } else {
+            escaped
+        }
     }
 }
