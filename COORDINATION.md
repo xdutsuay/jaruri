@@ -41,12 +41,12 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 ## Active Lock
 
 ## Active Lock
-- Status: AVAILABLE
-- Active agent: none
-- Role: none
-- Claimed at: none
-- Scope lock: none
-- Expected deliverable: none
+- Status: CLAIMED
+- Active agent: Cursor automation
+- Role: implementation
+- Claimed at: 2026-05-18 11:01 UTC
+- Scope lock: sign-out navigation back stack and focused tests
+- Expected deliverable: prevent post-sign-out Back navigation into authenticated app screens
 
 ## Baton
 
@@ -152,6 +152,18 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
   - Android Studio JBR 21 is fine by itself, but the hard toolchain 17 requirement is what breaks sync
 
 ## Work Log
+
+### 2026-05-18 - Cursor automation (Sign-out back stack fix)
+
+- Scope:
+  - Audit recent dual-path authentication changes for critical correctness bugs.
+  - Fix the sign-out navigation path if it leaves private finance screens on the back stack.
+- Observations:
+  - Sign-out currently calls `navController.navigate(R.id.nav_login)` without `popUpTo`, so the previous destination can remain below the login screen.
+- Action taken:
+  - In progress.
+- Validation:
+  - Pending.
 
 ### 2026-04-22 - Antigravity
 152: 

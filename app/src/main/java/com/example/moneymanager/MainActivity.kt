@@ -80,8 +80,12 @@ class MainActivity : AppCompatActivity() {
                         // Also sign out from Google to force re-auth next time
                         GoogleSignInHelper(this@MainActivity).signOut {}
                         DriveBackupAuth(this@MainActivity).signOut {}
-                        // Navigate back to login
-                        navController.navigate(R.id.nav_login)
+                        // Reset the stack so Back cannot reopen screens after sign-out.
+                        navController.navigate(
+                            R.id.nav_login,
+                            null,
+                            AuthNavigation.signOutNavOptions(navController.graph.id)
+                        )
                     }
                     drawerLayout.closeDrawers()
                     true
