@@ -41,12 +41,12 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 ## Active Lock
 
 ## Active Lock
-- Status: CLAIMED
-- Active agent: Cursor automation
-- Role: implementation
-- Claimed at: 2026-05-18 11:01 UTC
-- Scope lock: sign-out navigation back stack and focused tests
-- Expected deliverable: prevent post-sign-out Back navigation into authenticated app screens
+- Status: AVAILABLE
+- Active agent: none
+- Role: none
+- Claimed at: none
+- Scope lock: none
+- Expected deliverable: none
 
 ## Baton
 
@@ -76,6 +76,9 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 ## Files Touched
 
 - `COORDINATION.md` - updated lock and work log
+- `app/src/main/java/com/example/moneymanager/AuthNavigation.kt` - added sign-out navigation options that clear the graph back stack
+- `app/src/main/java/com/example/moneymanager/MainActivity.kt` - uses clearing nav options after sign-out before showing login
+- `app/src/test/java/com/example/moneymanager/AuthNavigationTest.kt` - regression coverage for sign-out nav options
 - `app/src/main/java/com/example/moneymanager/viewmodel/MainViewModel.kt` - added settings observation and monthly filtering
 - `app/src/main/java/com/example/moneymanager/ui/ChartFragment.kt` - switched to database-backed chart data
 - `app/src/main/java/com/example/moneymanager/ui/HomeFragment.kt` - applied currency symbol setting
@@ -161,9 +164,12 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 - Observations:
   - Sign-out currently calls `navController.navigate(R.id.nav_login)` without `popUpTo`, so the previous destination can remain below the login screen.
 - Action taken:
-  - In progress.
+  - Added `AuthNavigation.signOutNavOptions`, which pops the navigation graph inclusively and uses launch-single-top when returning to login.
+  - Updated `MainActivity` sign-out handling to use those nav options.
+  - Added a focused unit test for the sign-out nav option contract.
 - Validation:
-  - Pending.
+  - Attempted `./gradlew testDebugUnitTest`.
+  - Blocked before compilation: Android SDK is not configured in this container (`SDK location not found`; no `ANDROID_HOME` or `/workspace/local.properties`).
 
 ### 2026-04-22 - Antigravity
 152: 
