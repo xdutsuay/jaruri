@@ -41,19 +41,26 @@ class LoginFragment : Fragment() {
         if (result.resultCode == Activity.RESULT_OK) {
             val account = googleSignInHelper.handleSignInResult(result.data)
             if (account != null) {
-                saveAuthAndNavigate(
-                    email = account.email ?: "",
-                    displayName = account.displayName ?: "User",
-                    photoUrl = account.photoUrl?.toString() ?: "",
-                    method = "google_signin"
-                )
+                launchInViewScope {
+                    try {
+                        saveAuthAndNavigate(
+                            email = account.email ?: "",
+                            displayName = account.displayName ?: "User",
+                            photoUrl = account.photoUrl?.toString() ?: "",
+                            method = "google_signin"
+                        )
+                    } finally {
+                        hideLoading()
+                    }
+                }
             } else {
                 showError("Google Sign-In failed. Try the Drive backup option.")
+                hideLoading()
             }
         } else {
             showError("Sign-in cancelled.")
+            hideLoading()
         }
-        hideLoading()
     }
 
     // Activity result launcher for secondary Drive auth
@@ -64,20 +71,23 @@ class LoginFragment : Fragment() {
             val account = driveBackupAuth.handleSignInResult(result.data)
             if (account != null) {
                 // Write auth info to Drive as plain text
-                lifecycleScope.launch {
+                launchInViewScope {
                     showLoading()
-                    val success = driveBackupAuth.writeAuthToDrive(account)
-                    if (success) {
-                        saveAuthAndNavigate(
-                            email = account.email ?: "",
-                            displayName = account.displayName ?: "User",
-                            photoUrl = account.photoUrl?.toString() ?: "",
-                            method = "drive_fallback"
-                        )
-                    } else {
-                        showError("Failed to write auth to Drive. Check network.")
+                    try {
+                        val success = driveBackupAuth.writeAuthToDrive(account)
+                        if (success) {
+                            saveAuthAndNavigate(
+                                email = account.email ?: "",
+                                displayName = account.displayName ?: "User",
+                                photoUrl = account.photoUrl?.toString() ?: "",
+                                method = "drive_fallback"
+                            )
+                        } else {
+                            showError("Failed to write auth to Drive. Check network.")
+                        }
+                    } finally {
+                        hideLoading()
                     }
-                    hideLoading()
                 }
             } else {
                 showError("Drive auth failed.")
@@ -105,7 +115,7 @@ class LoginFragment : Fragment() {
         driveBackupAuth = DriveBackupAuth(requireContext())
 
         // Check if already signed in
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             if (authRepository.isCurrentlySignedIn()) {
                 navigateToHome()
                 return@launch
@@ -130,37 +140,49 @@ class LoginFragment : Fragment() {
         }
     }
 
-    private fun saveAuthAndNavigate(
+    private fun launchInViewScope(block: suspend () -> Unit) {
+        val lifecycleOwner = viewLifecycleOwnerLiveData.value ?: return
+        lifecycleOwner.lifecycleScope.launch {
+            block()
+        }
+    }
+
+    private suspend fun saveAuthAndNavigate(
         email: String,
         displayName: String,
         photoUrl: String,
         method: String
     ) {
-        lifecycleScope.launch {
-            authRepository.saveSignIn(email, displayName, photoUrl, method)
+        authRepository.saveSignIn(email, displayName, photoUrl, method)
+        context?.let {
             Toast.makeText(
-                requireContext(),
+                it,
                 "Welcome, $displayName!",
                 Toast.LENGTH_SHORT
             ).show()
-            navigateToHome()
         }
+        navigateToHome()
     }
 
     private fun navigateToHome() {
-        findNavController().navigate(R.id.action_login_to_home)
+        val navController = runCatching { findNavController() }.getOrNull() ?: return
+        if (navController.currentDestination?.id == R.id.nav_login) {
+            navController.navigate(R.id.action_login_to_home)
+        }
     }
 
     private fun showLoading() {
-        binding.loadingOverlay.visibility = View.VISIBLE
+        _binding?.loadingOverlay?.visibility = View.VISIBLE
     }
 
     private fun hideLoading() {
-        binding.loadingOverlay.visibility = View.GONE
+        _binding?.loadingOverlay?.visibility = View.GONE
     }
 
     private fun showError(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+        context?.let {
+            Toast.makeText(it, message, Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onDestroyView() {
