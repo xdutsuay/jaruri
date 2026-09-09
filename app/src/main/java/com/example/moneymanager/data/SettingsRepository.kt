@@ -17,6 +17,7 @@ class SettingsRepository(private val context: Context) {
         val DATE_FORMAT = stringPreferencesKey("date_format")
         val THEME = stringPreferencesKey("theme")
         val SAMPLE_DATA = booleanPreferencesKey("sample_data")
+        val AUTO_IMPORT_SMS = booleanPreferencesKey("auto_import_sms")
     }
 
     val currencySymbol: Flow<String> = context.dataStore.data.map { preferences ->
@@ -33,6 +34,11 @@ class SettingsRepository(private val context: Context) {
 
     val sampleDataEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[SAMPLE_DATA] ?: true
+    }
+
+    /** Default OFF — user must opt in before SMS_RECEIVED auto-adds transactions. */
+    val autoImportSmsEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[AUTO_IMPORT_SMS] ?: false
     }
 
     suspend fun setCurrencySymbol(symbol: String) {
@@ -56,6 +62,12 @@ class SettingsRepository(private val context: Context) {
     suspend fun setSampleDataEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[SAMPLE_DATA] = enabled
+        }
+    }
+
+    suspend fun setAutoImportSmsEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[AUTO_IMPORT_SMS] = enabled
         }
     }
 }

@@ -119,6 +119,22 @@ You have received Rs 200 from ALICE via UPI.
         assertTrue(a != c)
     }
 
+
+    @Test
+    fun incompleteWithoutDirectionNotComplete() {
+        // Amount found but no credit/debit verb → not complete for auto-import
+        val p = SmsParser.parse("Your balance is Rs.5000", fixedNow)
+        if (p != null) {
+            assertFalse(p.isComplete)
+        }
+    }
+
+    @Test
+    fun emptyAndBlankReturnNull() {
+        assertNull(SmsParser.parse("", fixedNow))
+        assertNull(SmsParser.parse("   ", fixedNow))
+    }
+
     private fun calendarMillis(year: Int, month: Int, day: Int): Long {
         val cal = Calendar.getInstance()
         cal.clear()

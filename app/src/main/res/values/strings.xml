@@ -31,4 +31,15 @@
     <string name="import_sms_saved">Imported %1$d transaction(s). Skipped %2$d duplicate(s).</string>
     <string name="import_sms_all_dup">All selected messages were already imported (%1$d).</string>
     <string name="import_sms_nothing_saved">Nothing imported. Check amounts and categories.</string>
+
+    <!-- Auto-import SMS -->
+    <string name="settings_auto_import_sms">Auto-import SMS transactions</string>
+    <string name="settings_auto_import_sms_hint">When on, new bank/UPI SMS are parsed and added to the ledger automatically. Off by default. Manual Import from SMS remains available.</string>
+    <string name="settings_auto_import_enabled">Auto-import SMS enabled</string>
+    <string name="settings_auto_import_permission_denied">SMS permission required for auto-import. Toggle left off.</string>
+    <string name="settings_auto_import_notify_optional">Auto-import on. Notification permission optional for alerts.</string>
+    <string name="sms_auto_import_channel_name">SMS auto-import</string>
+    <string name="sms_auto_import_notification_title">Transaction added</string>
+    <string name="sms_auto_import_notification_text">Added %1$s — %2$s</string>
 </resources>
+
