@@ -13,6 +13,25 @@ Money Manager is an Android application designed to help users track their incom
 *   **Charts:** Visualize your financial data with interactive pie charts for both income and expenses.
 *   **Export:** Export your transaction data to a CSV file.
 *   **Settings:** Customize the app to your preferences.
+*   **SMS import:** Parse common Indian bank/UPI SMS into editable transactions (requires `READ_SMS` on Android, or paste SMS as a fallback). Nothing is saved until you confirm the preview.
+
+## SMS import
+
+1. Open **Add Transaction** → **Import from SMS**, or use the drawer item **Import from SMS**.
+2. Tap **Read SMS inbox** (grant `READ_SMS` when prompted) or paste SMS text and tap **Parse pasted SMS**.
+3. Select messages → **Preview selected** → edit amount / type / category / memo → **Confirm import**.
+4. Duplicates are skipped when the memo already contains the same `[sms:<hash>]` tag.
+
+Sample SMS bodies that the parser understands:
+
+```
+Rs.1,250.00 debited from A/c XX4521 on 08-09-2026 at AMAZON. Avl Bal Rs.12,340.50
+INR 5000.00 credited to your A/c XX7788 on 01-Sep-26. Info: SALARY.
+₹249.00 spent on UPI to SWIGGY using PhonePe. UPI Ref 123456789012.
+You have received Rs 1,000.00 from RAHUL SHARMA via UPI. Ref: 987654321098.
+```
+
+Unit tests: `./gradlew :app:testDebugUnitTest --tests com.example.moneymanager.utils.SmsParserTest`
 
 ## Screenshots
 

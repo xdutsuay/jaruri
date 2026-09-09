@@ -9,4 +9,26 @@
     <string name="label_expenses">Expenses</string>
     <string name="label_balance">Balance</string>
     <string name="text_no_data">No data available</string>
+
+    <!-- SMS import -->
+    <string name="import_sms_button">Import from SMS</string>
+    <string name="import_sms_title">Import from SMS</string>
+    <string name="import_sms_hint">Read recent bank/UPI SMS (needs READ_SMS) or paste messages below. Review and edit before saving — nothing is imported silently.</string>
+    <string name="import_sms_read_inbox">Read SMS inbox</string>
+    <string name="import_sms_or_paste">Or paste SMS text</string>
+    <string name="import_sms_paste_hint">Paste one or more SMS (blank line between messages)</string>
+    <string name="import_sms_parse_paste">Parse pasted SMS</string>
+    <string name="import_sms_select_title">Select messages</string>
+    <string name="import_sms_preview_selected">Preview selected</string>
+    <string name="import_sms_preview_title">Editable preview</string>
+    <string name="import_sms_confirm">Confirm import</string>
+    <string name="import_sms_include">Include this transaction</string>
+    <string name="import_sms_mode_label">Payment mode: %1$s</string>
+    <string name="import_sms_permission_denied">SMS permission denied. You can still paste messages below.</string>
+    <string name="import_sms_none_found">No financial SMS found. Check the text and try again.</string>
+    <string name="import_sms_select_one">Select at least one SMS</string>
+    <string name="import_sms_inbox_empty">No financial SMS found in recent inbox. Try pasting instead.</string>
+    <string name="import_sms_saved">Imported %1$d transaction(s). Skipped %2$d duplicate(s).</string>
+    <string name="import_sms_all_dup">All selected messages were already imported (%1$d).</string>
+    <string name="import_sms_nothing_saved">Nothing imported. Check amounts and categories.</string>
 </resources>

@@ -25,6 +25,9 @@
             android:id="@+id/action_home_to_addTransaction"
             app:destination="@id/addTransactionFragment" />
         <action
+            android:id="@+id/action_home_to_importSms"
+            app:destination="@id/nav_import_sms" />
+        <action
             android:id="@+id/action_home_to_chart"
             app:destination="@id/nav_chart" />
     </fragment>
@@ -56,5 +59,15 @@
         android:id="@+id/addTransactionFragment"
         android:name="com.example.moneymanager.ui.AddTransactionFragment"
         android:label="Add Transaction"
-        tools:layout="@layout/fragment_add_transaction"/>
+        tools:layout="@layout/fragment_add_transaction">
+        <action
+            android:id="@+id/action_addTransaction_to_importSms"
+            app:destination="@id/nav_import_sms" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_import_sms"
+        android:name="com.example.moneymanager.ui.ImportSmsFragment"
+        android:label="@string/import_sms_title"
+        tools:layout="@layout/fragment_import_sms" />
 </navigation>
