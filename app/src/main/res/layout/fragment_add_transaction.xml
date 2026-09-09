@@ -88,5 +88,13 @@
             android:layout_height="wrap_content"
             android:text="Save Transaction" />
 
+        <Button
+            android:id="@+id/btnImportSms"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/import_sms_button" />
+
     </LinearLayout>
 </ScrollView>

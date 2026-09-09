@@ -24,6 +24,7 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
         val spCategory = view.findViewById<Spinner>(R.id.spCategory)
         val rgType = view.findViewById<RadioGroup>(R.id.rgType)
         val btnSave = view.findViewById<Button>(R.id.btnSave)
+        val btnImportSms = view.findViewById<Button>(R.id.btnImportSms)
 
         categoryAdapter = ArrayAdapter(
             requireContext(),
@@ -48,6 +49,11 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
 
         rgType.setOnCheckedChangeListener { _, _ ->
             updateCategorySpinner(spCategory, rgType)
+        }
+
+
+        btnImportSms.setOnClickListener {
+            findNavController().navigate(R.id.action_addTransaction_to_importSms)
         }
 
         btnSave.setOnClickListener {
