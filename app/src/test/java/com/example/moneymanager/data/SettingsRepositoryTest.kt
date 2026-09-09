@@ -46,4 +46,15 @@ class SettingsRepositoryTest {
         settingsRepository.setSampleDataEnabled(false)
         assertEquals(false, settingsRepository.sampleDataEnabled.first())
     }
+
+    @Test
+    fun testAutoImportSmsDefaultsOffAndPersists() = runBlocking {
+        assertEquals(false, settingsRepository.autoImportSmsEnabled.first())
+
+        settingsRepository.setAutoImportSmsEnabled(true)
+        assertEquals(true, settingsRepository.autoImportSmsEnabled.first())
+
+        settingsRepository.setAutoImportSmsEnabled(false)
+        assertEquals(false, settingsRepository.autoImportSmsEnabled.first())
+    }
 }

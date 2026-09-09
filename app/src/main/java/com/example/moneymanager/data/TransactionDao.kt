@@ -14,6 +14,10 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE dateTimestamp BETWEEN :start AND :end")
     fun getTransactionsByDateRange(start: Long, end: Long): Flow<List<TransactionEntity>>
 
+    /** Dedup helper: count rows whose memo contains the SMS hash tag, e.g. `[sms:abc]`. */
+    @Query("SELECT COUNT(*) FROM transactions WHERE memo LIKE '%' || :tag || '%'")
+    suspend fun countByMemoTag(tag: String): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: TransactionEntity)
 
