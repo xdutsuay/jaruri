@@ -20,12 +20,9 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.moneymanager.R
+import com.example.moneymanager.utils.CsvFormatter
 import com.example.moneymanager.viewmodel.MainViewModel
 import java.io.File
-import java.io.OutputStream
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class ExportFragment : Fragment() {
 
@@ -37,12 +34,24 @@ class ExportFragment : Fragment() {
         if (isGranted) {
             exportToCSV()
         } else {
-            Toast.makeText(requireContext(), "Permission required to save file in older Android versions.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                requireContext(),
+                "Permission required to save file in older Android versions.",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
+    private val openCsvLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        importFromUri(uri)
+    }
+
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_export, container, false)
@@ -58,24 +67,56 @@ class ExportFragment : Fragment() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 exportToCSV()
             } else {
-                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                if (ContextCompat.checkSelfPermission(
+                        requireContext(),
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
                     exportToCSV()
                 } else {
                     requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 }
             }
         }
+
+        view.findViewById<Button>(R.id.btn_import_csv).setOnClickListener {
+            openCsvLauncher.launch(arrayOf("text/*", "text/csv", "application/csv", "*/*"))
+        }
+    }
+
+    private fun importFromUri(uri: Uri) {
+        try {
+            val text = requireContext().contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+            if (text.isNullOrBlank()) {
+                Toast.makeText(requireContext(), R.string.import_csv_failed, Toast.LENGTH_SHORT).show()
+                return
+            }
+            val datePattern = viewModel.dateFormat.value ?: "yyyy-MM-dd"
+            val rows = CsvFormatter.parse(text, datePattern)
+            if (rows.isEmpty()) {
+                Toast.makeText(requireContext(), R.string.import_csv_empty, Toast.LENGTH_SHORT).show()
+                return
+            }
+            viewModel.importTransactions(rows)
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.import_csv_done, rows.size),
+                Toast.LENGTH_SHORT
+            ).show()
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), R.string.import_csv_failed, Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun exportToCSV() {
         val transactions = viewModel.allTransactions.value ?: return
         val datePattern = viewModel.dateFormat.value ?: "yyyy-MM-dd"
-        
-        val csvData = com.example.moneymanager.utils.CsvFormatter.format(transactions, datePattern)
-        val filename = "MoneyManager_Export_${System.currentTimeMillis()}.csv"
-        
+
+        val csvData = CsvFormatter.format(transactions, datePattern)
+        val filename = "Jaruri_Export_${System.currentTimeMillis()}.csv"
+
         var fileUri: Uri? = null
-        
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val resolver = requireContext().contentResolver
             val contentValues = ContentValues().apply {
@@ -83,7 +124,7 @@ class ExportFragment : Fragment() {
                 put(MediaStore.MediaColumns.MIME_TYPE, "text/csv")
                 put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
             }
-            
+
             fileUri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
             fileUri?.let { uri ->
                 resolver.openOutputStream(uri)?.use { it.write(csvData.toByteArray()) }
@@ -93,15 +134,14 @@ class ExportFragment : Fragment() {
             if (!downloadsDir.exists()) downloadsDir.mkdirs()
             val file = File(downloadsDir, filename)
             file.writeText(csvData)
-            
-            // Generate FileProvider uri for sharing
+
             fileUri = FileProvider.getUriForFile(
                 requireContext(),
                 "${requireContext().packageName}.fileprovider",
                 file
             )
         }
-        
+
         if (fileUri != null) {
             Toast.makeText(requireContext(), "Exported to Downloads", Toast.LENGTH_SHORT).show()
             shareFile(fileUri)

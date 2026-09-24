@@ -9,6 +9,8 @@ data class TransactionEntity(
     val type: String,        // "INCOME" or "EXPENSE"
     val category: String,
     val amount: Double,
-    val dateTimestamp: Long, // Storing as Long makes sorting/filtering easier
-    val memo: String
+    val dateTimestamp: Long,
+    val memo: String,
+    /** Optional link to accounts.id (null = unassigned). */
+    val accountId: Long? = null
 )
