@@ -1,0 +1,1 @@
+FOSS release: removed Google Sign-In / Drive dependencies for F-Droid. Local-only ledger with CSV backup.
