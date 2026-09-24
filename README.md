@@ -1,52 +1,55 @@
-# Money Manager
+# Jaruri
 
-> **Note**: This project has reached the end of active development. The core features (including dual-path authentication, CSV export, dynamic charts, and settings) are complete and stable.
+Local Android money manager (Kotlin). Tracks income and expenses on-device, with optional Indian bank/UPI/credit-card SMS import.
 
-Money Manager is an Android application designed to help users track their income and expenses. It provides a simple and intuitive interface for managing personal finances.
+> Flutter prototype history remains on the archived `master` / tags. Active product line is this Gradle app (`app/`).
 
-## Features
+## Requirements
 
-*   **Authentication:** Dual-path authentication (Primary: Google Sign-In, Secondary: Google Drive plain-text fallback).
-*   **Dashboard:** A quick overview of your income, expenses, and current balance.
-*   **Transactions:** Add, view, and manage your income and expense transactions.
-*   **Categories:** Organize your transactions by creating and managing custom categories for both income and expenses.
-*   **Charts:** Visualize your financial data with interactive pie charts for both income and expenses.
-*   **Export:** Export your transaction data to a CSV file.
-*   **Settings:** Customize the app to your preferences.
-*   **SMS import:** Parse common Indian bank/UPI SMS into editable transactions (requires `READ_SMS` on Android, or paste SMS as a fallback). Nothing is saved until you confirm the preview.
+- **JDK 17** (required for Room/KSP)
+- Android Studio or command-line Android SDK
+- Device/emulator API 24+
 
-## SMS import
+## Features (v1.3.1)
 
-1. Open **Add Transaction** → **Import from SMS**, or use the drawer item **Import from SMS**.
-2. Tap **Read SMS inbox** (grant `READ_SMS` when prompted) or paste SMS text and tap **Parse pasted SMS**.
-3. Select messages → **Preview selected** → edit amount / type / category / memo → **Confirm import**.
-4. Duplicates are skipped when the memo already contains the same `[sms:<hash>]` tag.
+- Dashboard with **month/year toggle**, income / expense / balance (color-coded)
+- Add, **edit**, delete (confirm), and **search/filter** transactions
+- Categories (incl. Shopping, Credit Card, Transfer)
+- Month pie charts
+- CSV export (RFC4180 escaping)
+- Settings: **currency selector** (₹ default), date format, auto-load demo history when empty, opt-in SMS auto-import
+- **Demo history**: ~4 months of sample income, expenses, and credit-card spends on first launch (never auto-deleted; Settings can reload only if the ledger is empty)
+- SMS import: inbox, paste, **Load sample SMS** (bank + credit card), editable preview
+- Google sign-in is **optional** (drawer → Link Google). Ledger does **not** sync to the cloud yet.
 
-Sample SMS bodies that the parser understands:
+## Run
 
-```
-Rs.1,250.00 debited from A/c XX4521 on 08-09-2026 at AMAZON. Avl Bal Rs.12,340.50
-INR 5000.00 credited to your A/c XX7788 on 01-Sep-26. Info: SALARY.
-₹249.00 spent on UPI to SWIGGY using PhonePe. UPI Ref 123456789012.
-You have received Rs 1,000.00 from RAHUL SHARMA via UPI. Ref: 987654321098.
+```bash
+# From repo root (Kotlin tree)
+./gradlew :app:installDebug
 ```
 
-Unit tests: `./gradlew :app:testDebugUnitTest --tests com.example.moneymanager.utils.SmsParserTest`
+Or open this folder in Android Studio → **Load Gradle Project** → Run on a device.
 
-## Screenshots
+## Test SMS without bank messages
 
-(Coming Soon)
+1. Drawer → **Import from SMS**
+2. Tap **Load sample SMS** → **Parse pasted SMS**
+3. Review proposals (including credit-card spend/payment) → **Confirm import**
 
-## Getting Started
+Unit tests:
 
-To get started with the Money Manager app, you'll need to have Android Studio installed. You can then clone the repository and open it in Android Studio.
-
+```bash
+./gradlew :app:testDebugUnitTest --tests com.example.moneymanager.utils.SmsParserTest
+./gradlew :app:testDebugUnitTest --tests com.example.moneymanager.utils.SmsCategorizerTest
+./gradlew :app:testDebugUnitTest
 ```
-https://github.com/your-username/money-manager.git
-```
 
-Once the project is open, you can build and run the app on an Android emulator or a physical device. Note that the project is pinned to JDK 17 for build stability.
+## Coming later (Pass 2)
 
-## Contributing
+Budgets, multiple accounts / per-card debt balances, recurring transactions, real ledger backup/restore.
 
-This project is no longer in active development. Forking and independent continuation are welcome!
+## Package
+
+- applicationId: `com.kaustubhtripathi.jaruri`
+- First install of this ID replaces the old `com.example.moneymanager` debug app (uninstall old package if signatures conflict).

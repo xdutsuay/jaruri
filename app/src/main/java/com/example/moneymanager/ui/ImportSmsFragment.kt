@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -68,6 +69,7 @@ class ImportSmsFragment : Fragment(R.layout.fragment_import_sms) {
         super.onViewCreated(view, savedInstanceState)
 
         val btnReadInbox = view.findViewById<Button>(R.id.btnReadInbox)
+        val btnLoadSamples = view.findViewById<Button>(R.id.btnLoadSamples)
         val btnParsePaste = view.findViewById<Button>(R.id.btnParsePaste)
         val btnPreviewSelected = view.findViewById<Button>(R.id.btnPreviewSelected)
         val btnConfirmImport = view.findViewById<Button>(R.id.btnConfirmImport)
@@ -85,6 +87,11 @@ class ImportSmsFragment : Fragment(R.layout.fragment_import_sms) {
         }
 
         btnReadInbox.setOnClickListener { ensurePermissionAndRead() }
+        btnLoadSamples.setOnClickListener {
+            etPasteSms.setText(SmsParser.samplePasteText())
+            Toast.makeText(requireContext(), R.string.import_sms_samples_loaded, Toast.LENGTH_SHORT)
+                .show()
+        }
         btnParsePaste.setOnClickListener {
             val parsed = SmsParser.parseBatch(etPasteSms.text.toString())
             if (parsed.isEmpty()) {

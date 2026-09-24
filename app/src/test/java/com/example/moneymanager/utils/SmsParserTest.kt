@@ -135,6 +135,37 @@ You have received Rs 200 from ALICE via UPI.
         assertNull(SmsParser.parse("   ", fixedNow))
     }
 
+    @Test
+    fun creditCardSpendParsesWithLast4() {
+        val sms =
+            "INR 3,499.00 spent on HDFC Bank Credit Card XX1234 at FLIPKART on 20-09-2026."
+        val p = SmsParser.parse(sms, fixedNow)!!
+        assertEquals(3499.0, p.amount!!, 0.001)
+        assertEquals(false, p.isIncome)
+        assertEquals("Credit Card", p.modeOfPayment)
+        assertEquals("1234", p.cardLast4)
+        assertTrue(p.toMemo().contains("Card XX1234"))
+        assertTrue(p.isComplete)
+    }
+
+    @Test
+    fun creditCardPaymentIsIncome() {
+        val sms =
+            "Payment of Rs.5,000 received towards your HDFC Credit Card XX1234. Thank you."
+        val p = SmsParser.parse(sms, fixedNow)!!
+        assertEquals(5000.0, p.amount!!, 0.001)
+        assertEquals(true, p.isIncome)
+        assertEquals("Credit Card", p.modeOfPayment)
+        assertEquals("1234", p.cardLast4)
+    }
+
+    @Test
+    fun samplePasteTextParsesMultiple() {
+        val list = SmsParser.parseBatch(SmsParser.samplePasteText(), fixedNow)
+        assertTrue(list.size >= 4)
+        assertTrue(list.any { it.modeOfPayment == "Credit Card" })
+    }
+
     private fun calendarMillis(year: Int, month: Int, day: Int): Long {
         val cal = Calendar.getInstance()
         cal.clear()

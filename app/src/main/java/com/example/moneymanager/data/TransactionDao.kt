@@ -9,7 +9,10 @@ interface TransactionDao {
     fun getAllTransactions(): Flow<List<TransactionEntity>>
 
     @Query("SELECT COUNT(*) FROM transactions")
-    suspend fun getCount(): Int // Returns a Flow for real-time updates
+    suspend fun getCount(): Int
+
+    @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
+    suspend fun getById(id: Long): TransactionEntity?
 
     @Query("SELECT * FROM transactions WHERE dateTimestamp BETWEEN :start AND :end")
     fun getTransactionsByDateRange(start: Long, end: Long): Flow<List<TransactionEntity>>
@@ -20,6 +23,9 @@ interface TransactionDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: TransactionEntity)
+
+    @Update
+    suspend fun updateTransaction(transaction: TransactionEntity)
 
     @Delete
     suspend fun deleteTransaction(transaction: TransactionEntity)

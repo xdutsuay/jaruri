@@ -4,16 +4,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5"
+    android:background="@color/background_gray"
     android:padding="16dp">
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_layout_chart"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:tabIndicatorColor="@color/primary_yellow"
-        app:tabSelectedTextColor="@color/black"
-        app:tabTextColor="@color/text_secondary">
+        android:background="@color/surface_white"
+        app:tabIndicatorColor="@color/primary_yellow_dark"
+        app:tabSelectedTextColor="@color/text_primary"
+        app:tabTextColor="@color/text_secondary"
+        app:tabTextAppearance="@style/TextAppearance.AppCompat.Body1">
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
@@ -31,7 +33,9 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="16dp">
+        android:layout_marginTop="12dp"
+        android:padding="12dp"
+        android:background="@color/surface_white">
 
         <Spinner
             android:id="@+id/spinner_month"
@@ -50,16 +54,20 @@
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:cardCornerRadius="4dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        app:cardCornerRadius="8dp"
         app:cardElevation="2dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp">
+        app:cardBackgroundColor="@color/surface_white"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="8dp">
 
         <com.github.mikephil.charting.charts.PieChart
             android:id="@+id/pieChart"
             android:layout_width="match_parent"
-            android:layout_height="300dp" />
+            android:layout_height="match_parent"
+            android:layout_margin="8dp"
+            android:minHeight="280dp" />
 
     </androidx.cardview.widget.CardView>
 
