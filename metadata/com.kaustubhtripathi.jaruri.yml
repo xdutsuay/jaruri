@@ -1,0 +1,38 @@
+﻿Categories:
+  - Money
+License: Apache-2.0
+AuthorName: Kaustubh Tripathi
+SourceCode: https://github.com/xdutsuay/jaruri
+IssueTracker: https://github.com/xdutsuay/jaruri/issues
+
+AutoName: Jaruri
+Name: Jaruri
+Summary: On-device money manager with SMS import, accounts, and budgets
+Description: |-
+    Jaruri is a free and open-source personal finance app that keeps your ledger entirely on your phone.
+
+    Features:
+    * Dashboard with month filter, search, and income/expense/balance
+    * Manual transactions plus Indian bank/UPI/credit-card SMS import
+    * Accounts (cash, bank, credit cards) and monthly category budgets
+    * Charts, categories, and CSV backup/restore
+    * Optional demo history for trying the UI
+    * No Google Play Services, no ads, no tracking, no required account
+
+    SMS reading is opt-in (manual import or Settings auto-import). Your data never leaves the device unless you export a CSV.
+
+RepoType: git
+Repo: https://github.com/xdutsuay/jaruri
+
+Builds:
+  - versionName: 1.5.0
+    versionCode: 6
+    commit: v1.5.0
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.5.0
+CurrentVersionCode: 6
