@@ -4,16 +4,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/white">
+    android:background="@color/background_gray">
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:tabIndicatorColor="@color/primary_yellow"
-        app:tabSelectedTextColor="@color/black"
+        app:tabIndicatorColor="@color/primary_yellow_dark"
+        app:tabSelectedTextColor="@color/text_primary"
         app:tabTextColor="@color/text_secondary"
-        android:background="@color/white">
+        android:background="@color/surface_white">
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
@@ -26,14 +26,13 @@
             android:text="Income" />
     </com.google.android.material.tabs.TabLayout>
 
-    <!-- Header Line (Yellow) if needed, handled by TabIndicator -->
-    
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_categories"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:scrollbars="vertical" />
+        android:scrollbars="vertical"
+        android:paddingTop="8dp" />
 
     <LinearLayout
         android:id="@+id/btn_add_category"
@@ -41,21 +40,24 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:padding="16dp"
-        android:background="?attr/selectableItemBackground"
+        android:background="@color/surface_white"
         android:clickable="true"
-        android:focusable="true">
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground">
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_add"
-            app:tint="@color/text_primary" />
+            app:tint="@color/text_primary"
+            android:contentDescription="@string/add_category" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Add new category"
+            android:text="@string/add_category"
             android:textColor="@color/text_primary"
+            android:textSize="16sp"
             android:layout_marginStart="8dp"/>
     </LinearLayout>
 

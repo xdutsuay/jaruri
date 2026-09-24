@@ -124,15 +124,21 @@ class ChartFragment : Fragment() {
 
         val dataSet = PieDataSet(entries, if (isExpense) "Expenses" else "Income")
         dataSet.colors = if (isExpense) ColorTemplate.MATERIAL_COLORS.toList() else ColorTemplate.JOYFUL_COLORS.toList()
-        dataSet.valueTextColor = Color.BLACK
-        dataSet.valueTextSize = 14f
+        dataSet.valueTextColor = Color.parseColor("#212121")
+        dataSet.valueTextSize = 13f
 
         val data = PieData(dataSet)
         binding.pieChart.data = data
         binding.pieChart.description.isEnabled = false
         binding.pieChart.isDrawHoleEnabled = true
-        binding.pieChart.setHoleColor(Color.TRANSPARENT)
-        binding.pieChart.animateY(1000)
+        binding.pieChart.setHoleColor(Color.WHITE)
+        binding.pieChart.setEntryLabelColor(Color.parseColor("#212121"))
+        binding.pieChart.setEntryLabelTextSize(12f)
+        binding.pieChart.legend.textColor = Color.parseColor("#212121")
+        binding.pieChart.legend.textSize = 12f
+        binding.pieChart.setNoDataTextColor(Color.parseColor("#616161"))
+        binding.pieChart.animateY(800)
+        binding.pieChart.invalidate()
     }
 
     override fun onDestroyView() {

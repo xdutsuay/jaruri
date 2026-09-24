@@ -25,16 +25,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="@dimen/nav_header_vertical_spacing"
-        android:text="Sign In"
+        android:text="@string/nav_header_local"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-        android:textColor="@color/text_primary" 
+        android:textColor="@color/text_primary"
         android:textStyle="bold"/>
 
     <TextView
         android:id="@+id/tv_user_email"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Tap to sign in"
+        android:text="@string/nav_header_local_sub"
         android:textAppearance="@style/TextAppearance.AppCompat.Caption"
         android:textColor="@color/text_primary" />
 

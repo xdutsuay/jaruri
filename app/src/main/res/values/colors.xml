@@ -10,11 +10,15 @@
     
     <!-- Custom Colors -->
     <color name="primary_yellow">#FFD54F</color>
-    <color name="primary_yellow_dark">#FFC107</color>
-    <color name="accent_blue">#4FC3F7</color>
-    <color name="accent_red">#EF5350</color>
-    <color name="accent_green">#66BB6A</color>
+    <color name="primary_yellow_dark">#F9A825</color>
+    <color name="accent_blue">#0277BD</color>
+    <color name="accent_red">#C62828</color>
+    <color name="accent_green">#2E7D32</color>
     <color name="text_primary">#212121</color>
-    <color name="text_secondary">#757575</color>
+    <color name="text_secondary">#616161</color>
     <color name="background_gray">#F5F5F5</color>
+    <color name="surface_white">#FFFFFF</color>
+    <color name="divider">#E0E0E0</color>
+    <color name="empty_banner_bg">#E3F2FD</color>
+    <color name="button_on_yellow">#212121</color>
 </resources>

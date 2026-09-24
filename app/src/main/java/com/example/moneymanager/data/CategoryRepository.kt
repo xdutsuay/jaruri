@@ -25,13 +25,18 @@ class CategoryRepository(private val context: Context) {
             "Car",
             "Entertainment",
             "Health",
-            "Clothing"
+            "Clothing",
+            "Shopping",
+            "Credit Card",
+            "Transfer"
         )
 
         val DEFAULT_INCOME_CATEGORY_NAMES = listOf(
             "Salary",
             "Business",
-            "Gift"
+            "Gift",
+            "Transfer",
+            "Credit Card Payment"
         )
     }
 
@@ -115,7 +120,7 @@ class CategoryRepository(private val context: Context) {
     private fun sanitizeCategoryNames(categoryNames: List<String>): List<String> {
         val seenNames = mutableSetOf<String>()
         return categoryNames
-            .map { it.trim() }
+            .map { it.replace(Regex("[\\r\\n]+"), " ").trim() }
             .filter { it.isNotEmpty() }
             .filter { seenNames.add(it.lowercase()) }
     }

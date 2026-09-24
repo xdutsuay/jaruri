@@ -11,6 +11,9 @@ object SmsCategorizer {
     private data class Rule(val category: String, val keywords: List<String>)
 
     private val EXPENSE_RULES = listOf(
+        Rule("Credit Card", listOf(
+            "credit card", "crd ", "card xx", "hdfc bank credit", "sbi card", "icici card"
+        )),
         Rule("Food", listOf(
             "swiggy", "zomato", "food", "restaurant", "cafe", "dominos",
             "mcdonald", "burger", "pizza", "dunzo", "blinkit", "zepto", "instamart"
@@ -35,6 +38,9 @@ object SmsCategorizer {
     )
 
     private val INCOME_RULES = listOf(
+        Rule("Credit Card Payment", listOf(
+            "towards your", "credit card", "payment received", "payment of"
+        )),
         Rule("Salary", listOf(
             "salary", "payroll", "stipend", "wage", "credited payroll"
         )),
@@ -48,7 +54,6 @@ object SmsCategorizer {
 
     /**
      * Picks a category name for [parsed] using [rawBody] (and merchant description) keywords.
-     * Income vs expense comes from [ParsedSms.isIncome]; UPI P2P defaults to Transfer.
      */
     fun categorize(parsed: ParsedSms, rawBody: String = ""): String {
         val haystack = buildString {
@@ -57,9 +62,15 @@ object SmsCategorizer {
             append(parsed.description.orEmpty())
             append(' ')
             append(parsed.remarks)
+            append(' ')
+            append(parsed.modeOfPayment)
         }.lowercase(Locale.ROOT)
 
         val isIncome = parsed.isIncome == true
+
+        if (parsed.modeOfPayment == "Credit Card") {
+            return if (isIncome) "Credit Card Payment" else "Credit Card"
+        }
 
         if (isIncome) {
             matchRules(haystack, INCOME_RULES)?.let { return it }
@@ -79,7 +90,6 @@ object SmsCategorizer {
         return null
     }
 
-    /** Heuristic: UPI to/from a person-like name, not a known merchant keyword. */
     private fun isUpiP2p(parsed: ParsedSms, haystack: String): Boolean {
         if (parsed.modeOfPayment != "UPI") return false
         val desc = parsed.description?.lowercase(Locale.ROOT).orEmpty()

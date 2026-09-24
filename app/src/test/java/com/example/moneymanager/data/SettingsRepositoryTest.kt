@@ -24,7 +24,7 @@ class SettingsRepositoryTest {
     @Test
     fun testCurrencySymbolPersistence() = runBlocking {
         // Default
-        assertEquals("$", settingsRepository.currencySymbol.first())
+        assertEquals("₹", settingsRepository.currencySymbol.first())
 
         // Save new
         settingsRepository.setCurrencySymbol("€")

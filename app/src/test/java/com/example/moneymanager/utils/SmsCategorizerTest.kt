@@ -104,4 +104,22 @@ class SmsCategorizerTest {
             )
         )
     }
+
+    @Test
+    fun creditCardModeMapsToCreditCategories() {
+        assertEquals(
+            "Credit Card",
+            SmsCategorizer.categorize(
+                parsed(isIncome = false, description = "FLIPKART", mode = "Credit Card"),
+                "spent on HDFC Bank Credit Card XX1234 at FLIPKART"
+            )
+        )
+        assertEquals(
+            "Credit Card Payment",
+            SmsCategorizer.categorize(
+                parsed(isIncome = true, description = null, mode = "Credit Card"),
+                "Payment received towards your credit card"
+            )
+        )
+    }
 }

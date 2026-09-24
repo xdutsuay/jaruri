@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/background_gray"
     tools:context=".ui.ExportFragment">
 
     <LinearLayout
@@ -13,18 +15,32 @@
         android:padding="24dp">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Export your transactions to a CSV file. The file will be saved to your Downloads folder and can be shared."
+            android:text="@string/export_title"
+            android:textColor="@color/text_primary"
+            android:textSize="22sp"
+            android:textStyle="bold"
             android:gravity="center"
-            android:textSize="16sp"
-            android:layout_marginBottom="24dp"/>
+            android:layout_marginBottom="12dp"/>
 
-        <Button
-            android:id="@+id/btn_export_csv"
-            android:layout_width="wrap_content"
+        <TextView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Export to CSV" />
+            android:text="@string/export_hint"
+            android:textColor="@color/text_secondary"
+            android:gravity="center"
+            android:textSize="15sp"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginBottom="28dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_export_csv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/export_button"
+            android:textColor="@color/button_on_yellow"
+            app:backgroundTint="@color/primary_yellow_dark" />
     </LinearLayout>
 
 </FrameLayout>

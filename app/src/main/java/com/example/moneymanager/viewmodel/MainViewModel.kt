@@ -4,9 +4,11 @@ import android.app.Application
 import androidx.lifecycle.*
 import com.example.moneymanager.data.AppDatabase
 import com.example.moneymanager.data.CategoryRepository
+import com.example.moneymanager.data.HistoricalSeedData
 import com.example.moneymanager.data.SettingsRepository
 import com.example.moneymanager.data.TransactionEntity
 import com.example.moneymanager.models.Category
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -14,29 +16,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val categoryRepository = CategoryRepository(application)
     private val settingsRepository = SettingsRepository(application)
 
-    // Real-time list of transactions observed by UI
     val allTransactions: LiveData<List<TransactionEntity>> = dao.getAllTransactions().asLiveData()
     val expenseCategories: LiveData<List<Category>> = categoryRepository.expenseCategories.asLiveData()
     val incomeCategories: LiveData<List<Category>> = categoryRepository.incomeCategories.asLiveData()
 
-    // Settings observed by UI
     val currencySymbol: LiveData<String> = settingsRepository.currencySymbol.asLiveData()
     val dateFormat: LiveData<String> = settingsRepository.dateFormat.asLiveData()
 
-    // Derived stats for Dashboard
     val incomeTotal = MediatorLiveData<Double>()
     val expenseTotal = MediatorLiveData<Double>()
     val balance = MediatorLiveData<Double>()
 
+    private var sampleSeedAttempted = false
+
     init {
-        android.util.Log.d("DEBUG_VM", "ViewModel Initialized")
-        // Recalculate totals whenever the list changes
         incomeTotal.addSource(allTransactions) { list ->
-            android.util.Log.d("DEBUG_VM", "AllTransactions updated: size=${list.size}")
             calculateTotals(list)
-            if (list.isEmpty()) {
-                android.util.Log.d("DEBUG_VM", "List empty, attempting sample data...")
-                populateSampleData()
+            if (list.isEmpty() && !sampleSeedAttempted) {
+                sampleSeedAttempted = true
+                maybePopulateSampleData()
             }
         }
     }
@@ -54,39 +52,67 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun addTransaction(type: String, category: String, amount: Double, date: Long, memo: String) {
         viewModelScope.launch {
-            val newTx = TransactionEntity(
-                type = type,
-                category = category,
-                amount = amount,
-                dateTimestamp = date,
-                memo = memo
+            dao.insertTransaction(
+                TransactionEntity(
+                    type = type,
+                    category = category,
+                    amount = amount,
+                    dateTimestamp = date,
+                    memo = memo
+                )
             )
-            dao.insertTransaction(newTx)
         }
     }
 
-    private fun populateSampleData() {
+    fun updateTransaction(tx: TransactionEntity) {
+        viewModelScope.launch {
+            dao.updateTransaction(tx)
+        }
+    }
+
+    suspend fun getTransaction(id: Long): TransactionEntity? = dao.getById(id)
+
+    /**
+     * Seeds multi-month demo history when DB is empty and demo seeding is allowed.
+     * Never deletes existing transactions.
+     */
+    private fun maybePopulateSampleData() {
         viewModelScope.launch {
             try {
+                val enabled = settingsRepository.sampleDataEnabled.first()
+                if (!enabled) return@launch
                 val count = dao.getCount()
-                android.util.Log.d("DEBUG_VM", "Current DB Count: $count")
-                if (count == 0) {
-                     android.util.Log.d("DEBUG_VM", "Inserting Sample Data...")
-                     val samples = listOf(
-                         TransactionEntity(type="INCOME", category="Salary", amount=217333.0, dateTimestamp=System.currentTimeMillis(), memo="Monthly Salary"),
-                         TransactionEntity(type="EXPENSE", category="Bills", amount=734.0, dateTimestamp=System.currentTimeMillis(), memo="Axis Bank"),
-                         TransactionEntity(type="EXPENSE", category="Home", amount=11000.0, dateTimestamp=System.currentTimeMillis(), memo="Advance for grill"),
-                         TransactionEntity(type="EXPENSE", category="Clothing", amount=2094.0, dateTimestamp=System.currentTimeMillis() - 86400000, memo="Baby Cloth"),
-                         TransactionEntity(type="EXPENSE", category="Transportation", amount=340.0, dateTimestamp=System.currentTimeMillis() - 172800000, memo="Bus/Train"),
-                         TransactionEntity(type="EXPENSE", category="Home", amount=17527.0, dateTimestamp=System.currentTimeMillis() - 259200000, memo="Home Loan EMI")
-                     )
-                     samples.forEach { dao.insertTransaction(it) }
-                     android.util.Log.d("DEBUG_VM", "Sample Data Inserted")
+                if (count != 0) {
+                    // Preserve whatever the user already has.
+                    return@launch
                 }
+                seedDemoHistoryInternal()
             } catch (e: Exception) {
-                android.util.Log.e("DEBUG_VM", "Error in populateSampleData", e)
+                android.util.Log.e("MainViewModel", "Sample data seed failed", e)
             }
         }
+    }
+
+    /** Public: append demo history only if DB empty; used from Settings. */
+    fun seedDemoHistoryIfEmpty(onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                if (dao.getCount() != 0) {
+                    onResult(false)
+                    return@launch
+                }
+                seedDemoHistoryInternal()
+                onResult(true)
+            } catch (e: Exception) {
+                android.util.Log.e("MainViewModel", "Demo seed failed", e)
+                onResult(false)
+            }
+        }
+    }
+
+    private suspend fun seedDemoHistoryInternal() {
+        HistoricalSeedData.transactions().forEach { dao.insertTransaction(it) }
+        settingsRepository.setDemoHistorySeeded(true)
     }
 
     fun deleteTransaction(tx: TransactionEntity) {
@@ -112,14 +138,53 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         calendar.set(year, month, 1, 0, 0, 0)
         calendar.set(java.util.Calendar.MILLISECOND, 0)
         val start = calendar.timeInMillis
-        
-        calendar.set(java.util.Calendar.DAY_OF_MONTH, calendar.getActualMaximum(java.util.Calendar.DAY_OF_MONTH))
+
+        calendar.set(
+            java.util.Calendar.DAY_OF_MONTH,
+            calendar.getActualMaximum(java.util.Calendar.DAY_OF_MONTH)
+        )
         calendar.set(java.util.Calendar.HOUR_OF_DAY, 23)
         calendar.set(java.util.Calendar.MINUTE, 59)
         calendar.set(java.util.Calendar.SECOND, 59)
         calendar.set(java.util.Calendar.MILLISECOND, 999)
         val end = calendar.timeInMillis
-        
+
         return dao.getTransactionsByDateRange(start, end).asLiveData()
+    }
+
+    companion object {
+        fun filterTransactions(
+            list: List<TransactionEntity>,
+            query: String,
+            typeFilter: String
+        ): List<TransactionEntity> {
+            val q = query.trim().lowercase()
+            return list.filter { tx ->
+                val typeOk = when (typeFilter) {
+                    "INCOME" -> tx.type == "INCOME"
+                    "EXPENSE" -> tx.type == "EXPENSE"
+                    else -> true
+                }
+                if (!typeOk) return@filter false
+                if (q.isEmpty()) return@filter true
+                tx.memo.lowercase().contains(q) ||
+                    tx.category.lowercase().contains(q) ||
+                    tx.amount.toString().contains(q) ||
+                    tx.type.lowercase().contains(q)
+            }
+        }
+
+        fun filterByMonth(
+            list: List<TransactionEntity>,
+            year: Int,
+            monthZeroBased: Int
+        ): List<TransactionEntity> {
+            val cal = java.util.Calendar.getInstance()
+            return list.filter { tx ->
+                cal.timeInMillis = tx.dateTimestamp
+                cal.get(java.util.Calendar.YEAR) == year &&
+                    cal.get(java.util.Calendar.MONTH) == monthZeroBased
+            }
+        }
     }
 }

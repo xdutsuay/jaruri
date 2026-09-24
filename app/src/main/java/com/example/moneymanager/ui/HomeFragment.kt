@@ -1,18 +1,24 @@
 package com.example.moneymanager.ui
 
 import android.os.Bundle
-import android.util.Log
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import androidx.appcompat.app.AlertDialog
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.moneymanager.R
+import com.example.moneymanager.data.TransactionEntity
 import com.example.moneymanager.databinding.FragmentHomeBinding
 import com.example.moneymanager.viewmodel.MainViewModel
+import java.util.Calendar
 
 class HomeFragment : Fragment() {
 
@@ -20,6 +26,11 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: MainViewModel by activityViewModels()
+    private var fullList: List<TransactionEntity> = emptyList()
+    private var searchQuery: String = ""
+    private var typeFilter: String = "ALL"
+    private var selectedMonth: Int = Calendar.getInstance().get(Calendar.MONTH)
+    private var selectedYear: Int = Calendar.getInstance().get(Calendar.YEAR)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,55 +44,164 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Debug Toast
-        Toast.makeText(context, "Home Fragment Active", Toast.LENGTH_SHORT).show()
+        val adapter = TransactionAdapter(
+            onClick = { tx ->
+                findNavController().navigate(
+                    R.id.action_home_to_addTransaction,
+                    bundleOf("transactionId" to tx.id)
+                )
+            },
+            onLongClick = { tx -> confirmDelete(tx) }
+        )
 
-        val adapter = TransactionAdapter {
-            // Click listener
-        }
-        
         binding.rvTransactions.layoutManager = LinearLayoutManager(requireContext())
         binding.rvTransactions.adapter = adapter
 
-        binding.fabAdd.setOnClickListener {
-            findNavController().navigate(R.id.action_home_to_addTransaction)
+        setupMonthYearSpinners(adapter)
+
+        val filterLabels = listOf(
+            getString(R.string.filter_all),
+            getString(R.string.filter_income),
+            getString(R.string.filter_expense)
+        )
+        binding.spTypeFilter.adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_dropdown_item,
+            filterLabels
+        )
+        binding.spTypeFilter.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                typeFilter = when (position) {
+                    1 -> "INCOME"
+                    2 -> "EXPENSE"
+                    else -> "ALL"
+                }
+                applyFilter(adapter)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
         }
-        
-        // Navigation to Chart Fragment on Summary Click
+
+        binding.etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                searchQuery = s?.toString().orEmpty()
+                applyFilter(adapter)
+            }
+        })
+
+        binding.fabAdd.setOnClickListener {
+            findNavController().navigate(
+                R.id.action_home_to_addTransaction,
+                bundleOf("transactionId" to -1L)
+            )
+        }
+
         binding.incomeLayout.setOnClickListener {
-             findNavController().navigate(R.id.action_home_to_chart)
+            findNavController().navigate(R.id.action_home_to_chart)
         }
         binding.expenseLayout.setOnClickListener {
-             findNavController().navigate(R.id.action_home_to_chart)
+            findNavController().navigate(R.id.action_home_to_chart)
         }
 
         viewModel.allTransactions.observe(viewLifecycleOwner) { list ->
-            Log.d("DEBUG_UI", "Observed items: ${list.size}")
-            adapter.submitList(list)
-            
-            if (list.isEmpty()) {
+            fullList = list
+            applyFilter(adapter)
+        }
+
+        viewModel.currencySymbol.observe(viewLifecycleOwner) {
+            applyFilter(adapter)
+        }
+    }
+
+    private fun setupMonthYearSpinners(adapter: TransactionAdapter) {
+        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+        val years = (2020..currentYear).map { it.toString() }
+        binding.spinnerYear.adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_dropdown_item,
+            years
+        )
+        binding.spinnerYear.setSelection(years.indexOf(currentYear.toString()).coerceAtLeast(0))
+
+        val monthAdapter = ArrayAdapter.createFromResource(
+            requireContext(),
+            R.array.months,
+            android.R.layout.simple_spinner_dropdown_item
+        )
+        binding.spinnerMonth.adapter = monthAdapter
+        binding.spinnerMonth.setSelection(selectedMonth)
+
+        val listener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                selectedMonth = binding.spinnerMonth.selectedItemPosition
+                selectedYear = binding.spinnerYear.selectedItem?.toString()?.toIntOrNull()
+                    ?: currentYear
+                applyFilter(adapter)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+        }
+        binding.spinnerMonth.onItemSelectedListener = listener
+        binding.spinnerYear.onItemSelectedListener = listener
+    }
+
+    private fun applyFilter(adapter: TransactionAdapter) {
+        val monthList = MainViewModel.filterByMonth(fullList, selectedYear, selectedMonth)
+        val filtered = MainViewModel.filterTransactions(monthList, searchQuery, typeFilter)
+        adapter.submitList(filtered)
+
+        val symbol = viewModel.currencySymbol.value ?: "₹"
+        var income = 0.0
+        var expense = 0.0
+        monthList.forEach { tx ->
+            if (tx.type == "INCOME") income += tx.amount else expense += tx.amount
+        }
+        binding.tvIncome.text = formatCurrency(income, symbol)
+        binding.tvExpense.text = formatCurrency(expense, symbol)
+        binding.tvBalance.text = formatCurrency(income - expense, symbol)
+
+        when {
+            fullList.isEmpty() -> {
+                binding.tvWarning.text = getString(R.string.empty_ledger_hint)
                 binding.tvWarning.visibility = View.VISIBLE
                 binding.rvTransactions.visibility = View.GONE
-            } else {
+            }
+            monthList.isEmpty() -> {
+                binding.tvWarning.text = getString(R.string.empty_month_hint)
+                binding.tvWarning.visibility = View.VISIBLE
+                binding.rvTransactions.visibility = View.GONE
+            }
+            filtered.isEmpty() -> {
+                binding.tvWarning.text = getString(R.string.empty_month_hint)
+                binding.tvWarning.visibility = View.VISIBLE
+                binding.rvTransactions.visibility = View.GONE
+            }
+            else -> {
                 binding.tvWarning.visibility = View.GONE
                 binding.rvTransactions.visibility = View.VISIBLE
             }
         }
+    }
 
-        viewModel.incomeTotal.observe(viewLifecycleOwner) {
-            binding.tvIncome.text = formatCurrency(it, viewModel.currencySymbol.value ?: "$")
-        }
-        viewModel.expenseTotal.observe(viewLifecycleOwner) {
-            binding.tvExpense.text = formatCurrency(it, viewModel.currencySymbol.value ?: "$")
-        }
-        viewModel.balance.observe(viewLifecycleOwner) {
-            binding.tvBalance.text = formatCurrency(it, viewModel.currencySymbol.value ?: "$")
-        }
-        viewModel.currencySymbol.observe(viewLifecycleOwner) { symbol ->
-            binding.tvIncome.text = formatCurrency(viewModel.incomeTotal.value ?: 0.0, symbol)
-            binding.tvExpense.text = formatCurrency(viewModel.expenseTotal.value ?: 0.0, symbol)
-            binding.tvBalance.text = formatCurrency(viewModel.balance.value ?: 0.0, symbol)
-        }
+    private fun confirmDelete(tx: TransactionEntity) {
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.delete_transaction_title)
+            .setMessage(R.string.delete_transaction_message)
+            .setPositiveButton(R.string.delete) { _, _ -> viewModel.deleteTransaction(tx) }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun formatCurrency(amount: Double, symbol: String): String {

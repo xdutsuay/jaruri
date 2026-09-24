@@ -5,37 +5,7 @@ import java.util.Locale
 import java.util.regex.Pattern
 
 /**
- * Result of parsing a single SMS body into transaction fields.
- * Pure data — no Android dependencies.
- */
-data class ParsedSms(
-    val amount: Double? = null,
-    /** true = INCOME, false = EXPENSE, null = unknown */
-    val isIncome: Boolean? = null,
-    val description: String? = null,
-    val modeOfPayment: String = "SMS",
-    val remarks: String = "",
-    /** Epoch millis when a date was found or [fallbackNow] was used. */
-    val dateTimestamp: Long = System.currentTimeMillis(),
-    /** Stable id derived from SMS body for light dedup (stored in memo). */
-    val smsHash: String = ""
-) {
-    val isComplete: Boolean
-        get() = amount != null && amount > 0 && isIncome != null
-
-    fun typeLabel(): String = if (isIncome == true) "INCOME" else "EXPENSE"
-
-    /** Memo suitable for [com.example.moneymanager.data.TransactionEntity.memo]. */
-    fun toMemo(): String {
-        val desc = description?.takeIf { it.isNotBlank() } ?: "SMS transaction"
-        val snippet = remarks.removePrefix("SMS: ").trim()
-        val hashTag = if (smsHash.isNotEmpty()) " [sms:$smsHash]" else ""
-        return "$desc · $modeOfPayment$hashTag | SMS: $snippet".take(500)
-    }
-}
-
-/**
- * Pure Kotlin parser for common Indian bank / UPI SMS messages.
+ * Pure Kotlin parser for common Indian bank / UPI / credit-card SMS messages.
  */
 object SmsParser {
 
@@ -59,22 +29,24 @@ object SmsParser {
         Pattern.CASE_INSENSITIVE
     )
     private val VERB_LOOK = Pattern.compile(
-        """\b(credited|debited|spent|received|paid|withdrawn|purchase|txn|transaction|upi)\b""",
+        """\b(credited|debited|spent|received|paid|withdrawn|purchase|txn|transaction|upi|outstanding|due)\b""",
+        Pattern.CASE_INSENSITIVE
+    )
+
+    private val CARD_LAST4 = Pattern.compile(
+        """(?:card|xx|ending|x{2,})\s*[xX*]*\s*(\d{4})\b""",
         Pattern.CASE_INSENSITIVE
     )
 
     private val CREDIT_HINTS = listOf(
         "credited", "received", "has been credited", "credit alert",
-        "deposited", "refund", "cashback"
+        "deposited", "refund", "cashback", "payment received", "payment of"
     )
     private val DEBIT_HINTS = listOf(
         "debited", "spent", "paid", "withdrawn", "purchase", "sent",
-        "debit alert", "has been debited", "dr "
+        "debit alert", "has been debited", "dr ", "swiped", "charged"
     )
 
-    /**
-     * Parses one SMS body. Returns null if nothing useful can be extracted.
-     */
     fun parse(raw: String, fallbackNow: Long = System.currentTimeMillis()): ParsedSms? {
         val text = raw.trim()
         if (text.isEmpty()) return null
@@ -84,6 +56,7 @@ object SmsParser {
         if (amount == null && isIncome == null) return null
 
         val mode = extractMode(text)
+        val cardLast4 = extractCardLast4(text)
         val description = extractDescription(text, mode)
         val dateTs = extractDate(text) ?: fallbackNow
         val snippet = if (text.length > 160) text.substring(0, 157) + "..." else text
@@ -96,38 +69,48 @@ object SmsParser {
             modeOfPayment = mode,
             remarks = "SMS: $snippet",
             dateTimestamp = dateTs,
-            smsHash = hash
+            smsHash = hash,
+            cardLast4 = cardLast4
         )
     }
 
-    /** Splits pasted text into SMS blocks and parses each. */
     fun parseBatch(raw: String, fallbackNow: Long = System.currentTimeMillis()): List<ParsedSms> {
         return splitSmsBlocks(raw).mapNotNull { parse(it, fallbackNow) }
     }
 
-    /** Heuristic: does this look like a financial SMS? */
     fun looksFinancial(raw: String): Boolean {
         val t = raw.lowercase(Locale.ROOT).trim()
         if (t.isEmpty()) return false
         val hasMoney = MONEY_LOOK.matcher(t).find()
         val hasVerb = VERB_LOOK.matcher(t).find()
-        return hasMoney || (hasVerb && t.any { it.isDigit() })
+        val hasCard = t.contains("credit card") || t.contains("crd") || CARD_LAST4.matcher(t).find()
+        return hasMoney || hasCard || (hasVerb && t.any { it.isDigit() })
     }
 
-    /** True if [memo] already contains this SMS hash tag (dedup). */
     fun memoContainsHash(memo: String, smsHash: String): Boolean {
         if (smsHash.isBlank()) return false
         return memo.contains("[sms:$smsHash]", ignoreCase = false)
     }
 
     fun contentHash(text: String): String {
-        // Stable, short, no crypto dependency — good enough for local dedup.
         var h = 1125899906842597L
         for (ch in text.trim()) {
             h = 31 * h + ch.code
         }
         return java.lang.Long.toHexString(h)
     }
+
+    fun samplePasteText(): String = """
+        Rs.1,250.00 debited from A/c XX4521 on 08-09-2026 at AMAZON. Avl Bal Rs.12,340.50
+
+        INR 5000.00 credited to your A/c XX7788 on 01-Sep-26. Info: SALARY.
+
+        ₹249.00 spent on UPI to SWIGGY using PhonePe. UPI Ref 123456789012.
+
+        INR 3,499.00 spent on HDFC Bank Credit Card XX1234 at FLIPKART on 20-09-2026.
+
+        Payment of Rs.5,000 received towards your HDFC Credit Card XX1234. Thank you.
+    """.trimIndent()
 
     private fun splitSmsBlocks(raw: String): List<String> {
         val normalized = raw.replace("\r\n", "\n").trim()
@@ -166,6 +149,11 @@ object SmsParser {
 
     private fun extractIsIncome(text: String): Boolean? {
         val t = text.lowercase(Locale.ROOT)
+        if (t.contains("payment") && (t.contains("credit card") || t.contains("towards your"))) {
+            if (t.contains("received") || t.contains("thank you") || t.contains("payment of")) {
+                return true
+            }
+        }
         val credit = CREDIT_HINTS.any { t.contains(it) }
         val debit = DEBIT_HINTS.any { t.contains(it) }
 
@@ -187,6 +175,13 @@ object SmsParser {
 
     private fun extractMode(text: String): String {
         val t = text.lowercase(Locale.ROOT)
+        if (t.contains("credit card") ||
+            t.contains("crd ") ||
+            (t.contains("card") && (t.contains("hdfc") || t.contains("sbi") || t.contains("icici") ||
+                t.contains("axis") || t.contains("amex") || t.contains("spent on")))
+        ) {
+            return "Credit Card"
+        }
         if (t.contains("upi") ||
             t.contains("@ybl") ||
             t.contains("@oksbi") ||
@@ -212,31 +207,29 @@ object SmsParser {
         return "SMS"
     }
 
+    private fun extractCardLast4(text: String): String? {
+        val m = CARD_LAST4.matcher(text)
+        return if (m.find()) m.group(1) else null
+    }
+
     private fun extractDescription(text: String, mode: String): String {
         val toMatch = Pattern.compile(
             """(?:to|towards|paid to|sent to)\s+([A-Za-z0-9 &._@-]{2,40})""",
             Pattern.CASE_INSENSITIVE
         ).matcher(text)
         if (toMatch.find()) {
-            return cleanMerchant(toMatch.group(1)!!)
-        }
-
-        val fromMatch = Pattern.compile(
-            """(?:from|received from|by)\s+([A-Za-z0-9 &._@-]{2,40})""",
-            Pattern.CASE_INSENSITIVE
-        ).matcher(text)
-        if (fromMatch.find()) {
-            return cleanMerchant(fromMatch.group(1)!!)
+            val candidate = cleanMerchant(toMatch.group(1)!!)
+            if (isUsefulMerchant(candidate)) {
+                return candidate
+            }
         }
 
         val atMatcher = Pattern.compile(
-            """(?:at|on)\s+([A-Za-z0-9 &._-]{2,40})""",
-            Pattern.CASE_INSENSITIVE
+            """(?i)(?:\s|^)(?:at|on)\s+([A-Za-z][A-Za-z0-9._-]{1,39})"""
         ).matcher(text)
         while (atMatcher.find()) {
             val candidate = cleanMerchant(atMatcher.group(1)!!)
-            if (!candidate.first().isDigit() &&
-                !Regex("""^\d{1,2}[-/]""").containsMatchIn(candidate) &&
+            if (isUsefulMerchant(candidate) &&
                 !Regex(
                     """^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)""",
                     RegexOption.IGNORE_CASE
@@ -246,11 +239,38 @@ object SmsParser {
             }
         }
 
+        val fromMatch = Pattern.compile(
+            """(?:from|received from|by)\s+([A-Za-z0-9 &._@-]{2,40})""",
+            Pattern.CASE_INSENSITIVE
+        ).matcher(text)
+        if (fromMatch.find()) {
+            val candidate = cleanMerchant(fromMatch.group(1)!!)
+            if (isUsefulMerchant(candidate) && !looksLikeAccountRef(candidate)) {
+                return candidate
+            }
+        }
+
         return when (mode) {
             "UPI" -> "UPI transaction"
             "Bank" -> "Bank transaction"
+            "Credit Card" -> "Credit card transaction"
             else -> "SMS transaction"
         }
+    }
+
+    private fun looksLikeAccountRef(candidate: String): Boolean {
+        val c = candidate.lowercase(Locale.ROOT)
+        return c.startsWith("a/c") ||
+            c.startsWith("ac ") ||
+            c.contains("xx") ||
+            Regex("""\d{4,}""").containsMatchIn(c)
+    }
+
+    private fun isUsefulMerchant(candidate: String): Boolean {
+        if (candidate.isBlank()) return false
+        val c = candidate.lowercase(Locale.ROOT)
+        if (c == "your" || c.startsWith("hdfc") || c.startsWith("credit")) return false
+        return true
     }
 
     private fun cleanMerchant(raw: String): String {

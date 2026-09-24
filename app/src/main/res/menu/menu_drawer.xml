@@ -4,15 +4,15 @@
         <item
             android:id="@+id/nav_home"
             android:icon="@android:drawable/ic_menu_rotate"
-            android:title="Dashboard" />
+            android:title="@string/menu_dashboard" />
         <item
             android:id="@+id/nav_chart"
-            android:icon="@android:drawable/ic_menu_sort_by_size" 
-            android:title="Chart" />
+            android:icon="@android:drawable/ic_menu_sort_by_size"
+            android:title="@string/menu_chart" />
         <item
             android:id="@+id/nav_categories"
             android:icon="@android:drawable/ic_menu_gallery"
-            android:title="Categories" />
+            android:title="@string/menu_categories" />
         <item
             android:id="@+id/nav_import_sms"
             android:icon="@android:drawable/ic_menu_upload"
@@ -20,24 +20,24 @@
         <item
             android:id="@+id/nav_export"
             android:icon="@android:drawable/ic_menu_save"
-            android:title="Export" />
+            android:title="@string/menu_export" />
         <item
             android:id="@+id/nav_settings"
             android:icon="@android:drawable/ic_menu_manage"
-            android:title="Settings" />
-        <item
-            android:id="@+id/nav_rate"
-            android:icon="@android:drawable/ic_menu_send"
-            android:title="Rate Us" />
+            android:title="@string/menu_settings" />
         <item
             android:id="@+id/nav_about"
             android:icon="@android:drawable/ic_menu_info_details"
-            android:title="About" />
+            android:title="@string/menu_about" />
     </group>
     <group android:id="@+id/group_auth">
         <item
+            android:id="@+id/nav_link_google"
+            android:icon="@android:drawable/ic_menu_myplaces"
+            android:title="@string/menu_link_google" />
+        <item
             android:id="@+id/nav_sign_out"
             android:icon="@android:drawable/ic_lock_lock"
-            android:title="Sign Out" />
+            android:title="@string/menu_sign_out" />
     </group>
 </menu>

@@ -1,74 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/background_gray"
     tools:context=".ui.SettingsFragment">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:fillViewport="true">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Settings"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="24dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Currency Symbol"
-            android:textColor="?android:textColorSecondary" />
-        <EditText
-            android:id="@+id/et_currency"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp" />
+            android:orientation="vertical"
+            android:padding="24dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Date Format"
-            android:textColor="?android:textColorSecondary" />
-        <EditText
-            android:id="@+id/et_date_format"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/menu_settings"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="24dp" />
 
-        <Switch
-            android:id="@+id/switch_sample_data"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Enable Sample Data on Empty DB"
-            android:layout_marginBottom="16dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/currency_label"
+                android:textColor="@color/text_secondary" />
 
-        <Switch
-            android:id="@+id/switch_auto_import_sms"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/settings_auto_import_sms"
-            android:layout_marginBottom="8dp" />
+            <Spinner
+                android:id="@+id/sp_currency"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/surface_white"
+                android:padding="12dp"
+                android:layout_marginBottom="16dp"
+                android:minHeight="48dp" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/settings_auto_import_sms_hint"
-            android:textColor="?android:textColorSecondary"
-            android:textSize="12sp"
-            android:layout_marginBottom="24dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Date Format"
+                android:textColor="@color/text_secondary" />
+            <EditText
+                android:id="@+id/et_date_format"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_primary"
+                android:background="@color/surface_white"
+                android:padding="12dp"
+                android:layout_marginBottom="16dp" />
 
-        <Button
-            android:id="@+id/btn_save_settings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Save Settings" />
-            
-    </LinearLayout>
+            <Switch
+                android:id="@+id/switch_sample_data"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Auto-load demo history when ledger is empty"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/seed_demo_data_hint"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:layout_marginBottom="12dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_seed_demo"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/seed_demo_data"
+                android:textColor="@color/text_primary"
+                app:strokeColor="@color/text_secondary"
+                android:layout_marginBottom="16dp" />
+
+            <Switch
+                android:id="@+id/switch_auto_import_sms"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_auto_import_sms"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_auto_import_sms_hint"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:layout_marginBottom="24dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_save_settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Save Settings"
+                android:textColor="@color/button_on_yellow"
+                app:backgroundTint="@color/primary_yellow_dark" />
+
+        </LinearLayout>
+    </ScrollView>
 
 </FrameLayout>
