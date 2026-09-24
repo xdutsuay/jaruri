@@ -47,6 +47,8 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_home,
                 R.id.nav_chart,
                 R.id.nav_categories,
+                R.id.nav_accounts,
+                R.id.nav_budgets,
                 R.id.nav_import_sms,
                 R.id.nav_export,
                 R.id.nav_settings
