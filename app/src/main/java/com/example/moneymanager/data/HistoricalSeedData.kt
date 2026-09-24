@@ -9,22 +9,25 @@ import java.util.Calendar
 object HistoricalSeedData {
 
     fun transactions(nowMillis: Long = System.currentTimeMillis()): List<TransactionEntity> {
-        val cal = Calendar.getInstance()
-        cal.timeInMillis = nowMillis
-
         fun at(year: Int, monthZeroBased: Int, day: Int, hour: Int = 12): Long {
             val c = Calendar.getInstance()
-            c.clear()
-            c.set(year, monthZeroBased, day, hour, 0, 0)
+            c.set(Calendar.YEAR, year)
+            c.set(Calendar.MONTH, monthZeroBased)
+            c.set(Calendar.DAY_OF_MONTH, day)
+            c.set(Calendar.HOUR_OF_DAY, hour)
+            c.set(Calendar.MINUTE, 0)
+            c.set(Calendar.SECOND, 0)
+            c.set(Calendar.MILLISECOND, 0)
             return c.timeInMillis
         }
 
-        val y = cal.get(Calendar.YEAR)
-        val m = cal.get(Calendar.MONTH)
+        val now = Calendar.getInstance().apply { timeInMillis = nowMillis }
+        val y = now.get(Calendar.YEAR)
+        val m = now.get(Calendar.MONTH)
 
         fun prevMonth(offset: Int): Pair<Int, Int> {
             val c = Calendar.getInstance()
-            c.set(y, m, 15)
+            c.set(y, m, 15, 12, 0, 0)
             c.add(Calendar.MONTH, -offset)
             return c.get(Calendar.YEAR) to c.get(Calendar.MONTH)
         }
@@ -76,4 +79,32 @@ object HistoricalSeedData {
             TransactionEntity(type = "EXPENSE", category = "Food", amount = 1800.0, dateTimestamp = at(y3, m3, 28), memo = "Family dinner")
         )
     }
+
+    fun accounts(): List<AccountEntity> = listOf(
+        AccountEntity(name = "Cash", type = AccountEntity.TYPE_CASH, balance = 2500.0),
+        AccountEntity(name = "HDFC Savings", type = AccountEntity.TYPE_BANK, balance = 125000.0),
+        AccountEntity(
+            name = "HDFC Regalia",
+            type = AccountEntity.TYPE_CREDIT_CARD,
+            balance = 12450.0,
+            creditLimit = 150000.0,
+            last4 = "1234",
+            notes = "Primary card"
+        ),
+        AccountEntity(
+            name = "SBI SimplyCLICK",
+            type = AccountEntity.TYPE_CREDIT_CARD,
+            balance = 3200.0,
+            creditLimit = 50000.0,
+            last4 = "5678"
+        )
+    )
+
+    fun budgets(): List<BudgetEntity> = listOf(
+        BudgetEntity(category = "Food", monthlyLimit = 8000.0),
+        BudgetEntity(category = "Transportation", monthlyLimit = 3000.0),
+        BudgetEntity(category = "Entertainment", monthlyLimit = 2000.0),
+        BudgetEntity(category = "Shopping", monthlyLimit = 5000.0),
+        BudgetEntity(category = "Credit Card", monthlyLimit = 20000.0)
+    )
 }

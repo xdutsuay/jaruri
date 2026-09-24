@@ -29,7 +29,7 @@ class HomeFragment : Fragment() {
     private var fullList: List<TransactionEntity> = emptyList()
     private var searchQuery: String = ""
     private var typeFilter: String = "ALL"
-    private var selectedMonth: Int = Calendar.getInstance().get(Calendar.MONTH)
+    private var selectedMonth: Int = -1 // -1 = All months (show full ledger)
     private var selectedYear: Int = Calendar.getInstance().get(Calendar.YEAR)
 
     override fun onCreateView(
@@ -130,13 +130,17 @@ class HomeFragment : Fragment() {
         )
         binding.spinnerYear.setSelection(years.indexOf(currentYear.toString()).coerceAtLeast(0))
 
-        val monthAdapter = ArrayAdapter.createFromResource(
+        val monthLabels = mutableListOf(getString(R.string.filter_all_months))
+        monthLabels.addAll(resources.getStringArray(R.array.months))
+        binding.spinnerMonth.adapter = ArrayAdapter(
             requireContext(),
-            R.array.months,
-            android.R.layout.simple_spinner_dropdown_item
+            android.R.layout.simple_spinner_dropdown_item,
+            monthLabels
         )
-        binding.spinnerMonth.adapter = monthAdapter
-        binding.spinnerMonth.setSelection(selectedMonth)
+        // Default to current calendar month (index 0 is "All", so +1)
+        val currentMonthIndex = Calendar.getInstance().get(Calendar.MONTH) + 1
+        binding.spinnerMonth.setSelection(currentMonthIndex)
+        selectedMonth = Calendar.getInstance().get(Calendar.MONTH)
 
         val listener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
@@ -145,7 +149,8 @@ class HomeFragment : Fragment() {
                 position: Int,
                 id: Long
             ) {
-                selectedMonth = binding.spinnerMonth.selectedItemPosition
+                val monthPos = binding.spinnerMonth.selectedItemPosition
+                selectedMonth = if (monthPos <= 0) -1 else monthPos - 1
                 selectedYear = binding.spinnerYear.selectedItem?.toString()?.toIntOrNull()
                     ?: currentYear
                 applyFilter(adapter)
@@ -178,7 +183,7 @@ class HomeFragment : Fragment() {
                 binding.tvWarning.visibility = View.VISIBLE
                 binding.rvTransactions.visibility = View.GONE
             }
-            monthList.isEmpty() -> {
+            monthList.isEmpty() && selectedMonth >= 0 -> {
                 binding.tvWarning.text = getString(R.string.empty_month_hint)
                 binding.tvWarning.visibility = View.VISIBLE
                 binding.rvTransactions.visibility = View.GONE
