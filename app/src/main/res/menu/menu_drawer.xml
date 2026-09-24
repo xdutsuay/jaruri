@@ -38,14 +38,4 @@
             android:icon="@android:drawable/ic_menu_info_details"
             android:title="@string/menu_about" />
     </group>
-    <group android:id="@+id/group_auth">
-        <item
-            android:id="@+id/nav_link_google"
-            android:icon="@android:drawable/ic_menu_myplaces"
-            android:title="@string/menu_link_google" />
-        <item
-            android:id="@+id/nav_sign_out"
-            android:icon="@android:drawable/ic_lock_lock"
-            android:title="@string/menu_sign_out" />
-    </group>
 </menu>

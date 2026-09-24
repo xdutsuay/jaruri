@@ -48,9 +48,7 @@
     <string name="import_csv_done">Imported %1$d transaction(s)</string>
     <string name="import_csv_failed">Could not read CSV</string>
     <string name="import_csv_empty">No valid rows found in CSV</string>
-    <string name="menu_link_google">Link Google (optional)</string>
-    <string name="menu_sign_out">Sign out Google</string>
-    <string name="about_message">Jaruri %1$s\nLocal money manager for Android.\nData stays on this device unless you export CSV.\nGoogle sign-in is optional and does not sync your ledger yet.</string>
+    <string name="about_message">Jaruri %1$s\nFree and open-source local money manager for Android.\nData stays on this device. Backup via CSV export/import.\nNo Google account or cloud sync required.</string>
     <string name="nav_header_local">Jaruri</string>
     <string name="nav_header_local_sub">On-device ledger</string>
     <string name="import_sms_load_samples">Load sample SMS</string>
