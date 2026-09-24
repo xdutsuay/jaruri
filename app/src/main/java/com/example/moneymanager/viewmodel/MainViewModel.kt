@@ -2,9 +2,12 @@ package com.example.moneymanager.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.*
+import com.example.moneymanager.data.AccountEntity
 import com.example.moneymanager.data.AppDatabase
+import com.example.moneymanager.data.BudgetEntity
 import com.example.moneymanager.data.CategoryRepository
 import com.example.moneymanager.data.HistoricalSeedData
+import com.example.moneymanager.data.RecurringEntity
 import com.example.moneymanager.data.SettingsRepository
 import com.example.moneymanager.data.TransactionEntity
 import com.example.moneymanager.models.Category
@@ -13,10 +16,16 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = AppDatabase.getDatabase(application).transactionDao()
+    private val accountDao = AppDatabase.getDatabase(application).accountDao()
+    private val budgetDao = AppDatabase.getDatabase(application).budgetDao()
+    private val recurringDao = AppDatabase.getDatabase(application).recurringDao()
     private val categoryRepository = CategoryRepository(application)
     private val settingsRepository = SettingsRepository(application)
 
     val allTransactions: LiveData<List<TransactionEntity>> = dao.getAllTransactions().asLiveData()
+    val allAccounts: LiveData<List<AccountEntity>> = accountDao.getAll().asLiveData()
+    val allBudgets: LiveData<List<BudgetEntity>> = budgetDao.getAll().asLiveData()
+    val activeRecurring: LiveData<List<RecurringEntity>> = recurringDao.getActive().asLiveData()
     val expenseCategories: LiveData<List<Category>> = categoryRepository.expenseCategories.asLiveData()
     val incomeCategories: LiveData<List<Category>> = categoryRepository.incomeCategories.asLiveData()
 
@@ -30,12 +39,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var sampleSeedAttempted = false
 
     init {
+        // Keep totals in sync whenever the ledger changes.
         incomeTotal.addSource(allTransactions) { list ->
             calculateTotals(list)
-            if (list.isEmpty() && !sampleSeedAttempted) {
-                sampleSeedAttempted = true
-                maybePopulateSampleData()
-            }
+        }
+        // Seed must not depend on Home observing incomeTotal (it no longer does).
+        viewModelScope.launch {
+            maybePopulateSampleData()
         }
     }
 
@@ -76,20 +86,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * Seeds multi-month demo history when DB is empty and demo seeding is allowed.
      * Never deletes existing transactions.
      */
-    private fun maybePopulateSampleData() {
-        viewModelScope.launch {
-            try {
-                val enabled = settingsRepository.sampleDataEnabled.first()
-                if (!enabled) return@launch
-                val count = dao.getCount()
-                if (count != 0) {
-                    // Preserve whatever the user already has.
-                    return@launch
-                }
+    private suspend fun maybePopulateSampleData() {
+        try {
+            if (sampleSeedAttempted) return
+            sampleSeedAttempted = true
+            val enabled = settingsRepository.sampleDataEnabled.first()
+            val count = dao.getCount()
+            if (enabled && count == 0) {
                 seedDemoHistoryInternal()
-            } catch (e: Exception) {
-                android.util.Log.e("MainViewModel", "Sample data seed failed", e)
+            } else {
+                // Phase 2 tables may be empty after schema bump while ledger already has rows.
+                seedAccountsAndBudgetsIfEmpty()
             }
+        } catch (e: Exception) {
+            android.util.Log.e("MainViewModel", "Sample data seed failed", e)
         }
     }
 
@@ -112,7 +122,53 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun seedDemoHistoryInternal() {
         HistoricalSeedData.transactions().forEach { dao.insertTransaction(it) }
+        seedAccountsAndBudgetsIfEmpty()
         settingsRepository.setDemoHistorySeeded(true)
+    }
+
+    private suspend fun seedAccountsAndBudgetsIfEmpty() {
+        if (accountDao.getCount() == 0) {
+            HistoricalSeedData.accounts().forEach { accountDao.insert(it) }
+        }
+        if (budgetDao.getAll().first().isEmpty()) {
+            HistoricalSeedData.budgets().forEach { budgetDao.insert(it) }
+        }
+    }
+
+    fun addAccount(account: AccountEntity) {
+        viewModelScope.launch { accountDao.insert(account) }
+    }
+
+    fun updateAccount(account: AccountEntity) {
+        viewModelScope.launch { accountDao.update(account) }
+    }
+
+    fun deleteAccount(account: AccountEntity) {
+        viewModelScope.launch { accountDao.delete(account) }
+    }
+
+    fun addBudget(category: String, monthlyLimit: Double) {
+        viewModelScope.launch {
+            budgetDao.insert(BudgetEntity(category = category, monthlyLimit = monthlyLimit))
+        }
+    }
+
+    fun deleteBudget(budget: BudgetEntity) {
+        viewModelScope.launch { budgetDao.delete(budget) }
+    }
+
+    fun addRecurring(item: RecurringEntity) {
+        viewModelScope.launch { recurringDao.insert(item) }
+    }
+
+    fun deleteRecurring(item: RecurringEntity) {
+        viewModelScope.launch { recurringDao.delete(item) }
+    }
+
+    fun importTransactions(rows: List<TransactionEntity>) {
+        viewModelScope.launch {
+            rows.forEach { dao.insertTransaction(it) }
+        }
     }
 
     fun deleteTransaction(tx: TransactionEntity) {
@@ -179,6 +235,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             year: Int,
             monthZeroBased: Int
         ): List<TransactionEntity> {
+            if (monthZeroBased < 0) return list // "All months"
             val cal = java.util.Calendar.getInstance()
             return list.filter { tx ->
                 cal.timeInMillis = tx.dateTimestamp

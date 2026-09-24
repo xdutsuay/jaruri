@@ -1,24 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FFD54F</color> <!-- Primary Yellow -->
-    <color name="purple_700">#FFC107</color> <!-- Darker Yellow -->
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
+    <color name="purple_500">#FFB300</color>
+    <color name="purple_700">#FF8F00</color>
+    <color name="teal_200">#26A69A</color>
+    <color name="teal_700">#00695C</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    
-    <!-- Custom Colors -->
-    <color name="primary_yellow">#FFD54F</color>
-    <color name="primary_yellow_dark">#F9A825</color>
-    <color name="accent_blue">#0277BD</color>
+
+    <!-- Brand: amber primary with dark ink for contrast on yellow surfaces -->
+    <color name="primary_yellow">#F9A825</color>
+    <color name="primary_yellow_dark">#F57F17</color>
+    <color name="accent_blue">#0D47A1</color>
     <color name="accent_red">#C62828</color>
     <color name="accent_green">#2E7D32</color>
-    <color name="text_primary">#212121</color>
-    <color name="text_secondary">#616161</color>
-    <color name="background_gray">#F5F5F5</color>
+    <color name="text_primary">#121212</color>
+    <color name="text_secondary">#424242</color>
+    <color name="background_gray">#F0F0F0</color>
     <color name="surface_white">#FFFFFF</color>
-    <color name="divider">#E0E0E0</color>
+    <color name="divider">#9E9E9E</color>
     <color name="empty_banner_bg">#E3F2FD</color>
-    <color name="button_on_yellow">#212121</color>
+    <color name="button_on_yellow">#121212</color>
+    <color name="card_debt">#FFCDD2</color>
+    <color name="card_cash">#C8E6C9</color>
+    <color name="nav_header_text">#121212</color>
+    <color name="toolbar_on_primary">#121212</color>
 </resources>

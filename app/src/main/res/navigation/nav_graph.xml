@@ -45,9 +45,21 @@
         android:label="Categories" />
 
     <fragment
+        android:id="@+id/nav_accounts"
+        android:name="com.example.moneymanager.ui.AccountsFragment"
+        android:label="@string/menu_accounts"
+        tools:layout="@layout/fragment_accounts" />
+
+    <fragment
+        android:id="@+id/nav_budgets"
+        android:name="com.example.moneymanager.ui.BudgetsFragment"
+        android:label="@string/menu_budgets"
+        tools:layout="@layout/fragment_budgets" />
+
+    <fragment
         android:id="@+id/nav_export"
         android:name="com.example.moneymanager.ui.ExportFragment"
-        android:label="Export"
+        android:label="@string/menu_export"
         tools:layout="@layout/fragment_export" />
 
     <fragment
