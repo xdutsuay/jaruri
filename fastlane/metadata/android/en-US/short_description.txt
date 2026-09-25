@@ -1,1 +1,1 @@
-On-device money manager with SMS import, accounts, and budgets — no Google account required.
+On-device money manager with SMS import, accounts, and budgets.

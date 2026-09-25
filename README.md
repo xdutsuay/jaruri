@@ -12,7 +12,7 @@ Local Android money manager (Kotlin). Tracks income and expenses on-device, with
 - Android Studio or command-line Android SDK
 - Device/emulator API 24+
 
-## Features (v1.5.0)
+## Features (v1.6.0)
 
 - Dashboard with **month/year toggle**, income / expense / balance
 - Add, **edit**, delete (confirm), and **search/filter** transactions
@@ -41,7 +41,7 @@ Local Android money manager (Kotlin). Tracks income and expenses on-device, with
 
 - FOSS dependencies only on `main` (AndroidX, Material, Room, MPAndroidChart via JitPack)
 - Store listing text under `fastlane/metadata/android/`
-- Tag releases (`v1.5.0`) before submitting to [fdroiddata](https://gitlab.com/fdroid/fdroiddata)
+- Tag releases (`v1.6.0`) before submitting to [fdroiddata](https://gitlab.com/fdroid/fdroiddata)
 - Repo must be **public** for F-Droid builders to clone
 
 ## Test SMS without bank messages
