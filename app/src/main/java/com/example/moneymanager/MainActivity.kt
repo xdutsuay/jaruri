@@ -41,6 +41,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_budgets,
                 R.id.nav_import_sms,
                 R.id.nav_export,
+                R.id.nav_recycle_bin,
                 R.id.nav_settings
             ),
             drawerLayout

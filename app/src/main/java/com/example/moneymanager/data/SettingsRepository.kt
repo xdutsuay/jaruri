@@ -19,6 +19,9 @@ class SettingsRepository(private val context: Context) {
         val SAMPLE_DATA = booleanPreferencesKey("sample_data")
         val AUTO_IMPORT_SMS = booleanPreferencesKey("auto_import_sms")
         val DEMO_HISTORY_SEEDED = booleanPreferencesKey("demo_history_seeded")
+        val SMS_CATEGORY_BACKFILL_V2 = booleanPreferencesKey("sms_category_backfill_v2")
+        val LEGACY_EXPORT_LOADED_V1 = booleanPreferencesKey("legacy_export_loaded_v1")
+        val REALME_MERGE_V1 = booleanPreferencesKey("realme_phone_merge_v1")
 
         /** Display label → symbol stored in prefs / shown on dashboard. */
         val CURRENCY_OPTIONS = listOf(
@@ -45,11 +48,11 @@ class SettingsRepository(private val context: Context) {
     }
 
     /**
-     * When true, empty DB may be filled with demo history once.
-     * Default ON so first install is easy to verify; existing rows are never wiped.
+     * Legacy pref — kept so old installs don't break DataStore reads.
+     * Demo seeding is removed from the app; default is always off.
      */
     val sampleDataEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[SAMPLE_DATA] ?: true
+        preferences[SAMPLE_DATA] ?: false
     }
 
     val demoHistorySeeded: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -59,6 +62,18 @@ class SettingsRepository(private val context: Context) {
     /** Default OFF — user must opt in before SMS_RECEIVED auto-adds transactions. */
     val autoImportSmsEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[AUTO_IMPORT_SMS] ?: false
+    }
+
+    val smsCategoryBackfillDone: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[SMS_CATEGORY_BACKFILL_V2] ?: false
+    }
+
+    val legacyExportLoaded: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[LEGACY_EXPORT_LOADED_V1] ?: false
+    }
+
+    val realmeMergeDone: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[REALME_MERGE_V1] ?: false
     }
 
     suspend fun setCurrencySymbol(symbol: String) {
@@ -94,6 +109,24 @@ class SettingsRepository(private val context: Context) {
     suspend fun setAutoImportSmsEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[AUTO_IMPORT_SMS] = enabled
+        }
+    }
+
+    suspend fun setSmsCategoryBackfillDone(done: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[SMS_CATEGORY_BACKFILL_V2] = done
+        }
+    }
+
+    suspend fun setLegacyExportLoaded(done: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LEGACY_EXPORT_LOADED_V1] = done
+        }
+    }
+
+    suspend fun setRealmeMergeDone(done: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[REALME_MERGE_V1] = done
         }
     }
 }

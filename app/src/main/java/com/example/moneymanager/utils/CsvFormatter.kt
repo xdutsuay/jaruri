@@ -55,6 +55,15 @@ object CsvFormatter {
             .toList()
         if (lines.isEmpty()) return emptyList()
 
+        // Legacy Money Manager export
+        val headerLower = lines.first().lowercase(Locale.getDefault())
+        if (headerLower.contains("income/expenses") ||
+            (headerLower.contains("date") && headerLower.contains("category") &&
+                headerLower.contains("amount") && headerLower.contains("memo"))
+        ) {
+            return LegacySpreadsheetParser.parse(csv)
+        }
+
         val start = if (lines.first().startsWith("Type", ignoreCase = true)) 1 else 0
         val result = mutableListOf<TransactionEntity>()
 
@@ -63,7 +72,7 @@ object CsvFormatter {
             if (fields.size < 4) continue
             val type = fields[0].trim().uppercase()
             if (type != "INCOME" && type != "EXPENSE") continue
-            val category = fields[1].trim().ifEmpty { "Other" }
+            val category = fields[1].trim().ifEmpty { "Others" }
             val amount = fields[2].trim().toDoubleOrNull() ?: continue
             if (amount <= 0) continue
             val dateMillis = parseDate(fields[3].trim(), fallbackFormats) ?: continue
@@ -80,6 +89,9 @@ object CsvFormatter {
         }
         return result
     }
+
+    /** Exposed for [LegacySpreadsheetParser] quoted CSV cells. */
+    fun parseLinePublic(line: String): List<String> = parseCsvLine(line)
 
     private fun parseDate(value: String, formats: List<SimpleDateFormat>): Long? {
         for (fmt in formats) {

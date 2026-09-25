@@ -51,6 +51,12 @@
         tools:layout="@layout/fragment_export" />
 
     <fragment
+        android:id="@+id/nav_recycle_bin"
+        android:name="com.example.moneymanager.ui.RecycleBinFragment"
+        android:label="@string/recycle_bin_title"
+        tools:layout="@layout/fragment_recycle_bin" />
+
+    <fragment
         android:id="@+id/nav_settings"
         android:name="com.example.moneymanager.ui.SettingsFragment"
         android:label="Settings"

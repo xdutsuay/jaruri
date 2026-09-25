@@ -21,14 +21,15 @@ class SmsTransactionReceiver : BroadcastReceiver() {
         val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return
         if (messages.isEmpty()) return
 
-        // Multipart SMS: concatenate bodies in order.
+        // Multipart SMS: concatenate bodies in order; keep first originator address.
         val body = messages.joinToString(separator = "") { it.messageBody.orEmpty() }
         if (body.isBlank()) return
+        val address = messages.firstOrNull()?.originatingAddress
 
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                SmsAutoImporter.tryImport(context, body, notify = true)
+                SmsAutoImporter.tryImport(context, body, notify = true, address = address)
             } finally {
                 pendingResult.finish()
             }

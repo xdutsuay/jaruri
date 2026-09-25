@@ -3,12 +3,14 @@ package com.example.moneymanager.ui
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
+import android.widget.NumberPicker
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -18,7 +20,10 @@ import com.example.moneymanager.R
 import com.example.moneymanager.data.TransactionEntity
 import com.example.moneymanager.databinding.FragmentHomeBinding
 import com.example.moneymanager.viewmodel.MainViewModel
+import com.google.android.material.button.MaterialButtonToggleGroup
+import java.text.DateFormatSymbols
 import java.util.Calendar
+import java.util.Locale
 
 class HomeFragment : Fragment() {
 
@@ -29,8 +34,9 @@ class HomeFragment : Fragment() {
     private var fullList: List<TransactionEntity> = emptyList()
     private var searchQuery: String = ""
     private var typeFilter: String = "ALL"
-    private var selectedMonth: Int = -1 // -1 = All months (show full ledger)
+    private var selectedMonth: Int = Calendar.getInstance().get(Calendar.MONTH)
     private var selectedYear: Int = Calendar.getInstance().get(Calendar.YEAR)
+    private var toolbarMonthView: View? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -57,34 +63,15 @@ class HomeFragment : Fragment() {
         binding.rvTransactions.layoutManager = LinearLayoutManager(requireContext())
         binding.rvTransactions.adapter = adapter
 
-        setupMonthYearSpinners(adapter)
-
-        val filterLabels = listOf(
-            getString(R.string.filter_all),
-            getString(R.string.filter_income),
-            getString(R.string.filter_expense)
-        )
-        binding.spTypeFilter.adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_dropdown_item,
-            filterLabels
-        )
-        binding.spTypeFilter.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>?,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                typeFilter = when (position) {
-                    1 -> "INCOME"
-                    2 -> "EXPENSE"
-                    else -> "ALL"
-                }
-                applyFilter(adapter)
+        binding.toggleTypeFilter.check(R.id.btn_filter_all)
+        binding.toggleTypeFilter.addOnButtonCheckedListener { _: MaterialButtonToggleGroup, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            typeFilter = when (checkedId) {
+                R.id.btn_filter_income -> "INCOME"
+                R.id.btn_filter_expense -> "EXPENSE"
+                else -> "ALL"
             }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+            applyFilter(adapter)
         }
 
         binding.etSearch.addTextChangedListener(object : TextWatcher {
@@ -120,46 +107,89 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun setupMonthYearSpinners(adapter: TransactionAdapter) {
-        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-        val years = (2020..currentYear).map { it.toString() }
-        binding.spinnerYear.adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_dropdown_item,
-            years
-        )
-        binding.spinnerYear.setSelection(years.indexOf(currentYear.toString()).coerceAtLeast(0))
+    override fun onResume() {
+        super.onResume()
+        installToolbarMonthPicker()
+        updateToolbarMonthLabel()
+    }
 
-        val monthLabels = mutableListOf(getString(R.string.filter_all_months))
-        monthLabels.addAll(resources.getStringArray(R.array.months))
-        binding.spinnerMonth.adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_dropdown_item,
-            monthLabels
-        )
-        // Default to current calendar month (index 0 is "All", so +1)
-        val currentMonthIndex = Calendar.getInstance().get(Calendar.MONTH) + 1
-        binding.spinnerMonth.setSelection(currentMonthIndex)
-        selectedMonth = Calendar.getInstance().get(Calendar.MONTH)
+    override fun onPause() {
+        clearToolbarMonthPicker()
+        super.onPause()
+    }
 
-        val listener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>?,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                val monthPos = binding.spinnerMonth.selectedItemPosition
-                selectedMonth = if (monthPos <= 0) -1 else monthPos - 1
-                selectedYear = binding.spinnerYear.selectedItem?.toString()?.toIntOrNull()
-                    ?: currentYear
+    private fun installToolbarMonthPicker() {
+        val activity = activity as? AppCompatActivity ?: return
+        val toolbar = activity.findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar) ?: return
+        activity.supportActionBar?.setDisplayShowTitleEnabled(false)
+        if (toolbarMonthView == null) {
+            val monthView = layoutInflater.inflate(R.layout.toolbar_month_title, toolbar, false)
+            monthView.setOnClickListener { showMonthYearPicker() }
+            toolbarMonthView = monthView
+        }
+        val parent = toolbarMonthView?.parent as? ViewGroup
+        parent?.removeView(toolbarMonthView)
+        val lp = androidx.appcompat.widget.Toolbar.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        ).apply { gravity = Gravity.CENTER }
+        toolbar.addView(toolbarMonthView, lp)
+        updateToolbarMonthLabel()
+    }
+
+    private fun clearToolbarMonthPicker() {
+        val activity = activity as? AppCompatActivity ?: return
+        val toolbar = activity.findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
+        toolbarMonthView?.let { toolbar?.removeView(it) }
+        activity.supportActionBar?.setDisplayShowTitleEnabled(true)
+    }
+
+    private fun updateToolbarMonthLabel() {
+        val label = toolbarMonthView?.findViewById<TextView>(R.id.tv_toolbar_month) ?: return
+        label.text = if (selectedMonth < 0) {
+            getString(R.string.filter_all_months)
+        } else {
+            DateFormatSymbols(Locale.getDefault()).shortMonths[selectedMonth]
+        }
+    }
+
+    private fun showMonthYearPicker() {
+        val adapter = binding.rvTransactions.adapter as? TransactionAdapter ?: return
+        val container = android.widget.LinearLayout(requireContext()).apply {
+            orientation = android.widget.LinearLayout.HORIZONTAL
+            setPadding(48, 24, 48, 8)
+            gravity = Gravity.CENTER
+        }
+        val monthPicker = NumberPicker(requireContext()).apply {
+            val labels = mutableListOf(getString(R.string.filter_all_months))
+            labels.addAll(DateFormatSymbols(Locale.getDefault()).months.filter { it.isNotBlank() })
+            minValue = 0
+            maxValue = labels.size - 1
+            displayedValues = labels.toTypedArray()
+            value = if (selectedMonth < 0) 0 else selectedMonth + 1
+            wrapSelectorWheel = false
+        }
+        val yearPicker = NumberPicker(requireContext()).apply {
+            val current = Calendar.getInstance().get(Calendar.YEAR)
+            minValue = 2018
+            maxValue = current + 1
+            value = selectedYear.coerceIn(minValue, maxValue)
+            wrapSelectorWheel = false
+        }
+        container.addView(monthPicker)
+        container.addView(yearPicker)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.pick_month_title)
+            .setView(container)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                selectedMonth = if (monthPicker.value == 0) -1 else monthPicker.value - 1
+                selectedYear = yearPicker.value
+                updateToolbarMonthLabel()
                 applyFilter(adapter)
             }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
-        }
-        binding.spinnerMonth.onItemSelectedListener = listener
-        binding.spinnerYear.onItemSelectedListener = listener
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun applyFilter(adapter: TransactionAdapter) {
@@ -214,6 +244,8 @@ class HomeFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        clearToolbarMonthPicker()
+        toolbarMonthView = null
         super.onDestroyView()
         _binding = null
     }

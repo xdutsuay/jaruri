@@ -5,13 +5,16 @@ import androidx.lifecycle.*
 import com.example.moneymanager.data.AccountEntity
 import com.example.moneymanager.data.AppDatabase
 import com.example.moneymanager.data.BudgetEntity
+import com.example.moneymanager.data.CategoryLearnEntity
 import com.example.moneymanager.data.CategoryRepository
-import com.example.moneymanager.data.HistoricalSeedData
 import com.example.moneymanager.data.RecurringEntity
 import com.example.moneymanager.data.SettingsRepository
 import com.example.moneymanager.data.TransactionEntity
 import com.example.moneymanager.models.Category
-import kotlinx.coroutines.flow.first
+import com.example.moneymanager.utils.CategoryLearning
+import com.example.moneymanager.utils.LegacyExportBootstrap
+import com.example.moneymanager.utils.PhoneMergeBootstrap
+import com.example.moneymanager.utils.SmsCategoryBackfill
 import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -19,10 +22,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val accountDao = AppDatabase.getDatabase(application).accountDao()
     private val budgetDao = AppDatabase.getDatabase(application).budgetDao()
     private val recurringDao = AppDatabase.getDatabase(application).recurringDao()
+    private val learnDao = AppDatabase.getDatabase(application).categoryLearnDao()
     private val categoryRepository = CategoryRepository(application)
     private val settingsRepository = SettingsRepository(application)
 
     val allTransactions: LiveData<List<TransactionEntity>> = dao.getAllTransactions().asLiveData()
+    val deletedTransactions: LiveData<List<TransactionEntity>> =
+        dao.getDeletedTransactions().asLiveData()
     val allAccounts: LiveData<List<AccountEntity>> = accountDao.getAll().asLiveData()
     val allBudgets: LiveData<List<BudgetEntity>> = budgetDao.getAll().asLiveData()
     val activeRecurring: LiveData<List<RecurringEntity>> = recurringDao.getActive().asLiveData()
@@ -36,16 +42,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val expenseTotal = MediatorLiveData<Double>()
     val balance = MediatorLiveData<Double>()
 
-    private var sampleSeedAttempted = false
-
     init {
-        // Keep totals in sync whenever the ledger changes.
-        incomeTotal.addSource(allTransactions) { list ->
-            calculateTotals(list)
-        }
-        // Seed must not depend on Home observing incomeTotal (it no longer does).
+        incomeTotal.addSource(allTransactions) { list -> calculateTotals(list) }
         viewModelScope.launch {
-            maybePopulateSampleData()
+            try {
+                LegacyExportBootstrap.runOnce(getApplication())
+                PhoneMergeBootstrap.runOnce(getApplication())
+                SmsCategoryBackfill.runOnce(getApplication())
+            } catch (e: Exception) {
+                android.util.Log.e("MainViewModel", "Startup ledger bootstrap failed", e)
+            }
         }
     }
 
@@ -71,68 +77,49 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     memo = memo
                 )
             )
+            rememberCategory(memo, null, category, type)
         }
     }
 
-    fun updateTransaction(tx: TransactionEntity) {
+    fun updateTransaction(tx: TransactionEntity, previousCategory: String? = null) {
         viewModelScope.launch {
             dao.updateTransaction(tx)
+            if (previousCategory != null && previousCategory != tx.category) {
+                rememberCategory(tx.memo, null, tx.category, tx.type)
+            }
         }
     }
 
     suspend fun getTransaction(id: Long): TransactionEntity? = dao.getById(id)
 
-    /**
-     * Seeds multi-month demo history when DB is empty and demo seeding is allowed.
-     * Never deletes existing transactions.
-     */
-    private suspend fun maybePopulateSampleData() {
-        try {
-            if (sampleSeedAttempted) return
-            sampleSeedAttempted = true
-            val enabled = settingsRepository.sampleDataEnabled.first()
-            val count = dao.getCount()
-            if (enabled && count == 0) {
-                seedDemoHistoryInternal()
-            } else {
-                // Phase 2 tables may be empty after schema bump while ledger already has rows.
-                seedAccountsAndBudgetsIfEmpty()
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("MainViewModel", "Sample data seed failed", e)
-        }
+    suspend fun learnedCategoryFor(description: String?, memo: String, type: String): String? {
+        val key = CategoryLearning.keyFromDescription(description, memo) ?: return null
+        val row = learnDao.get(key) ?: return null
+        return if (row.type.equals(type, ignoreCase = true)) row.category else null
     }
 
-    /** Public: append demo history only if DB empty; used from Settings. */
-    fun seedDemoHistoryIfEmpty(onResult: (Boolean) -> Unit = {}) {
-        viewModelScope.launch {
-            try {
-                if (dao.getCount() != 0) {
-                    onResult(false)
-                    return@launch
-                }
-                seedDemoHistoryInternal()
-                onResult(true)
-            } catch (e: Exception) {
-                android.util.Log.e("MainViewModel", "Demo seed failed", e)
-                onResult(false)
-            }
-        }
-    }
-
-    private suspend fun seedDemoHistoryInternal() {
-        HistoricalSeedData.transactions().forEach { dao.insertTransaction(it) }
-        seedAccountsAndBudgetsIfEmpty()
-        settingsRepository.setDemoHistorySeeded(true)
-    }
-
-    private suspend fun seedAccountsAndBudgetsIfEmpty() {
-        if (accountDao.getCount() == 0) {
-            HistoricalSeedData.accounts().forEach { accountDao.insert(it) }
-        }
-        if (budgetDao.getAll().first().isEmpty()) {
-            HistoricalSeedData.budgets().forEach { budgetDao.insert(it) }
-        }
+    private suspend fun rememberCategory(
+        memo: String,
+        description: String?,
+        category: String,
+        type: String
+    ) {
+        val key = CategoryLearning.keyFromDescription(description, memo) ?: return
+        val existing = learnDao.get(key)
+        learnDao.upsert(
+            CategoryLearnEntity(
+                merchantKey = key,
+                category = category,
+                type = type,
+                hitCount = (existing?.hitCount ?: 0) + 1,
+                updatedAt = System.currentTimeMillis()
+            )
+        )
+        // Ensure category exists in the user's list
+        categoryRepository.addCategory(
+            category,
+            if (type == "INCOME") CategoryRepository.TYPE_INCOME else CategoryRepository.TYPE_EXPENSE
+        )
     }
 
     fun addAccount(account: AccountEntity) {
@@ -171,9 +158,69 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Append rows from a second phone/export, skipping exact duplicates
+     * (same calendar day + type + category + amount + memo).
+     */
+    fun mergeTransactions(
+        rows: List<TransactionEntity>,
+        onDone: (added: Int, skipped: Int) -> Unit = { _, _ -> }
+    ) {
+        viewModelScope.launch {
+            val existing = dao.getAllActiveList()
+            val keys = existing.map { fingerprint(it) }.toMutableSet()
+            var added = 0
+            var skipped = 0
+            for (row in rows) {
+                val clean = row.copy(id = 0, deletedAt = null)
+                val fp = fingerprint(clean)
+                if (fp in keys) {
+                    skipped++
+                    continue
+                }
+                dao.insertTransaction(clean)
+                keys += fp
+                rememberCategory(clean.memo, null, clean.category, clean.type)
+                added++
+            }
+            onDone(added, skipped)
+        }
+    }
+
+    /** Soft-delete → recycle bin. */
     fun deleteTransaction(tx: TransactionEntity) {
         viewModelScope.launch {
-            dao.deleteTransaction(tx)
+            dao.softDelete(tx.id)
+        }
+    }
+
+    fun restoreTransaction(tx: TransactionEntity) {
+        viewModelScope.launch { dao.restore(tx.id) }
+    }
+
+    fun permanentlyDelete(tx: TransactionEntity) {
+        viewModelScope.launch { dao.hardDeleteById(tx.id) }
+    }
+
+    fun emptyRecycleBin() {
+        viewModelScope.launch { dao.emptyRecycleBin() }
+    }
+
+    /**
+     * One-shot: wipe active SMS auto-imports (and optionally all active rows),
+     * then insert legacy export rows.
+     */
+    fun replaceActiveLedgerWith(
+        rows: List<TransactionEntity>,
+        clearAllActive: Boolean = true,
+        onDone: (Int) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            if (clearAllActive) dao.deleteAllActive() else dao.deleteActiveSmsImports()
+            dao.insertAll(rows.map { it.copy(id = 0, deletedAt = null) })
+            // Learn from imported categories
+            rows.forEach { rememberCategory(it.memo, null, it.category, it.type) }
+            onDone(rows.size)
         }
     }
 
@@ -209,6 +256,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     companion object {
+        fun fingerprint(tx: TransactionEntity): String {
+            val cal = java.util.Calendar.getInstance()
+            cal.timeInMillis = tx.dateTimestamp
+            val day = "%04d-%02d-%02d".format(
+                cal.get(java.util.Calendar.YEAR),
+                cal.get(java.util.Calendar.MONTH) + 1,
+                cal.get(java.util.Calendar.DAY_OF_MONTH)
+            )
+            val cents = kotlin.math.round(tx.amount * 100.0).toLong()
+            val memo = tx.memo.trim().lowercase()
+            val cat = tx.category.trim().lowercase()
+            return "$day|${tx.type}|$cat|$cents|$memo"
+        }
+
         fun filterTransactions(
             list: List<TransactionEntity>,
             query: String,
@@ -235,7 +296,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             year: Int,
             monthZeroBased: Int
         ): List<TransactionEntity> {
-            if (monthZeroBased < 0) return list // "All months"
+            if (monthZeroBased < 0) return list
             val cal = java.util.Calendar.getInstance()
             return list.filter { tx ->
                 cal.timeInMillis = tx.dateTimestamp

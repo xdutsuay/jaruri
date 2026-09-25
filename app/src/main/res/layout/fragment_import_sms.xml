@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scrollImportSms"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
@@ -39,48 +39,6 @@
             app:backgroundTint="@color/primary_yellow_dark"
             android:layout_marginBottom="8dp" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLoadSamples"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/import_sms_load_samples"
-            android:textColor="@color/text_primary"
-            app:strokeColor="@color/text_secondary"
-            android:layout_marginBottom="8dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/import_sms_or_paste"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:layout_marginBottom="8dp" />
-
-        <EditText
-            android:id="@+id/etPasteSms"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minLines="4"
-            android:gravity="top|start"
-            android:inputType="textMultiLine|textCapSentences"
-            android:hint="@string/import_sms_paste_hint"
-            android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_secondary"
-            android:background="@color/surface_white"
-            android:padding="12dp"
-            android:layout_marginBottom="8dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnParsePaste"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/import_sms_parse_paste"
-            android:textColor="@color/text_primary"
-            app:strokeColor="@color/text_secondary"
-            android:layout_marginBottom="16dp" />
-
         <TextView
             android:id="@+id/tvInboxSection"
             android:layout_width="wrap_content"
@@ -91,22 +49,39 @@
             android:visibility="gone"
             android:layout_marginBottom="8dp" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvInbox"
+        <!-- Actions ABOVE the long list so they stay reachable -->
+        <LinearLayout
+            android:id="@+id/inboxActions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"
+            android:orientation="vertical"
             android:visibility="gone"
-            tools:listitem="@layout/item_sms_inbox"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="8dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnPreviewSelected"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSelectAllInbox"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/import_sms_select_all"
+                android:textColor="@color/text_primary"
+                app:strokeColor="@color/text_secondary"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPreviewSelected"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/import_sms_preview_selected"
+                android:textColor="@color/button_on_yellow"
+                app:backgroundTint="@color/primary_yellow_dark" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/llInbox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/import_sms_preview_selected"
-            android:textColor="@color/text_primary"
+            android:orientation="vertical"
             android:visibility="gone"
             android:layout_marginBottom="16dp" />
 
@@ -136,6 +111,48 @@
             app:backgroundTint="@color/primary_yellow_dark"
             android:visibility="gone"
             android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/import_sms_or_paste"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/etPasteSms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minLines="3"
+            android:gravity="top|start"
+            android:inputType="textMultiLine|textCapSentences"
+            android:hint="@string/import_sms_paste_hint"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_secondary"
+            android:background="@color/surface_white"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnParsePaste"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/import_sms_parse_paste"
+            android:textColor="@color/text_primary"
+            app:strokeColor="@color/text_secondary"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLoadSamples"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/import_sms_load_samples"
+            android:textColor="@color/text_primary"
+            app:strokeColor="@color/text_secondary"
             android:layout_marginBottom="24dp" />
 
         <ProgressBar
