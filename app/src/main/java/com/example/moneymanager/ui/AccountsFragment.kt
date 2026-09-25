@@ -32,6 +32,7 @@ class AccountsFragment : Fragment(R.layout.fragment_accounts) {
         val rv = view.findViewById<RecyclerView>(R.id.rv_accounts)
         val adapter = AccountAdapter(
             symbolProvider = { viewModel.currencySymbol.value ?: "₹" },
+            onClick = { account -> showEditDialog(account) },
             onLongClick = { account -> confirmDelete(account) }
         )
         rv.layoutManager = LinearLayoutManager(requireContext())
@@ -42,6 +43,56 @@ class AccountsFragment : Fragment(R.layout.fragment_accounts) {
         view.findViewById<FloatingActionButton>(R.id.fab_add_account).setOnClickListener {
             showAddDialog()
         }
+    }
+
+    private fun showEditDialog(account: AccountEntity) {
+        val container = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 24, 48, 8)
+        }
+        val etName = EditText(requireContext()).apply {
+            hint = "Name"
+            setText(account.name)
+        }
+        val etBalance = EditText(requireContext()).apply {
+            hint = "Balance / outstanding"
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            setText(if (account.balance == 0.0) "" else account.balance.toString())
+        }
+        val etLimit = EditText(requireContext()).apply {
+            hint = "Credit limit (cards only)"
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            setText(if (account.creditLimit == 0.0) "" else account.creditLimit.toString())
+            visibility = if (account.isCreditCard) View.VISIBLE else View.GONE
+        }
+        val etLast4 = EditText(requireContext()).apply {
+            hint = "Last 4 digits"
+            inputType = InputType.TYPE_CLASS_NUMBER
+            filters = arrayOf(InputFilter.LengthFilter(4))
+            setText(account.last4)
+            visibility = if (account.isCreditCard) View.VISIBLE else View.GONE
+        }
+        container.addView(etName)
+        container.addView(etBalance)
+        container.addView(etLimit)
+        container.addView(etLast4)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(account.name)
+            .setView(container)
+            .setPositiveButton(R.string.save_transaction) { _, _ ->
+                val name = etName.text.toString().trim().ifBlank { account.name }
+                viewModel.updateAccount(
+                    account.copy(
+                        name = name,
+                        balance = etBalance.text.toString().toDoubleOrNull() ?: account.balance,
+                        creditLimit = etLimit.text.toString().toDoubleOrNull() ?: account.creditLimit,
+                        last4 = etLast4.text.toString().trim()
+                    )
+                )
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun showAddDialog() {
@@ -117,6 +168,7 @@ class AccountsFragment : Fragment(R.layout.fragment_accounts) {
 
     private class AccountAdapter(
         private val symbolProvider: () -> String,
+        private val onClick: (AccountEntity) -> Unit,
         private val onLongClick: (AccountEntity) -> Unit
     ) : RecyclerView.Adapter<AccountAdapter.VH>() {
         private var items: List<AccountEntity> = emptyList()
@@ -153,6 +205,7 @@ class AccountsFragment : Fragment(R.layout.fragment_accounts) {
             }
             val bg = if (a.isCreditCard) R.color.card_debt else R.color.card_cash
             holder.itemView.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, bg))
+            holder.itemView.setOnClickListener { onClick(a) }
             holder.itemView.setOnLongClickListener {
                 onLongClick(a)
                 true

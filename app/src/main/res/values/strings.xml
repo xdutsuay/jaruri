@@ -24,6 +24,19 @@
     <string name="filter_income">Income</string>
     <string name="filter_expense">Expense</string>
     <string name="pick_month_title">Select month</string>
+    <string name="memo_hint">Memo</string>
+    <string name="widget_description">Jaruri month income, expenses, and balance</string>
+    <string name="widget_loading">Jaruri</string>
+
+    <string name="day_expenses_total">Expenses: %1$s%2$s</string>
+    <string name="menu_recurring">Recurring</string>
+    <string name="recurring_hint">Templates that remind you of regular income or bills. Long-press to delete.</string>
+    <string name="add_recurring">Add recurring</string>
+    <string name="recurring_empty">No recurring items yet</string>
+    <string name="recurring_freq_day">Daily</string>
+    <string name="recurring_freq_week">Weekly</string>
+    <string name="recurring_freq_month">Monthly</string>
+    <string name="recurring_next">Next: %1$s</string>
     <string name="import_merge_button">Merge another Money Manager export</string>
     <string name="import_merge_hint">Keeps your current ledger and adds rows from a second phone/export. Exact duplicates (same day, category, amount, memo) are skipped.</string>
     <string name="import_merge_done">Merged %1$d new · skipped %2$d duplicate(s)</string>

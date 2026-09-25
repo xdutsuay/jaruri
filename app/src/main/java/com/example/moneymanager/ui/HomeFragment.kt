@@ -57,7 +57,8 @@ class HomeFragment : Fragment() {
                     bundleOf("transactionId" to tx.id)
                 )
             },
-            onLongClick = { tx -> confirmDelete(tx) }
+            onLongClick = { tx -> confirmDelete(tx) },
+            currencySymbol = { viewModel.currencySymbol.value ?: "₹" }
         )
 
         binding.rvTransactions.layoutManager = LinearLayoutManager(requireContext())
@@ -84,10 +85,7 @@ class HomeFragment : Fragment() {
         })
 
         binding.fabAdd.setOnClickListener {
-            findNavController().navigate(
-                R.id.action_home_to_addTransaction,
-                bundleOf("transactionId" to -1L)
-            )
+            findNavController().navigate(R.id.action_home_to_quickAdd)
         }
 
         binding.incomeLayout.setOnClickListener {
@@ -195,7 +193,7 @@ class HomeFragment : Fragment() {
     private fun applyFilter(adapter: TransactionAdapter) {
         val monthList = MainViewModel.filterByMonth(fullList, selectedYear, selectedMonth)
         val filtered = MainViewModel.filterTransactions(monthList, searchQuery, typeFilter)
-        adapter.submitList(filtered)
+        adapter.submitGrouped(filtered)
 
         val symbol = viewModel.currencySymbol.value ?: "₹"
         var income = 0.0
