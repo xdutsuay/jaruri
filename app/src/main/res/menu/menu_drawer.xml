@@ -22,6 +22,10 @@
             android:icon="@android:drawable/ic_menu_agenda"
             android:title="@string/menu_budgets" />
         <item
+            android:id="@+id/nav_recurring"
+            android:icon="@android:drawable/ic_menu_recent_history"
+            android:title="@string/menu_recurring" />
+        <item
             android:id="@+id/nav_import_sms"
             android:icon="@android:drawable/ic_menu_upload"
             android:title="@string/import_sms_button" />

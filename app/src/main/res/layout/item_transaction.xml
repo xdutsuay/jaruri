@@ -5,68 +5,63 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:padding="16dp"
-    android:background="?attr/selectableItemBackground">
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp"
+    android:background="@color/surface_white"
+    android:foreground="?attr/selectableItemBackground">
 
-    <!-- Category Icon -->
-    <ImageView
-        android:id="@+id/ivIcon"
+    <FrameLayout
         android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:src="@drawable/circle_shape"
-        android:background="@drawable/circle_shape"
-        android:backgroundTint="#80DEEA" 
-        android:padding="8dp"
-        app:tint="@color/white" />
+        android:layout_height="40dp">
+
+        <View
+            android:id="@+id/vIconBg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/circle_shape" />
+
+        <TextView
+            android:id="@+id/tvIconLetter"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:text="F" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="14dp"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/tvCategory"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Category"
-            android:textSize="16sp"
-            android:textColor="#000000"
-            android:textStyle="normal"/>
+            android:textSize="15sp"
+            android:textColor="@color/text_primary"
+            android:text="Category" />
 
         <TextView
             android:id="@+id/tvMemo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Memo"
-            android:textColor="#757575"
+            android:textColor="@color/text_secondary"
             android:textSize="12sp"
-            android:visibility="visible"/>
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="Memo" />
     </LinearLayout>
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/tvAmount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="end">
-
-        <TextView
-            android:id="@+id/tvAmount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="- 734"
-            android:textSize="16sp"
-            android:textColor="#000000"/>
-
-        <TextView
-            android:id="@+id/tvDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Today"
-            android:textColor="#9E9E9E"
-            android:textSize="10sp"
-            android:visibility="visible"/> 
-    </LinearLayout>
-
+        android:textSize="15sp"
+        android:textColor="@color/text_primary"
+        android:text="- 734" />
 </LinearLayout>

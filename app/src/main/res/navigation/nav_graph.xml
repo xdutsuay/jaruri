@@ -14,6 +14,9 @@
             android:id="@+id/action_home_to_addTransaction"
             app:destination="@id/addTransactionFragment" />
         <action
+            android:id="@+id/action_home_to_quickAdd"
+            app:destination="@id/quickAddFragment" />
+        <action
             android:id="@+id/action_home_to_importSms"
             app:destination="@id/nav_import_sms" />
         <action
@@ -45,6 +48,12 @@
         tools:layout="@layout/fragment_budgets" />
 
     <fragment
+        android:id="@+id/nav_recurring"
+        android:name="com.example.moneymanager.ui.RecurringFragment"
+        android:label="@string/menu_recurring"
+        tools:layout="@layout/fragment_recurring" />
+
+    <fragment
         android:id="@+id/nav_export"
         android:name="com.example.moneymanager.ui.ExportFragment"
         android:label="@string/menu_export"
@@ -61,6 +70,12 @@
         android:name="com.example.moneymanager.ui.SettingsFragment"
         android:label="Settings"
         tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/quickAddFragment"
+        android:name="com.example.moneymanager.ui.QuickAddFragment"
+        android:label="@string/add_transaction"
+        tools:layout="@layout/fragment_quick_add" />
 
     <fragment
         android:id="@+id/addTransactionFragment"

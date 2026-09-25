@@ -12,6 +12,7 @@ import com.example.moneymanager.data.SettingsRepository
 import com.example.moneymanager.data.TransactionEntity
 import com.example.moneymanager.models.Category
 import com.example.moneymanager.utils.CategoryLearning
+import com.example.moneymanager.utils.CreditCardLedger
 import com.example.moneymanager.utils.LegacyExportBootstrap
 import com.example.moneymanager.utils.PhoneMergeBootstrap
 import com.example.moneymanager.utils.SmsCategoryBackfill
@@ -66,16 +67,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         balance.value = inc - exp
     }
 
-    fun addTransaction(type: String, category: String, amount: Double, date: Long, memo: String) {
+    fun addTransaction(
+        type: String,
+        category: String,
+        amount: Double,
+        date: Long,
+        memo: String,
+        cardLast4: String? = null,
+        accountId: Long? = null
+    ) {
         viewModelScope.launch {
+            val resolvedAccountId = accountId
+                ?: CreditCardLedger.resolveOrCreateCard(accountDao, cardLast4)
             dao.insertTransaction(
                 TransactionEntity(
                     type = type,
                     category = category,
                     amount = amount,
                     dateTimestamp = date,
-                    memo = memo
+                    memo = memo,
+                    accountId = resolvedAccountId
                 )
+            )
+            CreditCardLedger.applyDebtDelta(
+                accountDao,
+                resolvedAccountId,
+                type,
+                category,
+                amount
             )
             rememberCategory(memo, null, category, type)
         }
@@ -83,7 +102,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateTransaction(tx: TransactionEntity, previousCategory: String? = null) {
         viewModelScope.launch {
+            val previous = dao.getById(tx.id)
+            if (previous != null && previous.accountId != null) {
+                CreditCardLedger.applyDebtDelta(
+                    accountDao,
+                    previous.accountId,
+                    previous.type,
+                    previous.category,
+                    previous.amount,
+                    reverse = true
+                )
+            }
             dao.updateTransaction(tx)
+            CreditCardLedger.applyDebtDelta(
+                accountDao,
+                tx.accountId,
+                tx.type,
+                tx.category,
+                tx.amount
+            )
             if (previousCategory != null && previousCategory != tx.category) {
                 rememberCategory(tx.memo, null, tx.category, tx.type)
             }
@@ -190,12 +227,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** Soft-delete → recycle bin. */
     fun deleteTransaction(tx: TransactionEntity) {
         viewModelScope.launch {
+            if (tx.accountId != null) {
+                CreditCardLedger.applyDebtDelta(
+                    accountDao,
+                    tx.accountId,
+                    tx.type,
+                    tx.category,
+                    tx.amount,
+                    reverse = true
+                )
+            }
             dao.softDelete(tx.id)
         }
     }
 
     fun restoreTransaction(tx: TransactionEntity) {
-        viewModelScope.launch { dao.restore(tx.id) }
+        viewModelScope.launch {
+            dao.restore(tx.id)
+            if (tx.accountId != null) {
+                CreditCardLedger.applyDebtDelta(
+                    accountDao,
+                    tx.accountId,
+                    tx.type,
+                    tx.category,
+                    tx.amount
+                )
+            }
+        }
     }
 
     fun permanentlyDelete(tx: TransactionEntity) {

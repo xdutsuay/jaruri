@@ -52,14 +52,18 @@ object SmsAutoImporter {
         val learned = learnKey?.let { learnDao.get(it)?.category }
         val category = SmsCategorizer.categorize(parsed, body, learned)
         val type = parsed.typeLabel()
+        val db = AppDatabase.getDatabase(appContext)
+        val accountId = CreditCardLedger.resolveOrCreateCard(db.accountDao(), parsed.cardLast4)
         val entity = TransactionEntity(
             type = type,
             category = category,
             amount = parsed.amount!!,
             dateTimestamp = parsed.dateTimestamp,
-            memo = parsed.toMemo()
+            memo = parsed.toMemo(),
+            accountId = accountId
         )
         dao.insertTransaction(entity)
+        CreditCardLedger.applyDebtDelta(db.accountDao(), accountId, type, category, entity.amount)
 
         if (notify) {
             showAddedNotification(appContext, entity)
