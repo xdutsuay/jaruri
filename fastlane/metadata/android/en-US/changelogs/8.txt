@@ -1,0 +1,1 @@
+F-Droid build uses stable Gradle 8.14.3.
