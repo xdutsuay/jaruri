@@ -166,6 +166,53 @@ You have received Rs 200 from ALICE via UPI.
         assertTrue(list.any { it.modeOfPayment == "Credit Card" })
     }
 
+    @Test
+    fun idfcCreditCardSpendParsesTxnAmountNotLimit() {
+        val sms =
+            "Delicious Purchase! INR 250.38 spent on your IDFC FIRST Bank Credit Card ending XX7354 at Zomato on 24 SEP 2026 at 06:01 PM Avbl Limit: INR 161337.57 If not done by you, call 180010888"
+        val p = SmsParser.parse(sms, fixedNow)!!
+        assertEquals(250.38, p.amount!!, 0.001)
+        assertEquals(false, p.isIncome)
+        assertEquals("Credit Card", p.modeOfPayment)
+        assertEquals("7354", p.cardLast4)
+        assertTrue(p.description!!.contains("Zomato", ignoreCase = true))
+        assertTrue(p.isComplete)
+        assertTrue(SmsParser.looksLikeTransaction(sms))
+    }
+
+    @Test
+    fun idfcBankDebitWithMerchantCredited() {
+        val sms =
+            "Your A/c XX0545 debited by Rs. 334.00 on 23/09/26; Amazon India credited. RRN 626641174342. Available balance Rs. 27,613.24. Team IDFC FIRST Bank"
+        val p = SmsParser.parse(sms, fixedNow)!!
+        assertEquals(334.0, p.amount!!, 0.001)
+        assertEquals(false, p.isIncome)
+        assertEquals("Bank", p.modeOfPayment)
+        assertTrue(p.description!!.contains("Amazon", ignoreCase = true))
+        assertTrue(p.isComplete)
+    }
+
+    @Test
+    fun idfcBankCreditParsesIncomeNotBalance() {
+        val sms =
+            "Your A/C XXXXX540545 is credited with INR 50.00 on 23/09/26 15:46. Your new balance is INR 27,663.24. Team IDFC FIRST Bank"
+        val p = SmsParser.parse(sms, fixedNow)!!
+        assertEquals(50.0, p.amount!!, 0.001)
+        assertEquals(true, p.isIncome)
+        assertTrue(p.isComplete)
+    }
+
+    @Test
+    fun promotionalCashbackOfferIsRejected() {
+        val sms =
+            "Get 5% Extra Cashback at Style Baazar with your SBI Credit Card. Min. Trxn.: Rs.2500; Max. Cashback: Rs.750 per card a/c. Valid till 21Oct26. T&C"
+        assertTrue(SmsParser.isPromotional(sms))
+        assertFalse(SmsParser.looksLikeTransaction(sms))
+        assertNull(SmsParser.parse(sms, fixedNow))
+        assertTrue(SmsParser.isPromotionalSender("JD-SBICRD-P"))
+        assertFalse(SmsParser.isPromotionalSender("CP-IDFCFB-S"))
+    }
+
     private fun calendarMillis(year: Int, month: Int, day: Int): Long {
         val cal = Calendar.getInstance()
         cal.clear()

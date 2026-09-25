@@ -73,16 +73,16 @@ class SmsCategorizerTest {
     }
 
     @Test
-    fun defaultExpenseIsBills() {
+    fun defaultExpenseIsOthers() {
         val p = parsed(isIncome = false, description = "UNKNOWN MERCHANT XYZ", mode = "Bank")
-        assertEquals("Bills", SmsCategorizer.categorize(p, "Rs.50 debited from A/c at UNKNOWN MERCHANT XYZ"))
+        assertEquals("Others", SmsCategorizer.categorize(p, "Rs.50 debited from A/c at UNKNOWN MERCHANT XYZ"))
     }
 
     @Test
-    fun defaultIncomeIsSalary() {
+    fun defaultIncomeIsOthersNotSalary() {
         val p = parsed(isIncome = true, description = "ACME CORP", mode = "Bank")
         assertEquals(
-            "Salary",
+            "Others",
             SmsCategorizer.categorize(p, "Rs.100 credited to A/c from ACME CORP")
         )
     }
@@ -106,19 +106,41 @@ class SmsCategorizerTest {
     }
 
     @Test
-    fun creditCardModeMapsToCreditCategories() {
+    fun creditCardSpendUsesMerchantCategoryNotCreditCard() {
         assertEquals(
-            "Credit Card",
+            "Shopping",
             SmsCategorizer.categorize(
                 parsed(isIncome = false, description = "FLIPKART", mode = "Credit Card"),
                 "spent on HDFC Bank Credit Card XX1234 at FLIPKART"
             )
         )
         assertEquals(
+            "Food",
+            SmsCategorizer.categorize(
+                parsed(isIncome = false, description = "Zomato", mode = "Credit Card"),
+                "INR 250 spent on IDFC FIRST Bank Credit Card at Zomato"
+            )
+        )
+    }
+
+    @Test
+    fun idfcBankDebitNotForcedToCreditCardCategory() {
+        assertEquals(
+            "Shopping",
+            SmsCategorizer.categorize(
+                parsed(isIncome = false, description = "Amazon India", mode = "Bank"),
+                "Your A/c XX0545 debited by Rs. 334.00; Amazon India credited. Team IDFC FIRST Bank"
+            )
+        )
+    }
+
+    @Test
+    fun creditCardPaymentIncome() {
+        assertEquals(
             "Credit Card Payment",
             SmsCategorizer.categorize(
                 parsed(isIncome = true, description = null, mode = "Credit Card"),
-                "Payment received towards your credit card"
+                "Payment of Rs.5,000 received towards your HDFC Credit Card XX1234. Thank you."
             )
         )
     }

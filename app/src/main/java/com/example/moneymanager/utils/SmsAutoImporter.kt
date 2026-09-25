@@ -22,18 +22,21 @@ object SmsAutoImporter {
     private const val NOTIFICATION_ID = 4101
 
     /**
+     * @param address SMS originator (DLT ID). Used to skip promotional `-P` senders.
      * @return inserted entity, or null if skipped (disabled / not financial / incomplete / duplicate).
      */
     suspend fun tryImport(
         context: Context,
         body: String,
-        notify: Boolean = true
+        notify: Boolean = true,
+        address: String? = null
     ): TransactionEntity? {
         val appContext = context.applicationContext
         val settings = SettingsRepository(appContext)
         if (!settings.autoImportSmsEnabled.first()) return null
 
-        if (!SmsParser.looksFinancial(body)) return null
+        if (!address.isNullOrBlank() && SmsParser.isPromotionalSender(address)) return null
+        if (!SmsParser.looksLikeTransaction(body)) return null
         val parsed = SmsParser.parse(body) ?: return null
         if (!parsed.isComplete) return null
 
@@ -44,7 +47,10 @@ object SmsAutoImporter {
             if (dao.countByMemoTag(tag) > 0) return null
         }
 
-        val category = SmsCategorizer.categorize(parsed, body)
+        val learnDao = AppDatabase.getDatabase(appContext).categoryLearnDao()
+        val learnKey = CategoryLearning.keyFromDescription(parsed.description, parsed.toMemo())
+        val learned = learnKey?.let { learnDao.get(it)?.category }
+        val category = SmsCategorizer.categorize(parsed, body, learned)
         val type = parsed.typeLabel()
         val entity = TransactionEntity(
             type = type,

@@ -40,11 +40,11 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun testSampleDataPersistence() = runBlocking {
-        assertEquals(true, settingsRepository.sampleDataEnabled.first())
-
-        settingsRepository.setSampleDataEnabled(false)
+    fun testSampleDataDefaultsOff() = runBlocking {
         assertEquals(false, settingsRepository.sampleDataEnabled.first())
+
+        settingsRepository.setSampleDataEnabled(true)
+        assertEquals(true, settingsRepository.sampleDataEnabled.first())
     }
 
     @Test

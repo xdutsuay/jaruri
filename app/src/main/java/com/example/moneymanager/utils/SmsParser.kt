@@ -32,6 +32,17 @@ object SmsParser {
         """\b(credited|debited|spent|received|paid|withdrawn|purchase|txn|transaction|upi|outstanding|due)\b""",
         Pattern.CASE_INSENSITIVE
     )
+    /** Verbs that indicate an actual money movement (not promo / statement fluff). */
+    private val TXN_VERB_LOOK = Pattern.compile(
+        """\b(credited|debited|spent|withdrawn|received|paid\s+to|sent\s+to|purchase)\b""",
+        Pattern.CASE_INSENSITIVE
+    )
+    private val BALANCE_BEFORE = Pattern.compile(
+        """(?:avl\.?\s*bal(?:ance)?|available\s+balance|avbl\.?\s*limit|available\s+limit|""" +
+            """new\s+balance|bal(?:ance)?|limit|outstanding|total\s+due|min(?:imum)?\s+due|""" +
+            """closing\s+balance|curr(?:ent)?\s+bal)\s*[:\-]?\s*$""",
+        Pattern.CASE_INSENSITIVE
+    )
 
     private val CARD_LAST4 = Pattern.compile(
         """(?:card|xx|ending|x{2,})\s*[xX*]*\s*(\d{4})\b""",
@@ -40,7 +51,8 @@ object SmsParser {
 
     private val CREDIT_HINTS = listOf(
         "credited", "received", "has been credited", "credit alert",
-        "deposited", "refund", "cashback", "payment received", "payment of"
+        "deposited", "refund", "payment received", "payment of"
+        // note: bare "cashback" removed — too common in promo SMS
     )
     private val DEBIT_HINTS = listOf(
         "debited", "spent", "paid", "withdrawn", "purchase", "sent",
@@ -50,6 +62,7 @@ object SmsParser {
     fun parse(raw: String, fallbackNow: Long = System.currentTimeMillis()): ParsedSms? {
         val text = raw.trim()
         if (text.isEmpty()) return null
+        if (isPromotional(text)) return null
 
         val amount = extractAmount(text)
         val isIncome = extractIsIncome(text)
@@ -85,6 +98,59 @@ object SmsParser {
         val hasVerb = VERB_LOOK.matcher(t).find()
         val hasCard = t.contains("credit card") || t.contains("crd") || CARD_LAST4.matcher(t).find()
         return hasMoney || hasCard || (hasVerb && t.any { it.isDigit() })
+    }
+
+    /**
+     * Stricter filter for inbox import lists: requires a currency amount and a
+     * real debit/credit/spend verb so loan promos and OTPs are skipped.
+     */
+    fun looksLikeTransaction(raw: String): Boolean {
+        val t = raw.trim()
+        if (t.isEmpty()) return false
+        if (isPromotional(t)) return false
+        if (!MONEY_LOOK.matcher(t).find()) return false
+        if (!TXN_VERB_LOOK.matcher(t).find()) return false
+        val lower = t.lowercase(Locale.ROOT)
+        // Skip pure OTP / verification codes even if they mention Rs somehow.
+        if (lower.contains("otp") || lower.contains("verification code")) return false
+        return true
+    }
+
+    /**
+     * Marketing / scam-style SMS that mention rupee amounts but are not ledger events.
+     * Example: "Get 5% Extra Cashback… Min. Trxn.: Rs.2500".
+     */
+    fun isPromotional(raw: String): Boolean {
+        val t = raw.lowercase(Locale.ROOT)
+        if (t.isEmpty()) return false
+        val promoPhrases = listOf(
+            "cashback", "extra cashback", "get 5%", "get 10%", "apply now",
+            "t&c", "t&cs", "tnc", "terms and conditions", "valid till", "valid until",
+            "min. trxn", "min trxn", "min. txn", "minimum transaction",
+            "max. cashback", "limited period", "offer", "unlock a personal loan",
+            "pre-approved", "missed call", "click here", "hurry", "avail now",
+            "congratulations! you are eligible", "don't miss", "flat rs",
+            "save upto", "save up to", "interest-free", "no cost emi offer"
+        )
+        val hits = promoPhrases.count { t.contains(it) }
+        if (hits >= 2) return true
+        if (t.contains("cashback") && (t.contains("min") || t.contains("valid"))) return true
+        if (t.contains("get ") && t.contains("%") && t.contains("credit card")) return true
+        // Indian DLT promo sender IDs often end with -P
+        // (checked by callers that have the address; body-only heuristic below)
+        if (!TXN_VERB_LOOK.matcher(t).find() && MONEY_LOOK.matcher(t).find() &&
+            (t.contains("offer") || t.contains("cashback") || t.contains("apply"))
+        ) {
+            return true
+        }
+        return false
+    }
+
+    /** True when the SMS address looks like a promotional DLT template (-P suffix). */
+    fun isPromotionalSender(address: String): Boolean {
+        val a = address.trim().uppercase(Locale.ROOT)
+        if (a.isEmpty()) return false
+        return a.endsWith("-P") || a.endsWith("-P\"") || a.contains("-P,")
     }
 
     fun memoContainsHash(memo: String, smsHash: String): Boolean {
@@ -136,9 +202,24 @@ object SmsParser {
     }
 
     private fun extractAmount(text: String): Double? {
+        // Prefer amount near a transaction verb (avoids Avbl Limit / Available balance).
+        val verbAnchored = Pattern.compile(
+            """(?i)(?:(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:is\s+)?(?:credited|debited|spent)|""" +
+                """(?:credited|debited|spent|withdrawn)\s+(?:with\s+|by\s+|for\s+)?(?:rs\.?|inr|₹)?\s*([\d,]+(?:\.\d{1,2})?)|""" +
+                """(?:credited|debited)\s+with\s+(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d{1,2})?))"""
+        ).matcher(text)
+        if (verbAnchored.find()) {
+            for (g in 1..verbAnchored.groupCount()) {
+                val rawAmt = verbAnchored.group(g)?.replace(",", "")
+                val value = rawAmt?.toDoubleOrNull()
+                if (value != null && value > 0) return value
+            }
+        }
+
         for (re in AMOUNT_PATTERNS) {
             val m = re.matcher(text)
-            if (m.find()) {
+            while (m.find()) {
+                if (isBalanceOrLimitContext(text, m.start())) continue
                 val rawAmt = m.group(1)?.replace(",", "") ?: continue
                 val value = rawAmt.toDoubleOrNull()
                 if (value != null && value > 0) return value
@@ -147,12 +228,24 @@ object SmsParser {
         return null
     }
 
+    private fun isBalanceOrLimitContext(text: String, matchStart: Int): Boolean {
+        val from = (matchStart - 48).coerceAtLeast(0)
+        val before = text.substring(from, matchStart)
+        return BALANCE_BEFORE.matcher(before).find()
+    }
+
     private fun extractIsIncome(text: String): Boolean? {
         val t = text.lowercase(Locale.ROOT)
         if (t.contains("payment") && (t.contains("credit card") || t.contains("towards your"))) {
             if (t.contains("received") || t.contains("thank you") || t.contains("payment of")) {
                 return true
             }
+        }
+        // IDFC / UPI style: "debited by Rs. X; MERCHANT credited" — treat as debit.
+        if (Regex("""\bdebited\b.*\bcredited\b""", RegexOption.IGNORE_CASE).containsMatchIn(t) &&
+            !t.contains("has been credited")
+        ) {
+            return false
         }
         val credit = CREDIT_HINTS.any { t.contains(it) }
         val debit = DEBIT_HINTS.any { t.contains(it) }
@@ -178,7 +271,8 @@ object SmsParser {
         if (t.contains("credit card") ||
             t.contains("crd ") ||
             (t.contains("card") && (t.contains("hdfc") || t.contains("sbi") || t.contains("icici") ||
-                t.contains("axis") || t.contains("amex") || t.contains("spent on")))
+                t.contains("axis") || t.contains("amex") || t.contains("idfc") ||
+                t.contains("spent on")))
         ) {
             return "Credit Card"
         }
@@ -214,7 +308,7 @@ object SmsParser {
 
     private fun extractDescription(text: String, mode: String): String {
         val toMatch = Pattern.compile(
-            """(?:to|towards|paid to|sent to)\s+([A-Za-z0-9 &._@-]{2,40})""",
+            """\b(?:to|towards|paid to|sent to)\s+([A-Za-z0-9 &._@-]{2,40})""",
             Pattern.CASE_INSENSITIVE
         ).matcher(text)
         if (toMatch.find()) {
@@ -225,13 +319,13 @@ object SmsParser {
         }
 
         val atMatcher = Pattern.compile(
-            """(?i)(?:\s|^)(?:at|on)\s+([A-Za-z][A-Za-z0-9._-]{1,39})"""
+            """(?i)(?:\s|^)(?:at)\s+([A-Za-z][A-Za-z0-9 &._-]{1,48}?)(?=\s+on\s+\d|\s+at\s+\d|,|\.|$)"""
         ).matcher(text)
         while (atMatcher.find()) {
             val candidate = cleanMerchant(atMatcher.group(1)!!)
             if (isUsefulMerchant(candidate) &&
                 !Regex(
-                    """^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)""",
+                    """^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|your|on)\b""",
                     RegexOption.IGNORE_CASE
                 ).containsMatchIn(candidate)
             ) {
@@ -239,8 +333,20 @@ object SmsParser {
             }
         }
 
+        // IDFC bank: "debited by Rs. X; MERCHANT credited"
+        val idfcMerchant = Pattern.compile(
+            """;\s*([A-Za-z][A-Za-z0-9 &._-]{1,48}?)\s+credited\b""",
+            Pattern.CASE_INSENSITIVE
+        ).matcher(text)
+        if (idfcMerchant.find()) {
+            val candidate = cleanMerchant(idfcMerchant.group(1)!!)
+            if (isUsefulMerchant(candidate) && !looksLikeAccountRef(candidate)) {
+                return candidate
+            }
+        }
+
         val fromMatch = Pattern.compile(
-            """(?:from|received from|by)\s+([A-Za-z0-9 &._@-]{2,40})""",
+            """\b(?:from|received from)\s+([A-Za-z0-9 &._@-]{2,40})""",
             Pattern.CASE_INSENSITIVE
         ).matcher(text)
         if (fromMatch.find()) {
@@ -270,6 +376,8 @@ object SmsParser {
         if (candidate.isBlank()) return false
         val c = candidate.lowercase(Locale.ROOT)
         if (c == "your" || c.startsWith("hdfc") || c.startsWith("credit")) return false
+        if (c == "rs" || c == "rs." || c == "inr" || c.startsWith("rs.") || c.startsWith("₹")) return false
+        if (c.all { it.isDigit() || it == '.' || it == ',' }) return false
         return true
     }
 

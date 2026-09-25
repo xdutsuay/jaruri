@@ -15,18 +15,22 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.moneymanager.R
 import com.example.moneymanager.utils.CsvFormatter
+import com.example.moneymanager.utils.LegacySpreadsheetParser
 import com.example.moneymanager.viewmodel.MainViewModel
 import java.io.File
 
 class ExportFragment : Fragment() {
 
     private val viewModel: MainViewModel by activityViewModels()
+    private var replaceMode = false
+    private var mergeMode = false
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -45,8 +49,18 @@ class ExportFragment : Fragment() {
     private val openCsvLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
-        if (uri == null) return@registerForActivityResult
-        importFromUri(uri)
+        if (uri == null) {
+            replaceMode = false
+            mergeMode = false
+            return@registerForActivityResult
+        }
+        when {
+            replaceMode -> replaceFromUri(uri)
+            mergeMode -> mergeFromUri(uri)
+            else -> importFromUri(uri)
+        }
+        replaceMode = false
+        mergeMode = false
     }
 
     override fun onCreateView(
@@ -80,13 +94,68 @@ class ExportFragment : Fragment() {
         }
 
         view.findViewById<Button>(R.id.btn_import_csv).setOnClickListener {
-            openCsvLauncher.launch(arrayOf("text/*", "text/csv", "application/csv", "*/*"))
+            replaceMode = false
+            mergeMode = false
+            openCsvLauncher.launch(
+                arrayOf(
+                    "text/*",
+                    "text/csv",
+                    "text/comma-separated-values",
+                    "application/vnd.ms-excel",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "*/*"
+                )
+            )
         }
+
+        view.findViewById<Button>(R.id.btn_replace_legacy).setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle(R.string.import_legacy_replace_button)
+                .setMessage(R.string.import_legacy_replace_hint)
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    replaceMode = true
+                    mergeMode = false
+                    openCsvLauncher.launch(
+                        arrayOf(
+                            "text/*",
+                            "text/csv",
+                            "application/vnd.ms-excel",
+                            "*/*"
+                        )
+                    )
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+        }
+
+        view.findViewById<Button>(R.id.btn_merge_legacy).setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle(R.string.import_merge_button)
+                .setMessage(R.string.import_merge_hint)
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    mergeMode = true
+                    replaceMode = false
+                    openCsvLauncher.launch(
+                        arrayOf(
+                            "text/*",
+                            "text/csv",
+                            "application/vnd.ms-excel",
+                            "*/*"
+                        )
+                    )
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+        }
+    }
+
+    private fun readText(uri: Uri): String? {
+        return requireContext().contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
     }
 
     private fun importFromUri(uri: Uri) {
         try {
-            val text = requireContext().contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+            val text = readText(uri)
             if (text.isNullOrBlank()) {
                 Toast.makeText(requireContext(), R.string.import_csv_failed, Toast.LENGTH_SHORT).show()
                 return
@@ -103,7 +172,60 @@ class ExportFragment : Fragment() {
                 getString(R.string.import_csv_done, rows.size),
                 Toast.LENGTH_SHORT
             ).show()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
+            Toast.makeText(requireContext(), R.string.import_csv_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun replaceFromUri(uri: Uri) {
+        try {
+            val text = readText(uri)
+            if (text.isNullOrBlank()) {
+                Toast.makeText(requireContext(), R.string.import_csv_failed, Toast.LENGTH_SHORT).show()
+                return
+            }
+            // Prefer legacy parser; fall back to Jaruri CSV
+            val rows = LegacySpreadsheetParser.parse(text).ifEmpty {
+                CsvFormatter.parse(text, viewModel.dateFormat.value ?: "yyyy-MM-dd")
+            }
+            if (rows.isEmpty()) {
+                Toast.makeText(requireContext(), R.string.import_csv_empty, Toast.LENGTH_SHORT).show()
+                return
+            }
+            viewModel.replaceActiveLedgerWith(rows, clearAllActive = true) { n ->
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.import_legacy_replace_done, n),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        } catch (_: Exception) {
+            Toast.makeText(requireContext(), R.string.import_csv_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun mergeFromUri(uri: Uri) {
+        try {
+            val text = readText(uri)
+            if (text.isNullOrBlank()) {
+                Toast.makeText(requireContext(), R.string.import_csv_failed, Toast.LENGTH_SHORT).show()
+                return
+            }
+            val rows = LegacySpreadsheetParser.parse(text).ifEmpty {
+                CsvFormatter.parse(text, viewModel.dateFormat.value ?: "yyyy-MM-dd")
+            }
+            if (rows.isEmpty()) {
+                Toast.makeText(requireContext(), R.string.import_csv_empty, Toast.LENGTH_SHORT).show()
+                return
+            }
+            viewModel.mergeTransactions(rows) { added, skipped ->
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.import_merge_done, added, skipped),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        } catch (_: Exception) {
             Toast.makeText(requireContext(), R.string.import_csv_failed, Toast.LENGTH_SHORT).show()
         }
     }

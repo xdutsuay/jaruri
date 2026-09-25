@@ -12,5 +12,7 @@ data class TransactionEntity(
     val dateTimestamp: Long,
     val memo: String,
     /** Optional link to accounts.id (null = unassigned). */
-    val accountId: Long? = null
+    val accountId: Long? = null,
+    /** Non-null when moved to recycle bin (epoch millis). */
+    val deletedAt: Long? = null
 )

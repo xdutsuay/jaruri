@@ -51,6 +51,41 @@
             android:textColor="@color/text_primary"
             style="@style/Widget.Material3.Button.OutlinedButton"
             app:strokeColor="@color/primary_yellow_dark" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/import_legacy_replace_hint"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_replace_legacy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/import_legacy_replace_button"
+            android:textColor="@color/button_on_yellow"
+            app:backgroundTint="@color/primary_yellow_dark" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/import_merge_hint"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_merge_legacy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/import_merge_button"
+            android:textColor="@color/text_primary"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            app:strokeColor="@color/primary_yellow_dark" />
     </LinearLayout>
 
 </FrameLayout>

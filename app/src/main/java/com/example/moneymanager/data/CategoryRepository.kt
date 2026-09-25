@@ -27,7 +27,15 @@ class CategoryRepository(private val context: Context) {
             "Health",
             "Clothing",
             "Shopping",
-            "Credit Card",
+            "Electronics",
+            "Baby",
+            "Education",
+            "Insurance",
+            "Pet",
+            "Social",
+            "Investment",
+            "papa",
+            "Others",
             "Transfer"
         )
 
@@ -35,8 +43,10 @@ class CategoryRepository(private val context: Context) {
             "Salary",
             "Business",
             "Gift",
+            "Others",
             "Transfer",
-            "Credit Card Payment"
+            "Credit Card Payment",
+            "Refunds"
         )
     }
 

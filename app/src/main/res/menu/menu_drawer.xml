@@ -30,6 +30,10 @@
             android:icon="@android:drawable/ic_menu_save"
             android:title="@string/menu_export" />
         <item
+            android:id="@+id/nav_recycle_bin"
+            android:icon="@android:drawable/ic_menu_delete"
+            android:title="@string/recycle_bin_title" />
+        <item
             android:id="@+id/nav_settings"
             android:icon="@android:drawable/ic_menu_manage"
             android:title="@string/menu_settings" />

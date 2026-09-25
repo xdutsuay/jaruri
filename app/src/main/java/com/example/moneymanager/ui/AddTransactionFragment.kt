@@ -125,16 +125,23 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
             val memo = etMemo.text.toString()
 
             if (editingId > 0) {
-                viewModel.updateTransaction(
-                    TransactionEntity(
-                        id = editingId,
-                        type = type,
-                        category = category,
-                        amount = amount,
-                        dateTimestamp = editingDate,
-                        memo = memo
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val previous = viewModel.getTransaction(editingId)
+                    viewModel.updateTransaction(
+                        TransactionEntity(
+                            id = editingId,
+                            type = type,
+                            category = category,
+                            amount = amount,
+                            dateTimestamp = editingDate,
+                            memo = memo,
+                            accountId = previous?.accountId,
+                            deletedAt = previous?.deletedAt
+                        ),
+                        previousCategory = previous?.category
                     )
-                )
+                    findNavController().popBackStack()
+                }
             } else {
                 viewModel.addTransaction(
                     type = type,
@@ -143,9 +150,8 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
                     date = System.currentTimeMillis(),
                     memo = memo
                 )
+                findNavController().popBackStack()
             }
-
-            findNavController().popBackStack()
         }
     }
 
