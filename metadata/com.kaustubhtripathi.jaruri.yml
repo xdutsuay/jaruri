@@ -1,4 +1,4 @@
-Categories:
+﻿Categories:
   - Finance Manager
 License: Apache-2.0
 AuthorName: xdutsuay
@@ -11,14 +11,14 @@ RepoType: git
 Repo: https://github.com/xdutsuay/jaruri.git
 
 Builds:
-  - versionName: 1.6.2
-    versionCode: 9
-    commit: ba31531a20b61c242d4bb2eb5abc3c9c50f02bc7
+  - versionName: 1.7.0
+    versionCode: 10
+    commit: 6fc265398b858ca0f46cd5dc7eea6f15e287199f
     subdir: app
     gradle:
       - yes
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.6.2
-CurrentVersionCode: 9
+CurrentVersion: 1.7.0
+CurrentVersionCode: 10
