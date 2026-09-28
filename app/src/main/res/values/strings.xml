@@ -75,9 +75,32 @@
     <string name="import_csv_done">Imported %1$d transaction(s)</string>
     <string name="import_csv_failed">Could not read CSV</string>
     <string name="import_csv_empty">No valid rows found in CSV</string>
-    <string name="about_message">Jaruri %1$s\nFree and open-source local money manager for Android.\nData stays on this device. Backup via CSV export/import.\nNo Google account or cloud sync required.</string>
+    <string name="about_message">Jaruri %1$s\nFree and open-source on-device money and time tracker for Android.\nData stays on this device. Money backup via CSV export/import.\nNo Google account or cloud sync required.</string>
     <string name="nav_header_local">Jaruri</string>
-    <string name="nav_header_local_sub">On-device ledger</string>
+    <string name="nav_header_local_sub">Money · Time · on-device</string>
+
+    <string name="menu_hub">Features</string>
+    <string name="menu_time">Time</string>
+    <string name="hub_title">Jaruri</string>
+    <string name="hub_subtitle">Pick what you want to track. Everything stays on this phone.</string>
+    <string name="hub_money_title">Money</string>
+    <string name="hub_money_body">Income, expenses, accounts, budgets, and SMS import.</string>
+    <string name="hub_time_title">Time</string>
+    <string name="hub_time_body">Manual time log with monthly history. Digital Wellbeing does not export usable history, so you enter what matters.</string>
+    <string name="hub_soon_title">More later</string>
+    <string name="hub_soon_body">Room for another tracker when we build it.</string>
+
+    <string name="time_hint">Log time spent on apps or activities yourself. Long-press a row to delete. Totals update for the selected month.</string>
+    <string name="time_empty">No time logged this month. Tap Add time entry.</string>
+    <string name="time_add">Add time entry</string>
+    <string name="time_label_hint">What (app or activity)</string>
+    <string name="time_hours_hint">Hours</string>
+    <string name="time_minutes_hint">Minutes</string>
+    <string name="time_notes_hint">Notes (optional)</string>
+    <string name="time_date_picked">Date: %1$s (tap to change)</string>
+    <string name="time_add_validation">Label and a duration greater than zero are required</string>
+    <string name="time_month_total">This month: %1$s</string>
+    <string name="time_month_total_placeholder">This month: —</string>
     <string name="import_sms_load_samples">Load sample SMS</string>
     <string name="import_sms_samples_loaded">Sample bank and credit-card SMS loaded. Tap Parse pasted SMS.</string>
 

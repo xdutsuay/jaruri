@@ -1,6 +1,6 @@
 # Jaruri
 
-Local Android money manager (Kotlin). Tracks income and expenses on-device, with optional Indian bank/UPI/credit-card SMS import.
+Local Android money and time tracker (Kotlin). Tracks income/expenses and manual time spent on-device, with optional Indian bank/UPI/credit-card SMS import.
 
 **License:** [Apache-2.0](LICENSE)
 
@@ -12,8 +12,9 @@ Local Android money manager (Kotlin). Tracks income and expenses on-device, with
 - Android Studio or command-line Android SDK
 - Device/emulator API 24+
 
-## Features (v1.6.2)
+## Features (v1.7.0)
 
+- Feature hub to open Money or Time
 - Dashboard with **month/year toggle**, income / expense / balance
 - Add, **edit**, delete (confirm), and **search/filter** transactions
 - Categories, accounts (cash/bank/CC debt), monthly budgets
@@ -21,6 +22,7 @@ Local Android money manager (Kotlin). Tracks income and expenses on-device, with
 - CSV export **and import**
 - Settings: currency selector (₹ default), date format, demo history, opt-in SMS auto-import
 - SMS import: inbox, paste, sample SMS, editable preview
+- **Time**: manual time entries with category, duration, date, and monthly totals
 - **No Google account, Play Services, or network permission** on `main`
 
 ## Branches

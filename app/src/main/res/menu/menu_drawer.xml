@@ -2,6 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:checkableBehavior="single">
         <item
+            android:id="@+id/nav_hub"
+            android:icon="@android:drawable/ic_menu_view"
+            android:title="@string/menu_hub" />
+        <item
+            android:id="@+id/nav_time"
+            android:icon="@android:drawable/ic_menu_recent_history"
+            android:title="@string/menu_time" />
+        <item
             android:id="@+id/nav_home"
             android:icon="@android:drawable/ic_menu_rotate"
             android:title="@string/menu_dashboard" />
@@ -23,7 +31,7 @@
             android:title="@string/menu_budgets" />
         <item
             android:id="@+id/nav_recurring"
-            android:icon="@android:drawable/ic_menu_recent_history"
+            android:icon="@android:drawable/ic_menu_today"
             android:title="@string/menu_recurring" />
         <item
             android:id="@+id/nav_import_sms"

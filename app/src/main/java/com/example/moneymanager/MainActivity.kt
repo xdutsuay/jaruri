@@ -34,6 +34,8 @@ class MainActivity : AppCompatActivity() {
 
         appBarConfiguration = AppBarConfiguration(
             setOf(
+                R.id.nav_hub,
+                R.id.nav_time,
                 R.id.nav_home,
                 R.id.nav_chart,
                 R.id.nav_categories,

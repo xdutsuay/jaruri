@@ -1,0 +1,1 @@
+Feature hub, manual time tracking with monthly history, and a proper Jaruri launcher icon.

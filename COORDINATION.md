@@ -40,7 +40,6 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-## Active Lock
 - Status: AVAILABLE
 - Active agent: none
 - Role: none
@@ -50,16 +49,15 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Baton
 
-- Previous agent: Antigravity
-- Baton state: END_OF_DEVELOPMENT
-- Next agent: none
-- Next step:
-  - Project has reached the end of active development. No further tasks planned.
+- Previous agent: Cursor
+- Baton state: HANDOFF
+- Next agent: —
+- Next step: install debug build; optionally tag v1.7.0 and refresh F-Droid metadata
 
 ## Current Priorities
 
-- F-Droid inclusion MR !50136: respond to waiting-on-response (R8 done in app; description markdown + squash still on GitLab).
-- Deferred (not shipping now): time spent ledger — historical screen-time style tracking with manual entry. Digital Wellbeing does not expose usable historical export; treat as a separate feature, not a cosmetic patch.
+- Hub + time tracking MVP shipped in tree (tag 1.7.0 when ready).
+- F-Droid MR !50136 is separate; update metadata after tagging if desired.
 
 ## Deferred Known Bugs
 
@@ -68,7 +66,7 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Deferred Features
 
-- Time spent tracking (manual entry + historical aggregation). Skipped for the F-Droid R8/metadata pass because it is a new product surface, not a cosmetic change.
+- Automatic screen-time import from Digital Wellbeing / UsageStats. Platform history is not reliably exportable; manual entry ships first.
 
 ## Risk Register
 

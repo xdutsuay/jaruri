@@ -3,12 +3,31 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/nav_home">
+    app:startDestination="@id/nav_hub">
+
+    <fragment
+        android:id="@+id/nav_hub"
+        android:name="com.example.moneymanager.ui.HubFragment"
+        android:label="@string/hub_title"
+        tools:layout="@layout/fragment_hub">
+        <action
+            android:id="@+id/action_hub_to_money"
+            app:destination="@id/nav_home" />
+        <action
+            android:id="@+id/action_hub_to_time"
+            app:destination="@id/nav_time" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_time"
+        android:name="com.example.moneymanager.ui.TimeHomeFragment"
+        android:label="@string/hub_time_title"
+        tools:layout="@layout/fragment_time_home" />
 
     <fragment
         android:id="@+id/nav_home"
         android:name="com.example.moneymanager.ui.HomeFragment"
-        android:label="@string/app_name"
+        android:label="@string/menu_dashboard"
         tools:layout="@layout/fragment_home">
         <action
             android:id="@+id/action_home_to_addTransaction"
