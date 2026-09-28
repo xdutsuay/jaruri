@@ -1,0 +1,1 @@
+Enable R8 minify and resource shrinking for the release build.
