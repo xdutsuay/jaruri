@@ -58,13 +58,17 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Current Priorities
 
-- **None (End of Active Development)**
-- Maintenance mode only.
+- F-Droid inclusion MR !50136: respond to waiting-on-response (R8 done in app; description markdown + squash still on GitLab).
+- Deferred (not shipping now): time spent ledger — historical screen-time style tracking with manual entry. Digital Wellbeing does not expose usable historical export; treat as a separate feature, not a cosmetic patch.
 
 ## Deferred Known Bugs
 
 - No active deferred category bugs at the moment.
 - The category refresh issue and the income/expense category-switching issue were resolved in the shared category-state pass on 2026-04-03.
+
+## Deferred Features
+
+- Time spent tracking (manual entry + historical aggregation). Skipped for the F-Droid R8/metadata pass because it is a new product surface, not a cosmetic change.
 
 ## Risk Register
 
