@@ -40,35 +40,46 @@ object SmsAutoImporter {
         val parsed = SmsParser.parse(body) ?: return null
         if (!parsed.isComplete) return null
 
-        val dao = AppDatabase.getDatabase(appContext).transactionDao()
+        val db = AppDatabase.getDatabase(appContext)
+        val known = InstrumentLedger.knownInstruments(db.accountDao())
+        val trust = SmsTrustEvaluator.evaluate(body, address, parsed, known)
+        if (!trust.shouldAutoImport) return null
+
+        val dao = db.transactionDao()
         val hash = parsed.smsHash
         if (hash.isNotEmpty()) {
             val tag = "[sms:$hash]"
             if (dao.countByMemoTag(tag) > 0) return null
         }
 
-        val learnDao = AppDatabase.getDatabase(appContext).categoryLearnDao()
+        val built = SmsImportPipeline.buildEntity(
+            db = db,
+            parsed = parsed,
+            rawBody = body,
+            needsCategoryReview = true
+        )
+        // Recompute review flag with learning (pipeline used null learned for needsReview)
+        val learnDao = db.categoryLearnDao()
         val learnKey = CategoryLearning.keyFromDescription(parsed.description, parsed.toMemo())
         val learned = learnKey?.let { learnDao.get(it)?.category }
-        val category = SmsCategorizer.categorize(parsed, body, learned)
-        val type = parsed.typeLabel()
-        val db = AppDatabase.getDatabase(appContext)
-        val accountId = CreditCardLedger.resolveOrCreateCard(db.accountDao(), parsed.cardLast4)
-        val entity = TransactionEntity(
-            type = type,
-            category = category,
-            amount = parsed.amount!!,
-            dateTimestamp = parsed.dateTimestamp,
-            memo = parsed.toMemo(),
-            accountId = accountId
-        )
-        dao.insertTransaction(entity)
-        CreditCardLedger.applyDebtDelta(db.accountDao(), accountId, type, category, entity.amount)
+        val needsReview = SmsCategorizer.needsCategoryReview(built.entity.category, learned)
+        val entity = built.entity.copy(needsCategoryReview = needsReview)
 
+        val rowId = dao.insertTransaction(entity)
+        InstrumentLedger.applyEntityDelta(db.accountDao(), entity)
+        InstrumentLedger.recordReportedBalance(
+            db.accountDao(),
+            db.balanceObservationDao(),
+            entity.accountId,
+            parsed,
+            transactionId = rowId
+        )
+
+        val saved = entity.copy(id = rowId)
         if (notify) {
-            showAddedNotification(appContext, entity)
+            showAddedNotification(appContext, saved)
         }
-        return entity
+        return saved
     }
 
     private fun showAddedNotification(context: Context, entity: TransactionEntity) {
@@ -77,7 +88,11 @@ object SmsAutoImporter {
             val merchant = entity.memo.substringBefore(" ·").substringBefore(" |").trim()
                 .ifBlank { entity.category }
             val amountLabel = "₹${"%.2f".format(entity.amount)}"
-            val title = context.getString(R.string.sms_auto_import_notification_title)
+            val title = if (entity.needsCategoryReview) {
+                context.getString(R.string.sms_auto_import_notification_title_review)
+            } else {
+                context.getString(R.string.sms_auto_import_notification_title)
+            }
             val text = context.getString(
                 R.string.sms_auto_import_notification_text,
                 amountLabel,

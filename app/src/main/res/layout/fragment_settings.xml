@@ -70,6 +70,64 @@
                 android:text="@string/settings_auto_import_sms_hint"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
+                android:layout_marginBottom="16dp" />
+
+            <Switch
+                android:id="@+id/switch_usage_wellbeing"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_usage_wellbeing"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_usage_wellbeing_hint"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_fiscal_year_label"
+                android:textColor="@color/text_secondary" />
+
+            <Spinner
+                android:id="@+id/sp_fiscal_year"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/surface_white"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp"
+                android:minHeight="48dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_fiscal_year_hint"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:layout_marginBottom="16dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sms_history_backfill"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_sms_history_backfill"
+                android:textColor="@color/text_primary"
+                app:strokeColor="@color/text_secondary"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/tv_sms_backfill_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_sms_history_backfill_hint"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
                 android:layout_marginBottom="24dp" />
 
             <com.google.android.material.button.MaterialButton

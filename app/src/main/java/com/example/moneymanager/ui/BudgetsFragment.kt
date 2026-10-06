@@ -49,6 +49,7 @@ class BudgetsFragment : Fragment(R.layout.fragment_budgets) {
             refresh()
         }
         viewModel.currencySymbol.observe(viewLifecycleOwner) { refresh() }
+        viewModel.fiscalYearMode.observe(viewLifecycleOwner) { refresh() }
 
         view.findViewById<MaterialButton>(R.id.btn_add_budget).setOnClickListener {
             showAddDialog()
@@ -57,9 +58,11 @@ class BudgetsFragment : Fragment(R.layout.fragment_budgets) {
 
     private fun refresh() {
         val cal = Calendar.getInstance()
-        val year = cal.get(Calendar.YEAR)
         val month = cal.get(Calendar.MONTH)
-        val monthSpend = MainViewModel.filterByMonth(transactions, year, month)
+        val fyMode = viewModel.fiscalYearMode.value
+            ?: com.example.moneymanager.data.SettingsRepository.FY_CALENDAR
+        val year = com.example.moneymanager.utils.FiscalYearHelpers.defaultYearValue(fyMode)
+        val monthSpend = MainViewModel.filterByMonth(transactions, year, month, fyMode)
             .filter { it.type == "EXPENSE" }
             .groupBy { it.category }
             .mapValues { (_, list) -> list.sumOf { it.amount } }

@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.moneymanager.R
 import com.example.moneymanager.data.RecurringEntity
+import com.example.moneymanager.utils.SubscriptionDetector
 import com.example.moneymanager.viewmodel.MainViewModel
 import com.google.android.material.button.MaterialButton
 import java.text.SimpleDateFormat
@@ -32,17 +33,39 @@ class RecurringFragment : Fragment(R.layout.fragment_recurring) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val rv = view.findViewById<RecyclerView>(R.id.rv_recurring)
+        val rvSuggestions = view.findViewById<RecyclerView>(R.id.rv_suggestions)
+        val suggestionsHeader = view.findViewById<TextView>(R.id.tv_suggestions_header)
         val empty = view.findViewById<TextView>(R.id.tv_recurring_empty)
         val adapter = Adapter(
             symbolProvider = { viewModel.currencySymbol.value ?: "₹" },
             onLongClick = { item -> confirmDelete(item) }
         )
+        val suggestionAdapter = SuggestionAdapter(
+            symbolProvider = { viewModel.currencySymbol.value ?: "₹" },
+            onAdd = { suggestion -> viewModel.acceptSubscriptionSuggestion(suggestion) }
+        )
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = adapter
+        rvSuggestions.layoutManager = LinearLayoutManager(requireContext())
+        rvSuggestions.adapter = suggestionAdapter
 
         viewModel.activeRecurring.observe(viewLifecycleOwner) { list ->
             adapter.submit(list)
-            empty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+            empty.visibility = if (list.isEmpty() &&
+                viewModel.subscriptionSuggestions.value.isNullOrEmpty()
+            ) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+        }
+
+        viewModel.subscriptionSuggestions.observe(viewLifecycleOwner) { list ->
+            val show = !list.isNullOrEmpty()
+            suggestionsHeader.visibility = if (show) View.VISIBLE else View.GONE
+            rvSuggestions.visibility = if (show) View.VISIBLE else View.GONE
+            suggestionAdapter.submit(list.orEmpty())
+            if (show) empty.visibility = View.GONE
         }
 
         view.findViewById<MaterialButton>(R.id.btn_add_recurring).setOnClickListener {
@@ -130,6 +153,45 @@ class RecurringFragment : Fragment(R.layout.fragment_recurring) {
             .setPositiveButton(R.string.delete) { _, _ -> viewModel.deleteRecurring(item) }
             .setNegativeButton(R.string.cancel, null)
             .show()
+    }
+
+    private class SuggestionAdapter(
+        private val symbolProvider: () -> String,
+        private val onAdd: (SubscriptionDetector.Suggestion) -> Unit
+    ) : RecyclerView.Adapter<SuggestionAdapter.VH>() {
+        private var items: List<SubscriptionDetector.Suggestion> = emptyList()
+
+        fun submit(list: List<SubscriptionDetector.Suggestion>) {
+            items = list
+            notifyDataSetChanged()
+        }
+
+        class VH(v: View) : RecyclerView.ViewHolder(v) {
+            val title: TextView = v.findViewById(R.id.tvSuggestionTitle)
+            val sub: TextView = v.findViewById(R.id.tvSuggestionSub)
+            val add: MaterialButton = v.findViewById(R.id.btnSuggestionAdd)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+            val v = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_subscription_suggestion, parent, false)
+            return VH(v)
+        }
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            val item = items[position]
+            val symbol = symbolProvider()
+            holder.title.text = "${item.displayName} · ${item.category}"
+            holder.sub.text = holder.itemView.context.getString(
+                R.string.subscription_hits,
+                item.hitCount,
+                symbol,
+                item.amount
+            )
+            holder.add.setOnClickListener { onAdd(item) }
+        }
+
+        override fun getItemCount() = items.size
     }
 
     private class Adapter(

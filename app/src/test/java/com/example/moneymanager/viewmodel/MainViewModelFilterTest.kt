@@ -10,7 +10,10 @@ class MainViewModelFilterTest {
     private val list = listOf(
         TransactionEntity(1, "INCOME", "Salary", 1000.0, 1L, "Monthly pay"),
         TransactionEntity(2, "EXPENSE", "Food", 200.0, 2L, "Lunch"),
-        TransactionEntity(3, "EXPENSE", "Credit Card", 500.0, 3L, "Card XX1234 Flipkart")
+        TransactionEntity(
+            3, "EXPENSE", "Credit Card", 500.0, 3L, "Card XX1234 Flipkart",
+            needsCategoryReview = true
+        )
     )
 
     @Test
@@ -18,6 +21,19 @@ class MainViewModelFilterTest {
         assertEquals(1, MainViewModel.filterTransactions(list, "", "INCOME").size)
         assertEquals(2, MainViewModel.filterTransactions(list, "", "EXPENSE").size)
         assertEquals(3, MainViewModel.filterTransactions(list, "", "ALL").size)
+        assertEquals(1, MainViewModel.filterTransactions(list, "", "REVIEW").size)
+    }
+
+    @Test
+    fun transferFilterAndTotals() {
+        val withTransfer = list + TransactionEntity(
+            4, "TRANSFER", "Transfer", 50.0, 4L, "Bank to cash",
+            accountId = 1, transferToAccountId = 2
+        )
+        assertEquals(1, MainViewModel.filterTransactions(withTransfer, "", "TRANSFER").size)
+        val totals = com.example.moneymanager.utils.TransactionAccounting.sumTotals(withTransfer)
+        assertEquals(1000.0, totals.income, 0.001)
+        assertEquals(700.0, totals.expense, 0.001) // Food 200 + Credit Card 500 (legacy cat still expense type)
     }
 
     @Test

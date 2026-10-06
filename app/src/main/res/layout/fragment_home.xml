@@ -6,15 +6,13 @@
     android:layout_height="match_parent"
     android:background="@color/background_gray">
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_summary"
+        style="@style/Widget.Jaruri.Card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="12dp"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="2dp"
-        app:cardBackgroundColor="@color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -50,9 +48,9 @@
             </LinearLayout>
 
             <View
-                android:layout_width="1dp"
+                android:layout_width="@dimen/hairline_stroke"
                 android:layout_height="match_parent"
-                android:background="#E0E0E0"
+                android:background="@color/hairline"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="4dp"/>
 
@@ -80,9 +78,9 @@
             </LinearLayout>
 
             <View
-                android:layout_width="1dp"
+                android:layout_width="@dimen/hairline_stroke"
                 android:layout_height="match_parent"
-                android:background="#E0E0E0"
+                android:background="@color/hairline"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="4dp"/>
 
@@ -109,7 +107,25 @@
             </LinearLayout>
 
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:id="@+id/tv_runway"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:background="@color/surface_white"
+        android:textColor="@color/text_secondary"
+        android:textSize="13sp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/card_summary"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="Runway: ₹12,000 (cash+bank − cards)"
+        tools:visibility="visible" />
 
     <!-- Compact filter: search + type chips on one quiet row -->
     <LinearLayout
@@ -120,7 +136,7 @@
         android:paddingHorizontal="16dp"
         android:paddingTop="10dp"
         android:paddingBottom="4dp"
-        app:layout_constraintTop_toBottomOf="@id/card_summary"
+        app:layout_constraintTop_toBottomOf="@id/tv_runway"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -157,39 +173,35 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_filter_all"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                style="@style/Widget.Jaruri.FilterButton"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="@dimen/filter_chip_height"
                 android:layout_weight="1"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:text="@string/filter_all"
-                android:textSize="13sp"
-                app:strokeColor="@color/primary_yellow_dark" />
+                android:text="@string/filter_all" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_filter_income"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                style="@style/Widget.Jaruri.FilterButton"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="@dimen/filter_chip_height"
                 android:layout_weight="1"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:text="@string/filter_income"
-                android:textSize="13sp"
-                app:strokeColor="@color/primary_yellow_dark" />
+                android:text="@string/filter_income" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_filter_expense"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                style="@style/Widget.Jaruri.FilterButton"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="@dimen/filter_chip_height"
                 android:layout_weight="1"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:text="@string/filter_expense"
-                android:textSize="13sp"
-                app:strokeColor="@color/primary_yellow_dark" />
+                android:text="@string/filter_expense" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_filter_review"
+                style="@style/Widget.Jaruri.FilterButton"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/filter_chip_height"
+                android:layout_weight="1.2"
+                android:text="@string/filter_review" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
     </LinearLayout>
 

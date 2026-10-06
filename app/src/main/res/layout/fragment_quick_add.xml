@@ -6,6 +6,29 @@
     android:orientation="vertical"
     android:background="@color/background_gray">
 
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/ll_templates"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp" />
+    </HorizontalScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_repeat_last"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="8dp"
+        android:text="@string/money_repeat_last"
+        android:textColor="@color/text_primary"
+        app:strokeColor="@color/text_secondary" />
+
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/toggle_type"
         android:layout_width="match_parent"

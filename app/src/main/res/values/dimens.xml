@@ -3,4 +3,12 @@
     <dimen name="nav_header_vertical_spacing">8dp</dimen>
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
+
+    <!-- Shared sharpness tokens (EM-owned) -->
+    <dimen name="hairline_stroke">1.5dp</dimen>
+    <dimen name="hairline_thin">1dp</dimen>
+    <dimen name="card_corner_sharp">6dp</dimen>
+    <dimen name="card_corner_feature">12dp</dimen>
+    <dimen name="filter_chip_height">36dp</dimen>
+    <dimen name="filter_chip_text">12sp</dimen>
 </resources>

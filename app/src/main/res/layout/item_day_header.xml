@@ -2,27 +2,42 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="8dp"
-    android:background="#EEEEEE">
+    android:orientation="vertical"
+    android:background="@color/background_gray">
 
-    <TextView
-        android:id="@+id/tvDayLabel"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:textColor="@color/text_primary"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:text="09/23 Wed" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="6dp">
 
-    <TextView
-        android:id="@+id/tvDayTotal"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/text_secondary"
-        android:textSize="13sp"
-        android:text="Expenses: 684" />
+        <TextView
+            android:id="@+id/tvDayLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.02"
+            android:text="09/23 Wed" />
+
+        <TextView
+            android:id="@+id/tvDayTotal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:text="Expenses: 684" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/hairline_thin"
+        android:layout_marginHorizontal="16dp"
+        android:background="@color/hairline" />
 </LinearLayout>

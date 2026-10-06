@@ -17,5 +17,8 @@ class HubFragment : Fragment(R.layout.fragment_hub) {
         view.findViewById<MaterialCardView>(R.id.card_time).setOnClickListener {
             findNavController().navigate(R.id.action_hub_to_time)
         }
+        view.findViewById<MaterialCardView>(R.id.card_usage).setOnClickListener {
+            findNavController().navigate(R.id.action_hub_to_usage)
+        }
     }
 }

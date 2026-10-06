@@ -27,6 +27,7 @@ sealed class LedgerRow {
 class TransactionAdapter(
     private val onClick: (TransactionEntity) -> Unit,
     private val onLongClick: (TransactionEntity) -> Unit = {},
+    private val onCategorize: (TransactionEntity) -> Unit = {},
     private val currencySymbol: () -> String = { "₹" }
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -47,7 +48,13 @@ class TransactionAdapter(
         return if (viewType == TYPE_HEADER) {
             HeaderVH(inflater.inflate(R.layout.item_day_header, parent, false))
         } else {
-            TxVH(inflater.inflate(R.layout.item_transaction, parent, false), onClick, onLongClick, currencySymbol)
+            TxVH(
+                inflater.inflate(R.layout.item_transaction, parent, false),
+                onClick,
+                onLongClick,
+                onCategorize,
+                currencySymbol
+            )
         }
     }
 
@@ -78,6 +85,7 @@ class TransactionAdapter(
         itemView: View,
         val onClick: (TransactionEntity) -> Unit,
         val onLongClick: (TransactionEntity) -> Unit,
+        val onCategorize: (TransactionEntity) -> Unit,
         val currencySymbol: () -> String
     ) : RecyclerView.ViewHolder(itemView) {
         fun bind(item: TransactionEntity) {
@@ -89,6 +97,8 @@ class TransactionAdapter(
                 memoView.visibility = View.VISIBLE
                 memoView.text = item.memo
             }
+            val badge = itemView.findViewById<TextView>(R.id.tvReviewBadge)
+            badge.visibility = if (item.needsCategoryReview) View.VISIBLE else View.GONE
             CategoryIcons.bind(
                 itemView.findViewById(R.id.vIconBg),
                 itemView.findViewById(R.id.tvIconLetter),
@@ -98,15 +108,25 @@ class TransactionAdapter(
             val amtView = itemView.findViewById<TextView>(R.id.tvAmount)
             val green = ContextCompat.getColor(itemView.context, R.color.accent_green)
             val red = ContextCompat.getColor(itemView.context, R.color.accent_red)
-            if (item.type == "INCOME") {
-                amtView.text = String.format(Locale.getDefault(), "+ %.0f", item.amount)
-                amtView.setTextColor(green)
-            } else {
-                amtView.text = String.format(Locale.getDefault(), "- %.0f", item.amount)
-                amtView.setTextColor(red)
+            val muted = ContextCompat.getColor(itemView.context, R.color.text_secondary)
+            when {
+                item.type.equals("TRANSFER", ignoreCase = true) -> {
+                    amtView.text = String.format(Locale.getDefault(), "↔ %.0f", item.amount)
+                    amtView.setTextColor(muted)
+                }
+                item.type == "INCOME" -> {
+                    amtView.text = String.format(Locale.getDefault(), "+ %.0f", item.amount)
+                    amtView.setTextColor(green)
+                }
+                else -> {
+                    amtView.text = String.format(Locale.getDefault(), "- %.0f", item.amount)
+                    amtView.setTextColor(red)
+                }
             }
 
-            itemView.setOnClickListener { onClick(item) }
+            itemView.setOnClickListener {
+                if (item.needsCategoryReview) onCategorize(item) else onClick(item)
+            }
             itemView.setOnLongClickListener {
                 onLongClick(item)
                 true
@@ -134,7 +154,12 @@ class TransactionAdapter(
                 }
             val out = mutableListOf<LedgerRow>()
             for ((dayStart, list) in grouped) {
-                val expense = list.filter { it.type == "EXPENSE" }.sumOf { it.amount }
+                val expense = list
+                    .filter {
+                        it.type == "EXPENSE" &&
+                            !com.example.moneymanager.utils.TransactionAccounting.isNeutralForTotals(it)
+                    }
+                    .sumOf { it.amount }
                 out += LedgerRow.Header(
                     dayStartMillis = dayStart,
                     label = dayFmt.format(Date(dayStart)),

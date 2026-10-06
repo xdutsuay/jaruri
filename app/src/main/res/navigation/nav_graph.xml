@@ -16,13 +16,26 @@
         <action
             android:id="@+id/action_hub_to_time"
             app:destination="@id/nav_time" />
+        <action
+            android:id="@+id/action_hub_to_usage"
+            app:destination="@id/nav_usage" />
     </fragment>
 
     <fragment
         android:id="@+id/nav_time"
         android:name="com.example.moneymanager.ui.TimeHomeFragment"
         android:label="@string/hub_time_title"
-        tools:layout="@layout/fragment_time_home" />
+        tools:layout="@layout/fragment_time_home">
+        <action
+            android:id="@+id/action_time_to_usage"
+            app:destination="@id/nav_usage" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_usage"
+        android:name="com.example.moneymanager.wellbeing.UsageWellbeingFragment"
+        android:label="@string/usage_title"
+        tools:layout="@layout/fragment_usage_wellbeing" />
 
     <fragment
         android:id="@+id/nav_home"

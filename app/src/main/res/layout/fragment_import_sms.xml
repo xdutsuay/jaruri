@@ -39,6 +39,25 @@
             app:backgroundTint="@color/primary_yellow_dark"
             android:layout_marginBottom="8dp" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDeepScan"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_sms_history_backfill"
+            android:textColor="@color/text_primary"
+            app:strokeColor="@color/text_secondary"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvDeepScanStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:visibility="gone"
+            android:layout_marginBottom="8dp" />
+
         <TextView
             android:id="@+id/tvInboxSection"
             android:layout_width="wrap_content"

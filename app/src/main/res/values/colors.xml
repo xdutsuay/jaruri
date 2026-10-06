@@ -9,20 +9,26 @@
     <color name="white">#FFFFFFFF</color>
 
     <!-- Brand: amber primary with dark ink for contrast on yellow surfaces -->
-    <color name="primary_yellow">#F9A825</color>
-    <color name="primary_yellow_dark">#F57F17</color>
-    <color name="accent_blue">#0D47A1</color>
-    <color name="accent_red">#C62828</color>
-    <color name="accent_green">#2E7D32</color>
-    <color name="text_primary">#121212</color>
-    <color name="text_secondary">#424242</color>
-    <color name="background_gray">#F0F0F0</color>
+    <color name="primary_yellow">#FFB300</color>
+    <color name="primary_yellow_dark">#FF8F00</color>
+    <color name="accent_blue">#0B3D91</color>
+    <color name="accent_red">#B71C1C</color>
+    <color name="accent_green">#1B5E20</color>
+    <color name="text_primary">#0A0A0A</color>
+    <!-- Slightly darker secondary for readable labels on gray / white -->
+    <color name="text_secondary">#2E2E2E</color>
+    <color name="background_gray">#E8E8E8</color>
     <color name="surface_white">#FFFFFF</color>
-    <color name="divider">#9E9E9E</color>
+    <color name="divider">#757575</color>
+    <color name="divider_light">#BDBDBD</color>
     <color name="empty_banner_bg">#E3F2FD</color>
-    <color name="button_on_yellow">#121212</color>
+    <color name="review_banner_bg">#FFF8E1</color>
+    <color name="review_badge_bg">#FF8F00</color>
+    <color name="button_on_yellow">#0A0A0A</color>
     <color name="card_debt">#FFCDD2</color>
     <color name="card_cash">#C8E6C9</color>
-    <color name="nav_header_text">#121212</color>
-    <color name="toolbar_on_primary">#121212</color>
+    <color name="nav_header_text">#0A0A0A</color>
+    <color name="toolbar_on_primary">#0A0A0A</color>
+    <!-- Visible hairlines on light gray; avoid washed-out #BDBDBD for strokes -->
+    <color name="hairline">#757575</color>
 </resources>

@@ -7,6 +7,7 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.moneymanager.data.AppDatabase
 import com.example.moneymanager.data.TimeEntryEntity
+import com.example.moneymanager.utils.journal.JournalTextHelpers
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -37,20 +38,56 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
         category: String,
         durationMinutes: Int,
         startedAt: Long,
-        notes: String = ""
+        notes: String = "",
+        source: String = TimeEntryEntity.SOURCE_MANUAL
     ) {
-        if (label.isBlank() || durationMinutes <= 0) return
+        val trimmedLabel = label.trim()
+        val trimmedNotes = notes.trim()
+        // Manual timed entries need a label and positive duration.
+        // Voice/journal notes may omit duration (0) but need text.
+        val ok = when (source) {
+            TimeEntryEntity.SOURCE_VOICE ->
+                (trimmedLabel.isNotEmpty() || trimmedNotes.isNotEmpty()) && durationMinutes >= 0
+            else ->
+                trimmedLabel.isNotEmpty() && durationMinutes > 0
+        }
+        if (!ok) return
         viewModelScope.launch {
+            val resolvedLabel = when {
+                trimmedLabel.isNotEmpty() -> trimmedLabel
+                else -> JournalTextHelpers.suggestLabel(trimmedNotes)
+            }
             dao.insert(
                 TimeEntryEntity(
-                    label = label.trim(),
+                    label = resolvedLabel,
                     category = category.trim().ifEmpty { "Other" },
-                    durationMinutes = durationMinutes,
+                    durationMinutes = durationMinutes.coerceAtLeast(0),
                     startedAt = startedAt,
-                    notes = notes.trim()
+                    notes = trimmedNotes,
+                    source = source
                 )
             )
         }
+    }
+
+    /** Persist an edited voice transcript as a journal / time entry (text only). */
+    fun addVoiceJournal(
+        text: String,
+        category: String,
+        durationMinutes: Int?,
+        startedAt: Long,
+        label: String = ""
+    ) {
+        val notes = JournalTextHelpers.normalizeTranscript(text)
+        if (notes.isEmpty()) return
+        addEntry(
+            label = label.ifBlank { JournalTextHelpers.suggestLabel(notes) },
+            category = category,
+            durationMinutes = durationMinutes?.coerceAtLeast(0) ?: 0,
+            startedAt = startedAt,
+            notes = notes,
+            source = TimeEntryEntity.SOURCE_VOICE
+        )
     }
 
     fun deleteEntry(entry: TimeEntryEntity) {
@@ -77,5 +114,9 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
                 else -> "${m}m"
             }
         }
+
+        /** Month total ignores journal-only rows (duration 0). */
+        fun sumLoggedMinutes(entries: List<TimeEntryEntity>): Int =
+            entries.sumOf { it.durationMinutes.coerceAtLeast(0) }
     }
 }

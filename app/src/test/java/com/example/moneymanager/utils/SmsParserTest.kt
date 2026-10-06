@@ -213,6 +213,24 @@ You have received Rs 200 from ALICE via UPI.
         assertFalse(SmsParser.isPromotionalSender("CP-IDFCFB-S"))
     }
 
+    @Test
+    fun autopayMandateNoticeIsRejected() {
+        val sms =
+            "Your account will be debited with Rs 1,500.00 towards ICCL  Mutual Funds  Autopay for the Autopay on 03/09/2026. Pause mandate to stop execution. IDFC FIRST Bank"
+        assertTrue(SmsParser.isNonLedgerNotice(sms))
+        assertFalse(SmsParser.looksLikeTransaction(sms))
+        assertNull(SmsParser.parse(sms, fixedNow))
+    }
+
+    @Test
+    fun createMandateNoticeIsRejected() {
+        val sms =
+            "Your account will be debited with Rs 399.00 towards APPLE MEDIA SERVICES for the Create Mandate on 01/09/2026. Pause mandate to stop execution. IDFC FIRST Bank"
+        assertTrue(SmsParser.isNonLedgerNotice(sms))
+        assertFalse(SmsParser.looksLikeTransaction(sms))
+        assertNull(SmsParser.parse(sms, fixedNow))
+    }
+
     private fun calendarMillis(year: Int, month: Int, day: Int): Long {
         val cal = Calendar.getInstance()
         cal.clear()

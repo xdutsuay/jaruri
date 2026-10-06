@@ -23,6 +23,13 @@
     <string name="filter_all_months">All months</string>
     <string name="filter_income">Income</string>
     <string name="filter_expense">Expense</string>
+    <string name="filter_review">Categorize</string>
+    <string name="categorize_title">Choose category</string>
+    <string name="needs_category_badge">Set category</string>
+    <string name="needs_category_hint">%1$d transaction(s) need a category — tap a row to set one. Choices improve future auto-import.</string>
+    <string name="account_sms_balance">SMS %1$s%2$s</string>
+    <string name="account_running_diff">Diff %1$s%2$s</string>
+    <string name="accounts_hint">Cash, bank, and credit cards. Long-press to delete. Card balance is outstanding debt. SMS balances are tallied against the ledger as a running difference.</string>
     <string name="pick_month_title">Select month</string>
     <string name="memo_hint">Memo</string>
     <string name="widget_description">Jaruri month income, expenses, and balance</string>
@@ -64,7 +71,6 @@
     <string name="menu_export">Backup / CSV</string>
     <string name="menu_settings">Settings</string>
     <string name="menu_about">About</string>
-    <string name="accounts_hint">Cash, bank, and credit cards. Long-press to delete. Card balance is outstanding debt.</string>
     <string name="budgets_hint">Monthly category limits vs this month’s spending. Long-press to delete.</string>
     <string name="add_account">Add account</string>
     <string name="add_budget">Add budget</string>
@@ -86,12 +92,38 @@
     <string name="hub_money_title">Money</string>
     <string name="hub_money_body">Income, expenses, accounts, budgets, and SMS import.</string>
     <string name="hub_time_title">Time</string>
-    <string name="hub_time_body">Manual time log with monthly history. Digital Wellbeing does not export usable history, so you enter what matters.</string>
+    <string name="hub_time_body">Time log and voice journal. Speak a quick end-of-day dump, edit the text, save — stays on this phone.</string>
+    <string name="hub_usage_title">Screen time</string>
+    <string name="hub_usage_body">Opt-in phone usage from Android Usage Access. Aggregates stay on this device — no app timers.</string>
     <string name="hub_soon_title">More later</string>
     <string name="hub_soon_body">Room for another tracker when we build it.</string>
+    <string name="menu_usage">Screen time</string>
 
-    <string name="time_hint">Log time spent on apps or activities yourself. Long-press a row to delete. Totals update for the selected month.</string>
-    <string name="time_empty">No time logged this month. Tap Add time entry.</string>
+    <string name="usage_title">Screen time</string>
+    <string name="usage_subtitle">Daily app foreground totals from Android Usage Stats. Data stays on this phone.</string>
+    <string name="usage_today">Today</string>
+    <string name="usage_week">Last 7 days</string>
+    <string name="usage_dash">—</string>
+    <string name="usage_categories">By category</string>
+    <string name="usage_top_apps">Top apps</string>
+    <string name="usage_top_apps_hint">Long-press an app to change its category.</string>
+    <string name="usage_permission_needed">Usage Access is required to read screen time. Jaruri only stores daily minute totals on this device.</string>
+    <string name="usage_open_settings">Open Usage Access settings</string>
+    <string name="usage_disabled_hint">Screen time is off. Turn it on to refresh aggregates from the phone (still on-device only).</string>
+    <string name="usage_enable">Turn on screen time</string>
+    <string name="usage_enabled_toast">Screen time enabled</string>
+    <string name="usage_no_data">No usage data yet. Some phones return empty stats until you use apps after granting access.</string>
+    <string name="usage_refreshing">Refreshing…</string>
+    <string name="usage_refreshed">Updated from phone</string>
+    <string name="usage_week_fallback">Showing week totals (today still empty).</string>
+    <string name="usage_set_category">Category for %1$s</string>
+    <string name="usage_category_saved">Saved as %1$s</string>
+    <string name="usage_open_from_time">Screen time</string>
+    <string name="settings_usage_wellbeing">Screen time (usage stats)</string>
+    <string name="settings_usage_wellbeing_hint">When on, Jaruri may read Android Usage Access to store daily per-app minute totals on this phone only. No cloud sync, no app-timer enforcement. Requires Usage Access permission.</string>
+
+    <string name="time_hint">Hold the mic for a voice journal, or add a timed entry manually. Long-press a row to delete. Only timed minutes count toward the month total. Audio is not saved — text only.</string>
+    <string name="time_empty">Nothing this month. Hold the mic to journal, or add a time entry.</string>
     <string name="time_add">Add time entry</string>
     <string name="time_label_hint">What (app or activity)</string>
     <string name="time_hours_hint">Hours</string>
@@ -101,6 +133,20 @@
     <string name="time_add_validation">Label and a duration greater than zero are required</string>
     <string name="time_month_total">This month: %1$s</string>
     <string name="time_month_total_placeholder">This month: —</string>
+    <string name="voice_journal_hold">Hold to speak</string>
+    <string name="voice_journal_listening">Listening… release when done</string>
+    <string name="voice_journal_tap_stop">Listening… tap to stop</string>
+    <string name="voice_journal_preview_title">Edit journal</string>
+    <string name="voice_journal_preview_hint">Edit the transcript, then save. Optional duration turns this into a timed log too.</string>
+    <string name="voice_journal_text_hint">Journal text</string>
+    <string name="voice_journal_category">Category</string>
+    <string name="voice_journal_duration_optional">Duration optional — leave blank for a note-only journal.</string>
+    <string name="voice_journal_save">Save journal</string>
+    <string name="voice_journal_empty">Add some text before saving</string>
+    <string name="voice_journal_permission_denied">Microphone permission is needed for voice journal. You can still add entries manually.</string>
+    <string name="voice_journal_unavailable">Speech recognition is unavailable on this device. Install an offline speech language pack in system settings, or type an entry manually.</string>
+    <string name="voice_journal_source_badge">Voice</string>
+    <string name="voice_journal_note_only">note</string>
     <string name="import_sms_load_samples">Load sample SMS</string>
     <string name="import_sms_samples_loaded">Sample bank and credit-card SMS loaded. Tap Parse pasted SMS.</string>
 
@@ -138,6 +184,51 @@
     <string name="settings_auto_import_notify_optional">Auto-import on. Notification permission optional for alerts.</string>
     <string name="sms_auto_import_channel_name">SMS auto-import</string>
     <string name="sms_auto_import_notification_title">Transaction added</string>
+    <string name="sms_auto_import_notification_title_review">Transaction added — set category</string>
     <string name="sms_auto_import_notification_text">Added %1$s — %2$s</string>
+
+    <string name="runway_label">Runway: %1$s%2$.0f (cash+bank - cards)</string>
+    <string name="transfer_between_accounts">Transfer between accounts</string>
+    <string name="transfer_title">Account transfer</string>
+    <string name="transfer_from">From account</string>
+    <string name="transfer_to">To account</string>
+    <string name="transfer_amount">Amount</string>
+    <string name="transfer_memo">Memo (optional)</string>
+    <string name="transfer_saved">Transfer saved</string>
+    <string name="transfer_need_two_accounts">Add at least two accounts first</string>
+    <string name="transfer_same_account">Pick two different accounts</string>
+    <string name="subscription_suggestions">Detected subscriptions</string>
+    <string name="subscription_add">Add</string>
+    <string name="subscription_hits">~%1$d× · %2$s%3$.0f / mo</string>
+    <string name="category_rules_tab">Rules</string>
+    <string name="add_category_rule">Add keyword rule</string>
+    <string name="category_rule_keyword">Contains keyword</string>
+    <string name="category_rule_category">Category</string>
+    <string name="category_rule_hint">Rules match SMS/memo text after learned merchants, before built-in keywords.</string>
+    <string name="category_rule_row">"%1$s" → %2$s</string>
+    <string name="chart_vs_prev_expense">Expenses %1$s%2$.0f · vs last month %3$s%4$.0f (%5$s%6$.0f)</string>
+    <string name="chart_vs_prev_income">Income %1$s%2$.0f · vs last month %3$s%4$.0f (%5$s%6$.0f)</string>
+    <string name="chart_breakdown_header">By category</string>
+    <string name="chart_other_label">Other</string>
+    <string name="filter_transfer">Transfer</string>
+
+    <!-- Money polish: payees / FY / quick-add / SMS history -->
+    <string name="money_rename_payee">Rename payee</string>
+    <string name="money_rename_payee_ok">Payee renamed</string>
+    <string name="money_rename_payee_none">No linked payee on this transaction</string>
+    <string name="money_repeat_last">+1 Repeat last expense</string>
+    <string name="money_repeat_last_ok">Repeated last expense</string>
+    <string name="money_repeat_last_empty">No recent expense to repeat</string>
+    <string name="money_shortcut_quick_add">Quick add</string>
+    <string name="money_shortcut_quick_add_long">Add expense quickly</string>
+    <string name="money_tile_quick_add">Jaruri add</string>
+    <string name="money_quick_add_done">Added ₹%1$.0f</string>
+    <string name="settings_fiscal_year_label">Year mode</string>
+    <string name="settings_fiscal_year_hint">Calendar year (Jan–Dec) or Indian financial year (Apr–Mar). Charts and home month picker follow this.</string>
+    <string name="settings_fiscal_calendar">Calendar year (Jan–Dec)</string>
+    <string name="settings_fiscal_apr_mar">Indian FY (Apr–Mar)</string>
+    <string name="settings_sms_history_backfill">Deep SMS history scan</string>
+    <string name="settings_sms_history_backfill_hint">One-shot deeper inbox rescan (beyond Import SMS). New rows need category review. Resume-safe.</string>
+    <string name="settings_sms_history_running">Scanning inbox…</string>
 </resources>
 
