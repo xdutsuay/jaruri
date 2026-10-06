@@ -20,16 +20,20 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.moneymanager.R
 import com.example.moneymanager.data.AccountEntity
+import com.example.moneymanager.utils.TransactionAccounting
 import com.example.moneymanager.viewmodel.MainViewModel
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class AccountsFragment : Fragment(R.layout.fragment_accounts) {
 
     private val viewModel: MainViewModel by activityViewModels()
+    private var accountsCache: List<AccountEntity> = emptyList()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val rv = view.findViewById<RecyclerView>(R.id.rv_accounts)
+        val tvRunway = view.findViewById<TextView>(R.id.tv_accounts_runway)
         val adapter = AccountAdapter(
             symbolProvider = { viewModel.currencySymbol.value ?: "₹" },
             onClick = { account -> showEditDialog(account) },
@@ -38,11 +42,104 @@ class AccountsFragment : Fragment(R.layout.fragment_accounts) {
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = adapter
 
-        viewModel.allAccounts.observe(viewLifecycleOwner) { adapter.submit(it) }
+        viewModel.allAccounts.observe(viewLifecycleOwner) { list ->
+            accountsCache = list
+            adapter.submit(list)
+            val symbol = viewModel.currencySymbol.value ?: "₹"
+            if (list.isEmpty()) {
+                tvRunway.visibility = View.GONE
+            } else {
+                tvRunway.visibility = View.VISIBLE
+                val net = TransactionAccounting.netLiquid(list)
+                tvRunway.text = getString(R.string.runway_label, symbol, net)
+            }
+        }
+
+        view.findViewById<MaterialButton>(R.id.btn_transfer).setOnClickListener {
+            showTransferDialog()
+        }
 
         view.findViewById<FloatingActionButton>(R.id.fab_add_account).setOnClickListener {
             showAddDialog()
         }
+    }
+
+    private fun showTransferDialog() {
+        if (accountsCache.size < 2) {
+            Toast.makeText(requireContext(), R.string.transfer_need_two_accounts, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val names = accountsCache.map { "${it.name} (${it.type.replace('_', ' ')})" }
+        val pad = (16 * resources.displayMetrics.density).toInt()
+        val container = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad * 2, pad, pad * 2, pad / 2)
+        }
+        val spFrom = Spinner(requireContext()).apply {
+            adapter = ArrayAdapter(
+                requireContext(),
+                android.R.layout.simple_spinner_dropdown_item,
+                names
+            )
+        }
+        val spTo = Spinner(requireContext()).apply {
+            adapter = ArrayAdapter(
+                requireContext(),
+                android.R.layout.simple_spinner_dropdown_item,
+                names
+            )
+            if (names.size > 1) setSelection(1)
+        }
+        val etAmount = EditText(requireContext()).apply {
+            hint = getString(R.string.transfer_amount)
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        val etMemo = EditText(requireContext()).apply {
+            hint = getString(R.string.transfer_memo)
+        }
+        val labelFrom = TextView(requireContext()).apply { text = getString(R.string.transfer_from) }
+        val labelTo = TextView(requireContext()).apply { text = getString(R.string.transfer_to) }
+        container.addView(labelFrom)
+        container.addView(spFrom)
+        container.addView(labelTo)
+        container.addView(spTo)
+        container.addView(etAmount)
+        container.addView(etMemo)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.transfer_title)
+            .setView(container)
+            .setPositiveButton(R.string.save_transaction) { _, _ ->
+                val from = accountsCache.getOrNull(spFrom.selectedItemPosition) ?: return@setPositiveButton
+                val to = accountsCache.getOrNull(spTo.selectedItemPosition) ?: return@setPositiveButton
+                if (from.id == to.id) {
+                    Toast.makeText(requireContext(), R.string.transfer_same_account, Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                val amount = etAmount.text.toString().toDoubleOrNull()
+                if (amount == null || amount <= 0) {
+                    Toast.makeText(requireContext(), "Enter an amount", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                val memo = etMemo.text.toString().trim()
+                val category = if (to.isCreditCard) {
+                    TransactionAccounting.CAT_CC_PAYMENT
+                } else {
+                    TransactionAccounting.CAT_TRANSFER
+                }
+                viewModel.addTransfer(
+                    fromAccountId = from.id,
+                    toAccountId = to.id,
+                    amount = amount,
+                    memo = memo.ifBlank {
+                        "Transfer: ${from.name} → ${to.name}"
+                    },
+                    category = category
+                )
+                Toast.makeText(requireContext(), R.string.transfer_saved, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun showEditDialog(account: AccountEntity) {
@@ -195,13 +292,30 @@ class AccountsFragment : Fragment(R.layout.fragment_accounts) {
             holder.name.text = a.name
             holder.meta.text = buildString {
                 append(a.type.replace('_', ' '))
+                if (a.bankHint.isNotBlank()) append(" · ").append(a.bankHint)
                 if (a.last4.isNotBlank()) append(" · XX").append(a.last4)
-                if (a.isCreditCard) append(" · Limit ").append(symbol).append(a.creditLimit.toInt())
+                if (a.isCreditCard && a.creditLimit > 0) {
+                    append(" · Limit ").append(symbol).append(a.creditLimit.toInt())
+                }
+                if (a.seenCount > 0) append(" · seen ").append(a.seenCount)
             }
-            holder.balance.text = if (a.isCreditCard) {
-                "Outstanding $symbol${"%.0f".format(a.balance)} · Available $symbol${"%.0f".format(a.availableCredit)}"
-            } else {
-                "$symbol${"%.0f".format(a.balance)}"
+            holder.balance.text = buildString {
+                if (a.isCreditCard) {
+                    append("Outstanding $symbol${"%.0f".format(a.balance)}")
+                    append(" · Available $symbol${"%.0f".format(a.availableCredit)}")
+                } else {
+                    append("$symbol${"%.0f".format(a.balance)}")
+                }
+                val reported = a.lastReportedBalance
+                if (reported != null) {
+                    append('\n')
+                    append("SMS $symbol${"%.0f".format(reported)}")
+                    if (a.lastReportedKind.isNotBlank()) append(" (").append(a.lastReportedKind).append(')')
+                    append(" · Diff ")
+                    val diff = a.runningDifference
+                    if (diff > 0) append('+')
+                    append(symbol).append("%.0f".format(diff))
+                }
             }
             val bg = if (a.isCreditCard) R.color.card_debt else R.color.card_cash
             holder.itemView.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, bg))

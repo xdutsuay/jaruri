@@ -39,6 +39,7 @@ class QuickAddFragment : Fragment(R.layout.fragment_quick_add) {
         val etMemo = view.findViewById<EditText>(R.id.et_memo)
         val toggle = view.findViewById<MaterialButtonToggleGroup>(R.id.toggle_type)
         val keypad = view.findViewById<GridLayout>(R.id.keypad)
+        val llTemplates = view.findViewById<android.widget.LinearLayout>(R.id.ll_templates)
 
         categoryAdapter = CatAdapter { name ->
             selectedCategory = name
@@ -58,6 +59,39 @@ class QuickAddFragment : Fragment(R.layout.fragment_quick_add) {
 
         viewModel.expenseCategories.observe(viewLifecycleOwner) { refreshCategories() }
         viewModel.incomeCategories.observe(viewLifecycleOwner) { refreshCategories() }
+        viewModel.quickAddTemplates.observe(viewLifecycleOwner) { templates ->
+            llTemplates.removeAllViews()
+            templates.orEmpty().forEach { tmpl ->
+                val chip = MaterialButton(
+                    requireContext(),
+                    null,
+                    com.google.android.material.R.attr.materialButtonOutlinedStyle
+                ).apply {
+                    text = "${tmpl.name} ${tmpl.amount.toInt()}"
+                    textSize = 12f
+                    setOnClickListener {
+                        viewModel.applyQuickAddTemplate(tmpl)
+                        findNavController().popBackStack()
+                    }
+                    setOnLongClickListener {
+                        viewModel.deleteQuickAddTemplate(tmpl.id)
+                        true
+                    }
+                }
+                llTemplates.addView(chip)
+            }
+        }
+
+        view.findViewById<MaterialButton>(R.id.btn_repeat_last).setOnClickListener {
+            viewModel.repeatLastExpense { ok ->
+                Toast.makeText(
+                    requireContext(),
+                    if (ok) R.string.money_repeat_last_ok else R.string.money_repeat_last_empty,
+                    Toast.LENGTH_SHORT
+                ).show()
+                if (ok) findNavController().popBackStack()
+            }
+        }
 
         tvAmount.text = amountBuffer
         tvSelected.text = selectedCategory
@@ -126,13 +160,25 @@ class QuickAddFragment : Fragment(R.layout.fragment_quick_add) {
                     Toast.makeText(requireContext(), "Enter an amount", Toast.LENGTH_SHORT).show()
                     return
                 }
+                val memo = etMemo.text.toString().trim()
                 viewModel.addTransaction(
                     type = if (isIncome) "INCOME" else "EXPENSE",
                     category = selectedCategory,
                     amount = amount,
                     date = System.currentTimeMillis(),
-                    memo = etMemo.text.toString().trim()
+                    memo = memo
                 )
+                // Pin as template when memo starts with "pin:"
+                if (memo.startsWith("pin:", ignoreCase = true)) {
+                    viewModel.saveQuickAddTemplate(
+                        name = memo.removePrefix("pin:").removePrefix("PIN:").trim()
+                            .ifBlank { selectedCategory },
+                        amount = amount,
+                        category = selectedCategory,
+                        type = if (isIncome) "INCOME" else "EXPENSE",
+                        note = ""
+                    )
+                }
                 findNavController().popBackStack()
                 return
             }

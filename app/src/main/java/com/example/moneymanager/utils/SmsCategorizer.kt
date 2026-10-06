@@ -1,5 +1,6 @@
 package com.example.moneymanager.utils
 
+import com.example.moneymanager.data.CategoryRuleEntity
 import java.util.Locale
 
 /**
@@ -7,6 +8,8 @@ import java.util.Locale
  *
  * Payment mode (Bank / Credit Card / UPI) is NOT a category — it stays in the memo.
  * Categories mirror purpose (Food, Home, Bills…), matching typical money-manager usage.
+ *
+ * Order: learned merchant → user [CategoryRuleEntity] → built-in keywords → defaults.
  */
 object SmsCategorizer {
 
@@ -35,11 +38,15 @@ object SmsCategorizer {
             "electricity", "broadband", "recharge", "airtel", "jio", "vi ",
             "bsnl", "gas", "water bill", "emi", "loan", "insurance", "premium"
         )),
+        Rule("Investment", listOf(
+            "mutual fund", "mutual funds", "iccl", "groww", "zerodha", "kuvera",
+            "coin by zerodha", "sip ", "nps ", "demat"
+        )),
         Rule("Home", listOf(
             "rent", "society maintenance", "maintenance"
         )),
         Rule("Electronics", listOf(
-            "croma", "reliance digital"
+            "croma", "reliance digital", "apple media"
         ))
     )
 
@@ -58,11 +65,13 @@ object SmsCategorizer {
     /**
      * Picks a category name for [parsed] using [rawBody] (and merchant description) keywords.
      * [learnedCategory] wins when the user previously corrected this merchant.
+     * [customRules] are applied next (contains-keyword), then built-in lists.
      */
     fun categorize(
         parsed: ParsedSms,
         rawBody: String = "",
-        learnedCategory: String? = null
+        learnedCategory: String? = null,
+        customRules: List<CategoryRuleEntity> = emptyList()
     ): String {
         if (!learnedCategory.isNullOrBlank()) return learnedCategory
 
@@ -76,21 +85,59 @@ object SmsCategorizer {
 
         val isIncome = parsed.isIncome == true
 
+        matchCustomRules(haystack, customRules, isIncome)?.let { return it }
+
         if (isIncome) {
             // CC repayment only when this SMS is actually a card payment receipt.
             if (parsed.modeOfPayment == "Credit Card" && looksLikeCardPayment(haystack)) {
-                return "Credit Card Payment"
+                return TransactionAccounting.CAT_CC_PAYMENT
             }
             matchRules(haystack, INCOME_RULES)?.let { return it }
-            if (isUpiP2p(parsed, haystack)) return "Transfer"
+            if (isUpiP2p(parsed, haystack)) return TransactionAccounting.CAT_TRANSFER
             // Unknown bank credits are often transfers/refunds — not salary.
             return "Others"
         }
 
         // Expense: never map payment-mode "Credit Card" → category "Credit Card".
         matchRules(haystack, EXPENSE_RULES)?.let { return it }
-        if (isUpiP2p(parsed, haystack)) return "Transfer"
+        if (isUpiP2p(parsed, haystack)) return TransactionAccounting.CAT_TRANSFER
         return "Others"
+    }
+
+    /**
+     * Auto-imported rows stay provisional until the user confirms a category once
+     * for that merchant (learning key). Keyword guesses are still applied as a
+     * starting point.
+     */
+    fun needsCategoryReview(category: String, learnedCategory: String?): Boolean {
+        if (!learnedCategory.isNullOrBlank()) return false
+        val c = category.trim().lowercase(Locale.ROOT)
+        if (c.isEmpty()) return true
+        // Credit-card repayments are structural — skip review noise.
+        if (c == TransactionAccounting.CAT_CC_PAYMENT.lowercase(Locale.ROOT)) return false
+        return true
+    }
+
+    /** First enabled custom rule whose keyword is contained in [haystack]. */
+    fun matchCustomRules(
+        haystack: String,
+        rules: List<CategoryRuleEntity>,
+        isIncome: Boolean
+    ): String? {
+        val needle = haystack.lowercase(Locale.ROOT)
+        for (rule in rules) {
+            if (!rule.enabled) continue
+            val kw = rule.keyword.trim().lowercase(Locale.ROOT)
+            if (kw.length < 2) continue
+            val typeOk = when (rule.type.uppercase(Locale.ROOT)) {
+                CategoryRuleEntity.TYPE_INCOME -> isIncome
+                CategoryRuleEntity.TYPE_EXPENSE -> !isIncome
+                else -> true
+            }
+            if (!typeOk) continue
+            if (needle.contains(kw)) return rule.category.trim()
+        }
+        return null
     }
 
     private fun looksLikeCardPayment(haystack: String): Boolean {

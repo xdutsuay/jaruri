@@ -10,13 +10,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.moneymanager.R
 import com.example.moneymanager.utils.ParsedSms
 import com.example.moneymanager.utils.SmsCategorizer
+import com.example.moneymanager.utils.SmsHistoryBackfill
 import com.example.moneymanager.utils.SmsInboxReader
 import com.example.moneymanager.utils.SmsParser
 import com.example.moneymanager.viewmodel.MainViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Import transactions from device SMS inbox or pasted text.
@@ -30,6 +35,7 @@ class ImportSmsFragment : Fragment(R.layout.fragment_import_sms) {
     private var incomeCategoryNames: List<String> = emptyList()
     private var inboxItems: MutableList<SelectableInbox> = mutableListOf()
     private var proposalViews: MutableList<ProposalBinding> = mutableListOf()
+    private var pendingDeepScan = false
 
     private data class SelectableInbox(
         val sms: SmsInboxReader.InboxSms,
@@ -55,8 +61,14 @@ class ImportSmsFragment : Fragment(R.layout.fragment_import_sms) {
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            loadInbox()
+            if (pendingDeepScan) {
+                pendingDeepScan = false
+                runDeepScan()
+            } else {
+                loadInbox()
+            }
         } else {
+            pendingDeepScan = false
             Toast.makeText(
                 requireContext(),
                 R.string.import_sms_permission_denied,
@@ -87,6 +99,9 @@ class ImportSmsFragment : Fragment(R.layout.fragment_import_sms) {
         }
 
         btnReadInbox.setOnClickListener { ensurePermissionAndRead() }
+        view.findViewById<Button>(R.id.btnDeepScan)?.setOnClickListener {
+            ensurePermissionAndDeepScan()
+        }
         btnLoadSamples.setOnClickListener {
             etPasteSms.setText(SmsParser.samplePasteText())
             Toast.makeText(requireContext(), R.string.import_sms_samples_loaded, Toast.LENGTH_SHORT)
@@ -142,6 +157,39 @@ class ImportSmsFragment : Fragment(R.layout.fragment_import_sms) {
             loadInbox()
         } else {
             requestSmsPermission.launch(Manifest.permission.READ_SMS)
+        }
+    }
+
+    private fun ensurePermissionAndDeepScan() {
+        val granted = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.READ_SMS
+        ) == PackageManager.PERMISSION_GRANTED
+        if (granted) {
+            runDeepScan()
+        } else {
+            pendingDeepScan = true
+            requestSmsPermission.launch(Manifest.permission.READ_SMS)
+        }
+    }
+
+    private fun runDeepScan() {
+        val status = requireView().findViewById<TextView>(R.id.tvDeepScanStatus)
+        val btn = requireView().findViewById<Button>(R.id.btnDeepScan)
+        status.visibility = View.VISIBLE
+        status.text = getString(R.string.settings_sms_history_running)
+        btn.isEnabled = false
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                SmsHistoryBackfill.run(requireContext()) { progress ->
+                    viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+                        status.text = progress.message
+                    }
+                }
+            }
+            status.text = result.message
+            btn.isEnabled = true
+            Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show()
         }
     }
 

@@ -16,6 +16,27 @@
         android:background="@color/surface_white" />
 
     <TextView
+        android:id="@+id/tv_suggestions_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="4dp"
+        android:text="@string/subscription_suggestions"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_suggestions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="8dp"
+        android:nestedScrollingEnabled="false"
+        android:visibility="gone" />
+
+    <TextView
         android:id="@+id/tv_recurring_empty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

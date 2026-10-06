@@ -31,6 +31,16 @@ interface TransactionDao {
     )
     suspend fun countByMemoTag(tag: String): Int
 
+    @Query(
+        "SELECT COUNT(*) FROM transactions WHERE deletedAt IS NULL AND needsCategoryReview = 1"
+    )
+    fun countNeedsCategoryReview(): Flow<Int>
+
+    @Query(
+        "SELECT * FROM transactions WHERE deletedAt IS NULL AND needsCategoryReview = 1 ORDER BY dateTimestamp DESC"
+    )
+    fun getNeedsCategoryReview(): Flow<List<TransactionEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: TransactionEntity): Long
 
@@ -57,6 +67,30 @@ interface TransactionDao {
 
     @Query("DELETE FROM transactions WHERE deletedAt IS NULL")
     suspend fun deleteAllActive()
+
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE deletedAt IS NULL
+          AND dateTimestamp BETWEEN :since AND :until
+        ORDER BY dateTimestamp DESC
+        """
+    )
+    suspend fun getRecentForRefundMatch(since: Long, until: Long): List<TransactionEntity>
+
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE deletedAt IS NULL AND type = 'EXPENSE'
+        ORDER BY dateTimestamp DESC LIMIT 1
+        """
+    )
+    suspend fun getLastExpense(): TransactionEntity?
+
+    @Query(
+        "SELECT * FROM transactions WHERE deletedAt IS NULL AND payeeId = :payeeId"
+    )
+    suspend fun getByPayeeId(payeeId: Long): List<TransactionEntity>
 
     @Delete
     suspend fun deleteTransaction(transaction: TransactionEntity)

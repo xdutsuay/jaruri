@@ -11,6 +11,7 @@ import com.example.moneymanager.R
 import com.example.moneymanager.data.AppDatabase
 import com.example.moneymanager.data.SettingsRepository
 import com.example.moneymanager.viewmodel.MainViewModel
+import com.example.moneymanager.utils.TransactionAccounting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -32,12 +33,8 @@ class SummaryWidgetProvider : AppWidgetProvider() {
             val year = cal.get(Calendar.YEAR)
             val month = cal.get(Calendar.MONTH)
             val monthList = MainViewModel.filterByMonth(txs, year, month)
-            var income = 0.0
-            var expense = 0.0
-            monthList.forEach {
-                if (it.type == "INCOME") income += it.amount else expense += it.amount
-            }
-            val balance = income - expense
+            val totals = TransactionAccounting.sumTotals(monthList)
+            val balance = totals.balance
             val open = Intent(app, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
@@ -49,8 +46,8 @@ class SummaryWidgetProvider : AppWidgetProvider() {
             )
             for (id in appWidgetIds) {
                 val views = RemoteViews(app.packageName, R.layout.widget_summary)
-                views.setTextViewText(R.id.tv_widget_income, "$symbol${"%.0f".format(income)}")
-                views.setTextViewText(R.id.tv_widget_expense, "$symbol${"%.0f".format(expense)}")
+                views.setTextViewText(R.id.tv_widget_income, "$symbol${"%.0f".format(totals.income)}")
+                views.setTextViewText(R.id.tv_widget_expense, "$symbol${"%.0f".format(totals.expense)}")
                 views.setTextViewText(R.id.tv_widget_balance, "$symbol${"%.0f".format(balance)}")
                 views.setOnClickPendingIntent(R.id.widget_root, pending)
                 appWidgetManager.updateAppWidget(id, views)

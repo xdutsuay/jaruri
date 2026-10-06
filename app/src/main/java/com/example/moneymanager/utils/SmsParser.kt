@@ -44,9 +44,49 @@ object SmsParser {
         Pattern.CASE_INSENSITIVE
     )
 
+    /** Card masks only — must mention card (avoids matching bank A/c XX####). */
     private val CARD_LAST4 = Pattern.compile(
-        """(?:card|xx|ending|x{2,})\s*[xX*]*\s*(\d{4})\b""",
+        """(?:credit\s+card|debit\s+card|\bcard)\s+(?:ending\s+)?(?:xx|x{2,}|\*)*\s*(\d{4})\b""",
         Pattern.CASE_INSENSITIVE
+    )
+    private val CARD_ENDING_LOOSE = Pattern.compile(
+        """\b(?:ending|xx)\s*[xX*]*\s*(\d{4})\b""",
+        Pattern.CASE_INSENSITIVE
+    )
+
+    /** Bank account masks: A/c XX4521, A/C XXXXX540545, account ending 5555 */
+    private val ACCOUNT_LAST4 = Pattern.compile(
+        """(?:a/?c(?:count)?(?:\s*(?:no\.?|number|num))?|ac)\s*[xX*]{2,}\s*(\d{2,})""",
+        Pattern.CASE_INSENSITIVE
+    )
+    private val ACCOUNT_ENDING = Pattern.compile(
+        """(?:a/?c(?:count)?|account)\s+(?:ending|no\.?|number)?\s*(\d{4})\b""",
+        Pattern.CASE_INSENSITIVE
+    )
+
+    private val BALANCE_VALUE = Pattern.compile(
+        """([\d,]+(?:\.\d{1,2})?)"""
+    )
+    private val BALANCE_LABELS = listOf(
+        BalanceKind.AVAILABLE_LIMIT to Pattern.compile(
+            """(?:avbl\.?\s*limit|available\s+limit|avail(?:able)?\.?\s*limit)\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*""",
+            Pattern.CASE_INSENSITIVE
+        ),
+        BalanceKind.OUTSTANDING to Pattern.compile(
+            """(?:outstanding(?:\s+balance)?|total\s+due|amount\s+due)\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*""",
+            Pattern.CASE_INSENSITIVE
+        ),
+        BalanceKind.AVAILABLE to Pattern.compile(
+            """(?:avl\.?\s*bal(?:ance)?|available\s+balance|avbl\.?\s*bal(?:ance)?|""" +
+                """new\s+balance|curr(?:ent)?\s+bal(?:ance)?|closing\s+balance|""" +
+                """(?:your\s+)?(?:new\s+)?balance\s+is)\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*""",
+            Pattern.CASE_INSENSITIVE
+        )
+    )
+
+    /** Capture issuer token before "Bank" without a fixed bank allow-list. */
+    private val BANK_HINT = Pattern.compile(
+        """\b([A-Z][A-Za-z]{1,24})(?:\s+FIRST)?\s+Bank\b"""
     )
 
     private val CREDIT_HINTS = listOf(
@@ -63,6 +103,7 @@ object SmsParser {
         val text = raw.trim()
         if (text.isEmpty()) return null
         if (isPromotional(text)) return null
+        if (isNonLedgerNotice(text)) return null
 
         val amount = extractAmount(text)
         val isIncome = extractIsIncome(text)
@@ -70,10 +111,16 @@ object SmsParser {
 
         val mode = extractMode(text)
         val cardLast4 = extractCardLast4(text)
+        val accountLast4 = extractAccountLast4(text)
+        val (reportedBalance, balanceKind) = extractReportedBalance(text)
+        val bankHint = extractBankHint(text)
         val description = extractDescription(text, mode)
         val dateTs = extractDate(text) ?: fallbackNow
         val snippet = if (text.length > 160) text.substring(0, 157) + "..." else text
         val hash = contentHash(text)
+        val vpa = PayeeResolver.extractVpa(text)
+        val refs = RefundMatcher.extractRefs(text)
+        val isRefund = RefundMatcher.isRefundOrReversal(text, isIncome)
 
         return ParsedSms(
             amount = amount,
@@ -83,7 +130,15 @@ object SmsParser {
             remarks = "SMS: $snippet",
             dateTimestamp = dateTs,
             smsHash = hash,
-            cardLast4 = cardLast4
+            cardLast4 = cardLast4,
+            accountLast4 = accountLast4,
+            reportedBalance = reportedBalance,
+            reportedBalanceKind = balanceKind,
+            bankHint = bankHint,
+            vpa = vpa,
+            upiRef = refs.upiRef,
+            rrn = refs.rrn,
+            isRefundOrReversal = isRefund
         )
     }
 
@@ -108,12 +163,65 @@ object SmsParser {
         val t = raw.trim()
         if (t.isEmpty()) return false
         if (isPromotional(t)) return false
+        if (isNonLedgerNotice(t)) return false
         if (!MONEY_LOOK.matcher(t).find()) return false
         if (!TXN_VERB_LOOK.matcher(t).find()) return false
         val lower = t.lowercase(Locale.ROOT)
         // Skip pure OTP / verification codes even if they mention Rs somehow.
         if (lower.contains("otp") || lower.contains("verification code")) return false
         return true
+    }
+
+    /**
+     * Autopay / e-mandate / scheduled-debit notices that mention an amount but are
+     * not a completed ledger movement. Bank-agnostic phrasing.
+     *
+     * Example: "Your account will be debited with Rs 1,500… for the Autopay…
+     * Pause mandate to stop execution."
+     */
+    fun isNonLedgerNotice(raw: String): Boolean {
+        val t = raw.lowercase(Locale.ROOT)
+        if (t.isEmpty()) return false
+
+        val mandatePhrases = listOf(
+            "pause mandate",
+            "create mandate",
+            "for the create mandate",
+            "for the autopay",
+            "for the auto pay",
+            "for the auto-pay",
+            "e-mandate",
+            "emandate",
+            "mandate registration",
+            "mandate to stop",
+            "stop execution",
+            "standing instruction",
+            "si registration",
+            "nach mandate",
+            "umrn",
+            "auto-pay mandate",
+            "autopay mandate",
+            "mandate setup",
+            "mandate has been registered",
+            "mandate registered",
+            "registration of mandate"
+        )
+        if (mandatePhrases.any { t.contains(it) }) return true
+
+        // Future-tense debit/credit notices without a completed txn marker.
+        val futureDebit = Regex(
+            """\bwill\s+be\s+(debited|credited|charged)\b""",
+            RegexOption.IGNORE_CASE
+        ).containsMatchIn(t)
+        if (futureDebit) {
+            val completed = Regex(
+                """\b(has\s+been\s+debited|has\s+been\s+credited|debited\s+by|""" +
+                    """is\s+debited|is\s+credited|spent\s+on|withdrawn)\b""",
+                RegexOption.IGNORE_CASE
+            ).containsMatchIn(t)
+            if (!completed) return true
+        }
+        return false
     }
 
     /**
@@ -302,8 +410,67 @@ object SmsParser {
     }
 
     private fun extractCardLast4(text: String): String? {
-        val m = CARD_LAST4.matcher(text)
-        return if (m.find()) m.group(1) else null
+        val direct = CARD_LAST4.matcher(text)
+        if (direct.find()) return direct.group(1)
+        // "ending XX7354" only when the SMS is about a card
+        val lower = text.lowercase(Locale.ROOT)
+        if (lower.contains("card") || lower.contains("crd")) {
+            val ending = CARD_ENDING_LOOSE.matcher(text)
+            if (ending.find()) return ending.group(1)
+        }
+        return null
+    }
+
+    fun extractAccountLast4(text: String): String? {
+        val masked = ACCOUNT_LAST4.matcher(text)
+        if (masked.find()) {
+            val digits = masked.group(1)?.filter { it.isDigit() }.orEmpty()
+            if (digits.length >= 4) return digits.takeLast(4)
+        }
+        val ending = ACCOUNT_ENDING.matcher(text)
+        if (ending.find()) return ending.group(1)
+        return null
+    }
+
+    /**
+     * Pulls a non-transaction balance/limit figure from the SMS body.
+     * Returns null when no balance label is present.
+     */
+    fun extractReportedBalance(text: String): Pair<Double?, BalanceKind?> {
+        for ((kind, labelRe) in BALANCE_LABELS) {
+            val label = labelRe.matcher(text)
+            while (label.find()) {
+                val from = label.end()
+                val rest = text.substring(from, (from + 24).coerceAtMost(text.length))
+                val num = BALANCE_VALUE.matcher(rest)
+                if (num.find()) {
+                    val value = num.group(1)?.replace(",", "")?.toDoubleOrNull()
+                    if (value != null && value >= 0) return value to kind
+                }
+            }
+        }
+        return null to null
+    }
+
+    fun extractBankHint(text: String): String? {
+        val m = BANK_HINT.matcher(text)
+        if (m.find()) {
+            val token = m.group(1)?.trim().orEmpty()
+            if (token.length >= 2 && !token.equals("Your", ignoreCase = true) &&
+                !token.equals("The", ignoreCase = true)
+            ) {
+                return token
+            }
+        }
+        // Trailing "Team X Bank" / "Team X"
+        val team = Pattern.compile(
+            """\bTeam\s+([A-Z][A-Za-z]{1,24})(?:\s+FIRST)?(?:\s+Bank)?\b"""
+        ).matcher(text)
+        if (team.find()) {
+            val token = team.group(1)?.trim().orEmpty()
+            if (token.length >= 2) return token
+        }
+        return null
     }
 
     private fun extractDescription(text: String, mode: String): String {

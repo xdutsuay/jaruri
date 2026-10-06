@@ -15,6 +15,28 @@
         android:textSize="13sp"
         android:background="@color/surface_white" />
 
+    <TextView
+        android:id="@+id/tv_accounts_runway"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="12dp"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:background="@color/surface_white"
+        android:visibility="gone" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_transfer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/transfer_between_accounts"
+        android:textColor="@color/button_on_yellow"
+        app:backgroundTint="@color/primary_yellow_dark" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_accounts"
         android:layout_width="match_parent"

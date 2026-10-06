@@ -14,6 +14,12 @@ interface AccountDao {
     @Query("SELECT * FROM accounts WHERE last4 = :last4 AND type = 'CREDIT_CARD' LIMIT 1")
     suspend fun getCreditCardByLast4(last4: String): AccountEntity?
 
+    @Query("SELECT * FROM accounts WHERE last4 = :last4 AND type = :type LIMIT 1")
+    suspend fun getByLast4AndType(last4: String, type: String): AccountEntity?
+
+    @Query("SELECT * FROM accounts")
+    suspend fun getAllList(): List<AccountEntity>
+
     @Query("SELECT COUNT(*) FROM accounts")
     suspend fun getCount(): Int
 

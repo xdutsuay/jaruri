@@ -49,10 +49,41 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Baton
 
-- Previous agent: Cursor
+- Previous agent: EM (Cursor) money polish 1–6
 - Baton state: HANDOFF
-- Next agent: —
-- Next step: install debug build; optionally tag v1.7.0 and refresh F-Droid metadata
+- Next agent: peers / user validation
+- Next step: AppDatabase now v11; do not bump without reading current version; validate payee/refund/FY/quick-add on device
+
+## Work Log
+
+### 2026-10-06 - EM (Cursor) money polish 1–6
+
+- Scope:
+  - UPI payee resolution, refund/reversal matching, historical SMS backfill, Indian FY toggle, quick-add power, chart display weights
+- Observations:
+  - Started from AppDatabase v8; applied migrations 8→9, 9→10, 10→11
+- Action taken:
+  - Serialized Room to v11 (payees, refund cols, quick_add_templates)
+  - PayeeResolver/PayeeStore, RefundMatcher, FiscalYearHelpers, SmsHistoryBackfill, SmsImportPipeline
+  - Settings FY + deep scan; Home rename payee / +1; QuickAdd templates; deep link jaruri://add; QS tile; ChartDisplayWeights wired
+  - Unit tests: PayeeResolver, RefundMatcher, FiscalYearHelpers, ChartDisplayWeights (+ existing filter/accounting)
+- Validation:
+  - Focused `testDebugUnitTest` BUILD SUCCESSFUL (JDK 17)
+
+### 2026-10-06 - EM (Cursor)
+
+- Scope:
+  - Sprint contract, shared UI sharpness tokens, InstrumentLedger pure-helper tests
+- Observations:
+  - Peers already landed transfers (DB 5→6), voice source (6→7), usage_daily (7→8), nav_usage
+  - Shared conflict risk: AppDatabase, strings.xml, nav_graph, InstrumentLedger
+- Action taken:
+  - Wrote `docs/sprint-em-contract.md`
+  - Sharpened themes/colors/dimens + filter chip color state lists; home/hub/day-header hairlines
+  - Ensured `InstrumentLedger.txnBalanceDelta` / `transferSideDelta` + `InstrumentLedgerTest`
+- Validation:
+  - Running `testDebugUnitTest` (JDK 17)
+
 
 ## Current Priorities
 

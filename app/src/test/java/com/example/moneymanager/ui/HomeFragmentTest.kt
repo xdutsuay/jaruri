@@ -40,8 +40,8 @@ class HomeFragmentTest {
         // Click the FAB
         onView(withId(R.id.fab_add)).perform(click())
 
-        // Verify that we've navigated to the AddTransactionFragment
-        assertEquals(R.id.addTransactionFragment, navController.currentDestination?.id)
+        // FAB opens Quick Add (full editor remains available from list rows).
+        assertEquals(R.id.quickAddFragment, navController.currentDestination?.id)
     }
     @Test
     fun testNavigateToChartOnIncomeClick() {

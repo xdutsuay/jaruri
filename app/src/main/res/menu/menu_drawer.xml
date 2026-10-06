@@ -10,6 +10,10 @@
             android:icon="@android:drawable/ic_menu_recent_history"
             android:title="@string/menu_time" />
         <item
+            android:id="@+id/nav_usage"
+            android:icon="@android:drawable/ic_menu_month"
+            android:title="@string/menu_usage" />
+        <item
             android:id="@+id/nav_home"
             android:icon="@android:drawable/ic_menu_rotate"
             android:title="@string/menu_dashboard" />
