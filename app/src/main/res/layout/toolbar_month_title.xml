@@ -21,10 +21,12 @@
         android:text="Sept" />
 
     <ImageView
-        android:layout_width="18dp"
-        android:layout_height="18dp"
-        android:layout_marginStart="2dp"
-        android:src="@android:drawable/arrow_down_float"
-        android:contentDescription="@string/month_label"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="4dp"
+        android:src="@drawable/ic_chevron_down"
+        android:contentDescription="@null"
+        android:importantForAccessibility="no"
+        android:scaleType="center"
         android:tint="@color/toolbar_on_primary" />
 </LinearLayout>

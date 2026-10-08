@@ -18,6 +18,8 @@ import com.example.moneymanager.utils.CategoryLearning
 import com.example.moneymanager.utils.InstrumentLedger
 import com.example.moneymanager.utils.LegacyExportBootstrap
 import com.example.moneymanager.utils.PhoneMergeBootstrap
+import com.example.moneymanager.utils.ParsedSms
+import com.example.moneymanager.utils.SmsBalanceReplay
 import com.example.moneymanager.utils.SmsCategoryBackfill
 import com.example.moneymanager.utils.SmsLedgerCleanup
 import com.example.moneymanager.utils.SubscriptionDetector
@@ -75,6 +77,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 PhoneMergeBootstrap.runOnce(getApplication())
                 SmsCategoryBackfill.runOnce(getApplication())
                 SmsLedgerCleanup.runOnce(getApplication())
+                SmsBalanceReplay.runOnce(getApplication())
+                SmsBalanceReplay.mergeAutoNamedCardsIntoBanks(
+                    AppDatabase.getDatabase(getApplication())
+                )
             } catch (e: Exception) {
                 android.util.Log.e("MainViewModel", "Startup ledger bootstrap failed", e)
             }
@@ -101,10 +107,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         date: Long,
         memo: String,
         cardLast4: String? = null,
-        accountId: Long? = null
+        accountId: Long? = null,
+        parsed: ParsedSms? = null
     ) {
         viewModelScope.launch {
             val resolvedAccountId = accountId
+                ?: parsed?.let { InstrumentLedger.resolveOrCreate(accountDao, it) }
                 ?: InstrumentLedger.resolveOrCreateCard(accountDao, cardLast4)
             val entity = TransactionEntity(
                 type = type,
@@ -115,8 +123,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 accountId = resolvedAccountId,
                 needsCategoryReview = false
             )
-            dao.insertTransaction(entity)
+            val rowId = dao.insertTransaction(entity)
             InstrumentLedger.applyEntityDelta(accountDao, entity)
+            if (parsed?.reportedBalance != null) {
+                InstrumentLedger.recordReportedBalance(
+                    accountDao,
+                    AppDatabase.getDatabase(getApplication()).balanceObservationDao(),
+                    resolvedAccountId,
+                    parsed,
+                    transactionId = rowId
+                )
+            }
             rememberCategory(memo, null, category, type)
         }
     }

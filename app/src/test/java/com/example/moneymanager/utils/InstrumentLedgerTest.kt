@@ -71,6 +71,26 @@ class InstrumentLedgerTest {
     }
 
     @Test
+    fun adoptSmsAsCashBalance_onlyNewerBankAvailable() {
+        assertEquals(
+            true,
+            InstrumentLedger.adoptSmsAsCashBalance(0L, 10L, BalanceKind.AVAILABLE, false)
+        )
+        assertEquals(
+            false,
+            InstrumentLedger.adoptSmsAsCashBalance(50L, 10L, BalanceKind.AVAILABLE, false)
+        )
+        assertEquals(
+            true,
+            InstrumentLedger.adoptSmsAsCashBalance(10L, 50L, BalanceKind.AVAILABLE, false)
+        )
+        assertEquals(
+            false,
+            InstrumentLedger.adoptSmsAsCashBalance(0L, 10L, BalanceKind.AVAILABLE, true)
+        )
+    }
+
+    @Test
     fun formatDifference_includesSignForPositive() {
         assertEquals("+12.50", InstrumentLedger.formatDifference(12.5))
     }

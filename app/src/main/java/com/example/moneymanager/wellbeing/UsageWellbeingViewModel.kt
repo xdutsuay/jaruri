@@ -54,13 +54,18 @@ class UsageWellbeingViewModel(application: Application) : AndroidViewModel(appli
                     UsageCategoryMapper.categoryFor(pkg, overrides)
                 }
                 val appsSource = todayRows.ifEmpty { weekRows }
+                val todayMins = UsageAggregator.totalMinutes(todayRows)
+                val weekMins = UsageAggregator.totalMinutes(weekRows)
+                val daysPresent = weekRows.map { it.day }.toSet().size.coerceAtLeast(1)
                 val top = UsageAggregator.topApps(appsSource, limit = 10).map { (pkg, mins) ->
                     AppMinutes(pkg, mins, categoryOf(pkg))
                 }
                 UiSummary(
                     enabled = true,
-                    todayMinutes = UsageAggregator.totalMinutes(todayRows),
-                    weekMinutes = UsageAggregator.totalMinutes(weekRows),
+                    todayMinutes = todayMins,
+                    weekMinutes = weekMins,
+                    avgDayMinutes = weekMins / daysPresent,
+                    dayTotals = UsageAggregator.dailyTotals(weekRows),
                     topApps = top,
                     categories = UsageAggregator.categoryTotals(appsSource, categoryOf),
                     usingWeekFallback = todayRows.isEmpty() && weekRows.isNotEmpty(),
@@ -117,6 +122,8 @@ class UsageWellbeingViewModel(application: Application) : AndroidViewModel(appli
         val enabled: Boolean,
         val todayMinutes: Int,
         val weekMinutes: Int,
+        val avgDayMinutes: Int,
+        val dayTotals: List<Pair<String, Int>>,
         val topApps: List<AppMinutes>,
         val categories: List<Pair<String, Int>>,
         val usingWeekFallback: Boolean,
@@ -127,6 +134,8 @@ class UsageWellbeingViewModel(application: Application) : AndroidViewModel(appli
                 enabled = enabled,
                 todayMinutes = 0,
                 weekMinutes = 0,
+                avgDayMinutes = 0,
+                dayTotals = emptyList(),
                 topApps = emptyList(),
                 categories = emptyList(),
                 usingWeekFallback = false,

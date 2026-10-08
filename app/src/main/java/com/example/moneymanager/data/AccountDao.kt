@@ -17,6 +17,9 @@ interface AccountDao {
     @Query("SELECT * FROM accounts WHERE last4 = :last4 AND type = :type LIMIT 1")
     suspend fun getByLast4AndType(last4: String, type: String): AccountEntity?
 
+    @Query("SELECT * FROM accounts WHERE last4 = :last4")
+    suspend fun getByLast4(last4: String): List<AccountEntity>
+
     @Query("SELECT * FROM accounts")
     suspend fun getAllList(): List<AccountEntity>
 

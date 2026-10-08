@@ -49,6 +49,18 @@ class SmsBalanceParseTest {
     }
 
     @Test
+    fun newBalAbbreviationIsSeparateFromTheDebit() {
+        val sms =
+            "Your A/C XXXXX881199 is debited by INR 2,500.00 on 01/10/26 13:20. New Bal :INR 8,500.00."
+        val p = SmsParser.parse(sms, fixedNow)!!
+        assertEquals(2500.0, p.amount!!, 0.001)
+        assertEquals(false, p.isIncome)
+        assertEquals("1199", p.accountLast4)
+        assertEquals(8500.00, p.reportedBalance!!, 0.001)
+        assertEquals(BalanceKind.AVAILABLE, p.reportedBalanceKind)
+    }
+
+    @Test
     fun needsReviewUntilLearned() {
         assertTrue(SmsCategorizer.needsCategoryReview("Food", learnedCategory = null))
         assertTrue(SmsCategorizer.needsCategoryReview("Others", learnedCategory = null))

@@ -59,4 +59,13 @@ object UsageAggregator {
             .filter { it.second > 0 }
             .sortedWith(compareByDescending<Pair<String, Int>> { it.second }.thenBy { it.first })
     }
+
+    /** Minutes per calendar day, oldest → newest. */
+    fun dailyTotals(rows: List<UsageDailyEntity>): List<Pair<String, Int>> {
+        if (rows.isEmpty()) return emptyList()
+        return rows
+            .groupBy { it.day }
+            .map { (day, list) -> day to list.sumOf { it.minutes.coerceAtLeast(0) } }
+            .sortedBy { it.first }
+    }
 }

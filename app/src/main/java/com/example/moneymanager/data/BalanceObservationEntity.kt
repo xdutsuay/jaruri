@@ -46,4 +46,7 @@ interface BalanceObservationDao {
 
     @Query("SELECT * FROM balance_observations WHERE accountId = :accountId ORDER BY observedAt DESC LIMIT 1")
     suspend fun latest(accountId: Long): BalanceObservationEntity?
+
+    @Query("SELECT COUNT(*) FROM balance_observations WHERE smsHash = :smsHash AND smsHash != ''")
+    suspend fun countByHash(smsHash: String): Int
 }

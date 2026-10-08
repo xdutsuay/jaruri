@@ -72,6 +72,19 @@ object InstrumentLedger {
         }
         val hint = bankHint?.trim().orEmpty()
         val label = if (hint.isNotBlank()) "$hint A/c XX$last4" else "A/c XX$last4"
+        // Older imports stored every XX#### mask as a credit card, including savings accounts.
+        val mislabeled = accountDao.getByLast4AndType(last4, AccountEntity.TYPE_CREDIT_CARD)
+        if (mislabeled != null && isAutoNamedCard(mislabeled, last4)) {
+            accountDao.update(
+                mislabeled.copy(
+                    name = label,
+                    type = AccountEntity.TYPE_BANK,
+                    bankHint = if (mislabeled.bankHint.isBlank()) hint else mislabeled.bankHint,
+                    seenCount = mislabeled.seenCount + 1
+                )
+            )
+            return mislabeled.id
+        }
         return accountDao.insert(
             AccountEntity(
                 name = label,
@@ -82,6 +95,11 @@ object InstrumentLedger {
                 seenCount = 1
             )
         )
+    }
+
+    private fun isAutoNamedCard(account: AccountEntity, last4: String): Boolean {
+        val name = account.name.trim()
+        return name == "Card XX$last4" || name.endsWith(" Card XX$last4")
     }
 
     private suspend fun touchSeen(accountDao: AccountDao, existing: AccountEntity, bankHint: String?) {
@@ -245,7 +263,24 @@ object InstrumentLedger {
     }
 
     /**
+     * Bank available-balance SMS is the cash figure to show.
+     * A later message replaces an earlier one. Card limits do not overwrite cash.
+     */
+    fun adoptSmsAsCashBalance(
+        lastObservedAt: Long,
+        smsAt: Long,
+        kind: BalanceKind,
+        isCreditCard: Boolean
+    ): Boolean {
+        if (kind != BalanceKind.AVAILABLE || isCreditCard) return false
+        return lastObservedAt == 0L || smsAt >= lastObservedAt
+    }
+
+    /**
      * Compare SMS-reported balance to current ledger and store a running difference.
+     * For a bank account, the newest "available / new balance" figure becomes the
+     * balance shown in the app. Month income is unchanged — a salary dated last
+     * month still belongs to last month.
      */
     suspend fun recordReportedBalance(
         accountDao: AccountDao,
@@ -257,28 +292,39 @@ object InstrumentLedger {
         if (accountId == null) return
         val reported = parsed.reportedBalance ?: return
         val kind = parsed.reportedBalanceKind ?: return
-        val acc = accountDao.getById(accountId) ?: return
+        val hash = parsed.smsHash
+        if (hash.isNotBlank() && observationDao.countByHash(hash) > 0) return
+
+        var acc = accountDao.getById(accountId) ?: return
+        if (shouldReclassAsBank(accountDao, acc, parsed, kind)) {
+            val hint = parsed.bankHint?.trim().orEmpty()
+            val label = if (hint.isNotBlank()) "$hint A/c XX${acc.last4}" else "A/c XX${acc.last4}"
+            acc = acc.copy(
+                type = AccountEntity.TYPE_BANK,
+                name = label,
+                bankHint = if (acc.bankHint.isBlank()) hint else acc.bankHint
+            )
+        }
 
         val ledgerComparable = ledgerComparable(acc, kind)
         val difference = reported - ledgerComparable
-
-        // First AVAILABLE balance for a bank account: treat SMS as the source of truth
-        // (rebaseline ledger). Later observations keep the running difference.
-        val rebaseline = !acc.isCreditCard &&
-            acc.observationCount == 0 &&
-            kind == BalanceKind.AVAILABLE
-
-        val ledgerForRow = if (rebaseline) reported else ledgerComparable
-        val diffForRow = if (rebaseline) 0.0 else difference
+        val adopt = adoptSmsAsCashBalance(
+            acc.lastBalanceObservedAt,
+            parsed.dateTimestamp,
+            kind,
+            acc.isCreditCard
+        )
+        val newerReport = acc.lastBalanceObservedAt == 0L ||
+            parsed.dateTimestamp >= acc.lastBalanceObservedAt
 
         observationDao.insert(
             BalanceObservationEntity(
-                accountId = accountId,
+                accountId = acc.id,
                 reportedBalance = reported,
                 balanceKind = kind.name,
-                ledgerBalance = ledgerForRow,
-                difference = diffForRow,
-                smsHash = parsed.smsHash,
+                ledgerBalance = if (adopt) reported else ledgerComparable,
+                difference = if (adopt) 0.0 else difference,
+                smsHash = hash,
                 transactionId = transactionId,
                 observedAt = parsed.dateTimestamp
             )
@@ -286,15 +332,28 @@ object InstrumentLedger {
 
         accountDao.update(
             acc.copy(
-                balance = if (rebaseline) reported else acc.balance,
-                lastReportedBalance = reported,
-                lastReportedKind = kind.name,
-                runningDifference = diffForRow,
+                balance = if (adopt) reported else acc.balance,
+                lastReportedBalance = if (newerReport) reported else acc.lastReportedBalance,
+                lastReportedKind = if (newerReport) kind.name else acc.lastReportedKind,
+                runningDifference = if (adopt) 0.0 else if (newerReport) difference else acc.runningDifference,
                 observationCount = acc.observationCount + 1,
-                lastBalanceObservedAt = System.currentTimeMillis(),
+                lastBalanceObservedAt = if (newerReport) parsed.dateTimestamp else acc.lastBalanceObservedAt,
                 creditLimit = maybeUpdateCreditLimit(acc, kind, reported)
             )
         )
+    }
+
+    private suspend fun shouldReclassAsBank(
+        accountDao: AccountDao,
+        acc: AccountEntity,
+        parsed: ParsedSms,
+        kind: BalanceKind
+    ): Boolean {
+        if (!acc.isCreditCard || kind != BalanceKind.AVAILABLE) return false
+        val ac = parsed.accountLast4 ?: return false
+        if (ac != acc.last4 || !parsed.cardLast4.isNullOrBlank()) return false
+        if (!isAutoNamedCard(acc, ac)) return false
+        return accountDao.getByLast4AndType(ac, AccountEntity.TYPE_BANK) == null
     }
 
     private fun ledgerComparable(acc: AccountEntity, kind: BalanceKind): Double {

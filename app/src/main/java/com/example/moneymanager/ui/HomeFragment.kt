@@ -18,6 +18,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.moneymanager.R
+import com.example.moneymanager.data.AccountEntity
 import com.example.moneymanager.data.TransactionEntity
 import com.example.moneymanager.databinding.FragmentHomeBinding
 import com.example.moneymanager.utils.TransactionAccounting
@@ -34,6 +35,7 @@ class HomeFragment : Fragment() {
 
     private val viewModel: MainViewModel by activityViewModels()
     private var fullList: List<TransactionEntity> = emptyList()
+    private var accounts: List<AccountEntity> = emptyList()
     private var searchQuery: String = ""
     private var typeFilter: String = "ALL"
     private var selectedMonth: Int = Calendar.getInstance().get(Calendar.MONTH)
@@ -110,6 +112,11 @@ class HomeFragment : Fragment() {
             applyFilter(adapter)
         }
 
+        viewModel.allAccounts.observe(viewLifecycleOwner) { list ->
+            accounts = list.orEmpty()
+            applyFilter(adapter)
+        }
+
         viewModel.currencySymbol.observe(viewLifecycleOwner) {
             applyFilter(adapter)
         }
@@ -134,15 +141,7 @@ class HomeFragment : Fragment() {
             }
         }
 
-        viewModel.netLiquid.observe(viewLifecycleOwner) { net ->
-            val symbol = viewModel.currencySymbol.value ?: "₹"
-            if (net == null || viewModel.allAccounts.value.isNullOrEmpty()) {
-                binding.tvRunway.visibility = View.GONE
-            } else {
-                binding.tvRunway.visibility = View.VISIBLE
-                binding.tvRunway.text = getString(R.string.runway_label, symbol, net)
-            }
-        }
+        binding.tvRunway.visibility = View.GONE
     }
 
     private fun openTransaction(tx: TransactionEntity) {
@@ -284,35 +283,35 @@ class HomeFragment : Fragment() {
 
     private fun showMonthYearPicker() {
         val adapter = binding.rvTransactions.adapter as? TransactionAdapter ?: return
-        val container = android.widget.LinearLayout(requireContext()).apply {
-            orientation = android.widget.LinearLayout.HORIZONTAL
-            setPadding(48, 24, 48, 8)
-            gravity = Gravity.CENTER
-        }
-        val monthPicker = NumberPicker(requireContext()).apply {
-            val labels = mutableListOf(getString(R.string.filter_all_months))
-            labels.addAll(DateFormatSymbols(Locale.getDefault()).months.filter { it.isNotBlank() })
-            minValue = 0
-            maxValue = labels.size - 1
-            displayedValues = labels.toTypedArray()
-            value = if (selectedMonth < 0) 0 else selectedMonth + 1
-            wrapSelectorWheel = false
-        }
-        val yearLabels = com.example.moneymanager.utils.FiscalYearHelpers.yearLabels(fiscalMode)
-        val yearPicker = NumberPicker(requireContext()).apply {
-            minValue = 0
-            maxValue = yearLabels.size - 1
-            displayedValues = yearLabels.map { it.label }.toTypedArray()
-            val idx = yearLabels.indexOfFirst { it.value == selectedYear }.coerceAtLeast(0)
-            value = idx
-            wrapSelectorWheel = false
-        }
-        container.addView(monthPicker)
-        container.addView(yearPicker)
+        val content = layoutInflater.inflate(R.layout.dialog_month_year, null, false)
+        val monthPicker = content.findViewById<NumberPicker>(R.id.np_month)
+        val yearPicker = content.findViewById<NumberPicker>(R.id.np_year)
 
-        AlertDialog.Builder(requireContext())
+        val monthLabels = mutableListOf(getString(R.string.filter_all_months))
+        monthLabels.addAll(
+            DateFormatSymbols(Locale.getDefault()).shortMonths.filter { it.isNotBlank() }
+        )
+        monthPicker.minValue = 0
+        monthPicker.maxValue = monthLabels.size - 1
+        monthPicker.displayedValues = monthLabels.toTypedArray()
+        monthPicker.value = if (selectedMonth < 0) 0 else selectedMonth + 1
+        monthPicker.wrapSelectorWheel = false
+        styleNumberPicker(monthPicker)
+
+        val yearLabels = com.example.moneymanager.utils.FiscalYearHelpers.yearLabels(fiscalMode)
+        yearPicker.minValue = 0
+        yearPicker.maxValue = yearLabels.size - 1
+        yearPicker.displayedValues = yearLabels.map { it.label }.toTypedArray()
+        yearPicker.value = yearLabels.indexOfFirst { it.value == selectedYear }.coerceAtLeast(0)
+        yearPicker.wrapSelectorWheel = false
+        styleNumberPicker(yearPicker)
+
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(
+            requireContext(),
+            R.style.ThemeOverlay_Jaruri_Dialog
+        )
             .setTitle(R.string.pick_month_title)
-            .setView(container)
+            .setView(content)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 selectedMonth = if (monthPicker.value == 0) -1 else monthPicker.value - 1
                 selectedYear = yearLabels.getOrNull(yearPicker.value)?.value ?: selectedYear
@@ -321,6 +320,41 @@ class HomeFragment : Fragment() {
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
+    }
+
+    /** Make NumberPicker selection text dark and large enough to read. */
+    private fun styleNumberPicker(picker: NumberPicker) {
+        val ink = requireContext().getColor(R.color.text_primary)
+        picker.setBackgroundColor(requireContext().getColor(R.color.surface_white))
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            picker.setTextColor(ink)
+            picker.setTextSize(22f * resources.displayMetrics.scaledDensity)
+        }
+        for (i in 0 until picker.childCount) {
+            val child = picker.getChildAt(i)
+            if (child is android.widget.EditText) {
+                child.setTextColor(ink)
+                child.textSize = 22f
+                child.typeface = android.graphics.Typeface.DEFAULT_BOLD
+                child.isFocusable = false
+                child.isClickable = false
+            }
+        }
+        try {
+            val divider = NumberPicker::class.java.getDeclaredField("mSelectionDivider")
+            divider.isAccessible = true
+            divider.set(
+                picker,
+                android.graphics.drawable.ColorDrawable(
+                    requireContext().getColor(R.color.outline_soft)
+                )
+            )
+            val height = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight")
+            height.isAccessible = true
+            height.setInt(picker, (2f * resources.displayMetrics.density).toInt().coerceAtLeast(2))
+        } catch (_: Exception) {
+            // OEM NumberPicker internals vary; text styling above still applies.
+        }
     }
 
     private fun applyFilter(adapter: TransactionAdapter) {
@@ -333,6 +367,7 @@ class HomeFragment : Fragment() {
         binding.tvIncome.text = formatCurrency(totals.income, symbol)
         binding.tvExpense.text = formatCurrency(totals.expense, symbol)
         binding.tvBalance.text = formatCurrency(totals.balance, symbol)
+        updateCashHero(symbol)
 
         val reviewCount = fullList.count { it.needsCategoryReview }
         when {
@@ -363,6 +398,39 @@ class HomeFragment : Fragment() {
             else -> {
                 binding.tvWarning.visibility = View.GONE
                 binding.rvTransactions.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun updateCashHero(symbol: String) {
+        val banks = accounts.filter {
+            it.type == AccountEntity.TYPE_BANK || it.type == AccountEntity.TYPE_CASH
+        }
+        // One SMS can mention someone else's account. Only accounts we keep
+        // seeing belong in the home total.
+        val repeated = banks.filter { it.observationCount >= 5 }
+        val banksForTotal = if (repeated.isNotEmpty()) repeated else banks
+        val show = banksForTotal.any { bank ->
+            bank.lastReportedBalance != null || kotlin.math.abs(bank.balance) >= 1.0
+        }
+        val visibility = if (show) View.VISIBLE else View.GONE
+        binding.tvCashLabel.visibility = visibility
+        binding.tvCashBalance.visibility = visibility
+        binding.tvCashCaption.visibility = visibility
+        if (show) {
+            val total = banksForTotal.sumOf { bank ->
+                if (bank.lastReportedKind == "AVAILABLE" && bank.lastReportedBalance != null) {
+                    bank.lastReportedBalance
+                } else {
+                    bank.balance
+                }
+            }
+            binding.tvCashBalance.text = formatCurrency(total, symbol)
+            val owing = accounts.filter { it.isCreditCard }.sumOf { it.balance.coerceAtLeast(0.0) }
+            binding.tvCashCaption.text = if (owing >= 1.0) {
+                getString(R.string.home_cards_owing, symbol, owing)
+            } else {
+                getString(R.string.home_from_sms)
             }
         }
     }

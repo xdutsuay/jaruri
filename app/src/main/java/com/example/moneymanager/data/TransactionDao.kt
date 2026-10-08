@@ -47,6 +47,9 @@ interface TransactionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(transactions: List<TransactionEntity>)
 
+    @Query("UPDATE transactions SET accountId = :toId WHERE accountId = :fromId")
+    suspend fun reassignAccount(fromId: Long, toId: Long)
+
     @Update
     suspend fun updateTransaction(transaction: TransactionEntity)
 

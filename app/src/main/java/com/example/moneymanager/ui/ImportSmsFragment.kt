@@ -371,7 +371,8 @@ class ImportSmsFragment : Fragment(R.layout.fragment_import_sms) {
                 amount = amount,
                 date = b.parsed.dateTimestamp,
                 memo = memo,
-                cardLast4 = b.parsed.cardLast4
+                cardLast4 = b.parsed.cardLast4,
+                parsed = b.parsed
             )
             seenMemos += memo
             imported++
