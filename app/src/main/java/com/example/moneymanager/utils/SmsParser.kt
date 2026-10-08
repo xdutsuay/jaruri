@@ -77,9 +77,11 @@ object SmsParser {
             Pattern.CASE_INSENSITIVE
         ),
         BalanceKind.AVAILABLE to Pattern.compile(
-            """(?:avl\.?\s*bal(?:ance)?|available\s+balance|avbl\.?\s*bal(?:ance)?|""" +
-                """new\s+balance|curr(?:ent)?\s+bal(?:ance)?|closing\s+balance|""" +
-                """(?:your\s+)?(?:new\s+)?balance\s+is)\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*""",
+            """(?:avl\.?\s*bal(?:ance)?|available\s+bal(?:ance)?|avbl\.?\s*bal(?:ance)?|""" +
+                """new\s+bal(?:ance)?|updated\s+bal(?:ance)?|a/?c\s+bal(?:ance)?|""" +
+                """clr\.?\s+bal(?:ance)?|curr(?:ent)?\s+bal(?:ance)?|closing\s+bal(?:ance)?|""" +
+                """(?:your\s+)?(?:new\s+)?balance\s+is|(?:your\s+)?(?:new\s+)?bal\s+is)""" +
+                """\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*""",
             Pattern.CASE_INSENSITIVE
         )
     )
@@ -116,7 +118,8 @@ object SmsParser {
         val bankHint = extractBankHint(text)
         val description = extractDescription(text, mode)
         val dateTs = extractDate(text) ?: fallbackNow
-        val snippet = if (text.length > 160) text.substring(0, 157) + "..." else text
+        // Keep the trailing balance sentence. 160 chars dropped "New Bal" / "Avl Bal" on real bank SMS.
+        val snippet = if (text.length > 420) text.substring(0, 417) + "..." else text
         val hash = contentHash(text)
         val vpa = PayeeResolver.extractVpa(text)
         val refs = RefundMatcher.extractRefs(text)
@@ -409,7 +412,7 @@ object SmsParser {
         return "SMS"
     }
 
-    private fun extractCardLast4(text: String): String? {
+    fun extractCardLast4(text: String): String? {
         val direct = CARD_LAST4.matcher(text)
         if (direct.find()) return direct.group(1)
         // "ending XX7354" only when the SMS is about a card

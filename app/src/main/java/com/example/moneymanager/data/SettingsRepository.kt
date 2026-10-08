@@ -23,6 +23,7 @@ class SettingsRepository(private val context: Context) {
         val DEMO_HISTORY_SEEDED = booleanPreferencesKey("demo_history_seeded")
         val SMS_CATEGORY_BACKFILL_V2 = booleanPreferencesKey("sms_category_backfill_v2")
         val SMS_LEDGER_CLEANUP_V3 = booleanPreferencesKey("sms_ledger_cleanup_v3")
+        val SMS_BALANCE_REPLAY_V1 = booleanPreferencesKey("sms_balance_replay_v1")
         val LEGACY_EXPORT_LOADED_V1 = booleanPreferencesKey("legacy_export_loaded_v1")
         val REALME_MERGE_V1 = booleanPreferencesKey("realme_phone_merge_v1")
         val USAGE_WELLBEING_ENABLED = booleanPreferencesKey("usage_wellbeing_enabled")
@@ -82,6 +83,10 @@ class SettingsRepository(private val context: Context) {
 
     val smsLedgerCleanupV3Done: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[SMS_LEDGER_CLEANUP_V3] ?: false
+    }
+
+    val smsBalanceReplayV1Done: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[SMS_BALANCE_REPLAY_V1] ?: false
     }
 
     val legacyExportLoaded: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -161,6 +166,12 @@ class SettingsRepository(private val context: Context) {
     suspend fun setSmsLedgerCleanupV3Done(done: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[SMS_LEDGER_CLEANUP_V3] = done
+        }
+    }
+
+    suspend fun setSmsBalanceReplayV1Done(done: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[SMS_BALANCE_REPLAY_V1] = done
         }
     }
 

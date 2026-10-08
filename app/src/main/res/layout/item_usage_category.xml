@@ -3,41 +3,41 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@color/background_gray">
+    android:paddingVertical="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="6dp">
+        android:gravity="center_vertical">
 
         <TextView
-            android:id="@+id/tvDayLabel"
+            android:id="@+id/tvUsageCatName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="@color/text_secondary"
-            android:textSize="13sp"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
             android:textStyle="bold"
-            android:letterSpacing="0.04"
-            android:text="09/23 Wed" />
+            android:text="Social" />
 
         <TextView
-            android:id="@+id/tvDayTotal"
+            android:id="@+id/tvUsageCatDuration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_primary"
+            android:textColor="@color/text_secondary"
             android:textSize="13sp"
-            android:textStyle="bold"
-            android:text="Expenses: 684" />
+            android:text="2h" />
     </LinearLayout>
 
-    <View
+    <ProgressBar
+        android:id="@+id/progressUsageCat"
+        style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/hairline_thin"
-        android:layout_marginHorizontal="16dp"
-        android:background="@color/hairline" />
+        android:layout_height="8dp"
+        android:layout_marginTop="6dp"
+        android:max="100"
+        android:progress="50"
+        android:progressTint="@color/teal_700"
+        android:progressBackgroundTint="@color/outline_soft" />
 </LinearLayout>

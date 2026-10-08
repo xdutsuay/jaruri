@@ -61,7 +61,7 @@ data class ParsedSms(
         }.orEmpty()
         val snippet = remarks.removePrefix("SMS: ").trim()
         val hashTag = if (smsHash.isNotEmpty()) " [sms:$smsHash]" else ""
-        return "$desc$cardTag$acTag$balTag · $modeOfPayment$hashTag | SMS: $snippet".take(500)
+        return "$desc$cardTag$acTag$balTag · $modeOfPayment$hashTag | SMS: $snippet".take(720)
     }
 }
 

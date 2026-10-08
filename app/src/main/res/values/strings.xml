@@ -8,6 +8,11 @@
     <string name="label_income">Income</string>
     <string name="label_expenses">Expenses</string>
     <string name="label_balance">Balance</string>
+    <string name="home_in_bank">In bank</string>
+    <string name="home_from_sms">Latest figure from your bank SMS</string>
+    <string name="home_cards_owing">Cards owing %1$s%2$.0f</string>
+    <string name="home_this_month">This month</string>
+    <string name="home_left">Left</string>
     <string name="text_no_data">No data available</string>
     <string name="empty_ledger_hint">No transactions yet. Tap + to add one, or import from SMS.</string>
     <string name="empty_month_hint">No transactions in this month. Switch month or add one.</string>
@@ -23,7 +28,7 @@
     <string name="filter_all_months">All months</string>
     <string name="filter_income">Income</string>
     <string name="filter_expense">Expense</string>
-    <string name="filter_review">Categorize</string>
+    <string name="filter_review">Review</string>
     <string name="categorize_title">Choose category</string>
     <string name="needs_category_badge">Set category</string>
     <string name="needs_category_hint">%1$d transaction(s) need a category — tap a row to set one. Choices improve future auto-import.</string>
@@ -31,6 +36,8 @@
     <string name="account_running_diff">Diff %1$s%2$s</string>
     <string name="accounts_hint">Cash, bank, and credit cards. Long-press to delete. Card balance is outstanding debt. SMS balances are tallied against the ledger as a running difference.</string>
     <string name="pick_month_title">Select month</string>
+    <string name="pick_month_column">Month</string>
+    <string name="pick_year_column">Year</string>
     <string name="memo_hint">Memo</string>
     <string name="widget_description">Jaruri month income, expenses, and balance</string>
     <string name="widget_loading">Jaruri</string>
@@ -83,26 +90,29 @@
     <string name="import_csv_empty">No valid rows found in CSV</string>
     <string name="about_message">Jaruri %1$s\nFree and open-source on-device money and time tracker for Android.\nData stays on this device. Money backup via CSV export/import.\nNo Google account or cloud sync required.</string>
     <string name="nav_header_local">Jaruri</string>
-    <string name="nav_header_local_sub">Money · Time · on-device</string>
+    <string name="nav_header_local_sub">Money · Journal · on-device</string>
 
     <string name="menu_hub">Features</string>
-    <string name="menu_time">Time</string>
+    <string name="menu_time">Journal</string>
     <string name="hub_title">Jaruri</string>
-    <string name="hub_subtitle">Pick what you want to track. Everything stays on this phone.</string>
+    <string name="hub_subtitle">Everything stays on this phone.</string>
     <string name="hub_money_title">Money</string>
-    <string name="hub_money_body">Income, expenses, accounts, budgets, and SMS import.</string>
-    <string name="hub_time_title">Time</string>
-    <string name="hub_time_body">Time log and voice journal. Speak a quick end-of-day dump, edit the text, save — stays on this phone.</string>
+    <string name="hub_money_body">SMS ledger, accounts, budgets</string>
+    <string name="hub_time_title">Journal</string>
+    <string name="hub_time_body">Voice notes and day logs</string>
     <string name="hub_usage_title">Screen time</string>
-    <string name="hub_usage_body">Opt-in phone usage from Android Usage Access. Aggregates stay on this device — no app timers.</string>
+    <string name="hub_usage_body">App minutes from this phone</string>
     <string name="hub_soon_title">More later</string>
     <string name="hub_soon_body">Room for another tracker when we build it.</string>
     <string name="menu_usage">Screen time</string>
 
     <string name="usage_title">Screen time</string>
-    <string name="usage_subtitle">Daily app foreground totals from Android Usage Stats. Data stays on this phone.</string>
+    <string name="usage_subtitle">Foreground minutes from Android Usage Access. Stays on this phone.</string>
     <string name="usage_today">Today</string>
     <string name="usage_week">Last 7 days</string>
+    <string name="usage_avg_day">Avg / day</string>
+    <string name="usage_week_bars">This week</string>
+    <string name="usage_share_of_day">%1$d%% of today</string>
     <string name="usage_dash">—</string>
     <string name="usage_categories">By category</string>
     <string name="usage_top_apps">Top apps</string>
@@ -122,8 +132,8 @@
     <string name="settings_usage_wellbeing">Screen time (usage stats)</string>
     <string name="settings_usage_wellbeing_hint">When on, Jaruri may read Android Usage Access to store daily per-app minute totals on this phone only. No cloud sync, no app-timer enforcement. Requires Usage Access permission.</string>
 
-    <string name="time_hint">Hold the mic for a voice journal, or add a timed entry manually. Long-press a row to delete. Only timed minutes count toward the month total. Audio is not saved — text only.</string>
-    <string name="time_empty">Nothing this month. Hold the mic to journal, or add a time entry.</string>
+    <string name="time_hint">Hold the mic to dictate a journal, or add an entry manually. Long-press a row to delete. Timed minutes roll into the month total. Audio is not saved — text only.</string>
+    <string name="time_empty">Nothing this month. Hold the mic to journal, or add an entry.</string>
     <string name="time_add">Add time entry</string>
     <string name="time_label_hint">What (app or activity)</string>
     <string name="time_hours_hint">Hours</string>
