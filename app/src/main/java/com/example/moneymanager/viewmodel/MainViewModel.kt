@@ -16,8 +16,6 @@ import com.example.moneymanager.data.PayeeEntity
 import com.example.moneymanager.models.Category
 import com.example.moneymanager.utils.CategoryLearning
 import com.example.moneymanager.utils.InstrumentLedger
-import com.example.moneymanager.utils.LegacyExportBootstrap
-import com.example.moneymanager.utils.PhoneMergeBootstrap
 import com.example.moneymanager.utils.ParsedSms
 import com.example.moneymanager.utils.SmsBalanceReplay
 import com.example.moneymanager.utils.SmsCategoryBackfill
@@ -73,8 +71,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         subscriptionSuggestions.addSource(activeRecurring) { refreshSuggestions() }
         viewModelScope.launch {
             try {
-                LegacyExportBootstrap.runOnce(getApplication())
-                PhoneMergeBootstrap.runOnce(getApplication())
                 SmsCategoryBackfill.runOnce(getApplication())
                 SmsLedgerCleanup.runOnce(getApplication())
                 SmsBalanceReplay.runOnce(getApplication())
@@ -82,7 +78,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     AppDatabase.getDatabase(getApplication())
                 )
             } catch (e: Exception) {
-                android.util.Log.e("MainViewModel", "Startup ledger bootstrap failed", e)
+                android.util.Log.e("MainViewModel", "Startup ledger maintenance failed", e)
             }
         }
     }
@@ -463,8 +459,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * One-shot: wipe active SMS auto-imports (and optionally all active rows),
-     * then insert legacy export rows.
+     * Replace the active ledger with rows the user chose to import.
+     * When [clearAllActive] is false, only active SMS auto-imports are removed first.
      */
     fun replaceActiveLedgerWith(
         rows: List<TransactionEntity>,

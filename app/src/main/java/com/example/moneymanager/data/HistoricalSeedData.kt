@@ -4,7 +4,7 @@ import java.util.Calendar
 
 /**
  * Multi-month demo ledger for verifying dashboard month toggle, charts, search, and categories.
- * Inserted only when the DB is empty (or explicitly requested). Never auto-deleted.
+ * Not inserted on startup or when the database is empty. Insert only after an explicit user action.
  */
 object HistoricalSeedData {
 

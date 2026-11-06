@@ -169,9 +169,9 @@ You have received Rs 200 from ALICE via UPI.
     @Test
     fun idfcCreditCardSpendParsesTxnAmountNotLimit() {
         val sms =
-            "Delicious Purchase! INR 199.00 spent on your IDFC FIRST Bank Credit Card ending XX2468 at Zomato on 24 SEP 2026 at 06:01 PM Avbl Limit: INR 50000.00 If not done by you, call 180010888"
+            "Delicious Purchase! INR 199.00 spent on your IDFC FIRST Bank Credit Card ending XX2468 at Zomato on 24 SEP 2026 at 06:01 PM Avbl Limit: INR 50,000.00 If not done by you, call 180010888"
         val p = SmsParser.parse(sms, fixedNow)!!
-        assertEquals(199.00, p.amount!!, 0.001)
+        assertEquals(199.0, p.amount!!, 0.001)
         assertEquals(false, p.isIncome)
         assertEquals("Credit Card", p.modeOfPayment)
         assertEquals("2468", p.cardLast4)
@@ -195,9 +195,9 @@ You have received Rs 200 from ALICE via UPI.
     @Test
     fun idfcBankCreditParsesIncomeNotBalance() {
         val sms =
-            "Your A/C XXXXX881199 is credited with INR 50.00 on 23/09/26 15:46. Your new balance is INR 10,075.00. Team IDFC FIRST Bank"
+            "Your A/C XXXXX881199 is credited with INR 75.00 on 23/09/26 15:46. Your new balance is INR 10,075.00. Team IDFC FIRST Bank"
         val p = SmsParser.parse(sms, fixedNow)!!
-        assertEquals(50.0, p.amount!!, 0.001)
+        assertEquals(75.0, p.amount!!, 0.001)
         assertEquals(true, p.isIncome)
         assertTrue(p.isComplete)
     }
@@ -216,7 +216,7 @@ You have received Rs 200 from ALICE via UPI.
     @Test
     fun autopayMandateNoticeIsRejected() {
         val sms =
-            "Your account will be debited with Rs 1,500.00 towards ICCL  Mutual Funds  Autopay for the Autopay on 03/09/2026. Pause mandate to stop execution. IDFC FIRST Bank"
+            "Your account will be debited with Rs 100.00 towards EXAMPLE MUTUAL FUNDS Autopay for the Autopay on 03/09/2026. Pause mandate to stop execution. EXAMPLE BANK"
         assertTrue(SmsParser.isNonLedgerNotice(sms))
         assertFalse(SmsParser.looksLikeTransaction(sms))
         assertNull(SmsParser.parse(sms, fixedNow))
@@ -225,7 +225,7 @@ You have received Rs 200 from ALICE via UPI.
     @Test
     fun createMandateNoticeIsRejected() {
         val sms =
-            "Your account will be debited with Rs 399.00 towards APPLE MEDIA SERVICES for the Create Mandate on 01/09/2026. Pause mandate to stop execution. IDFC FIRST Bank"
+            "Your account will be debited with Rs 49.00 towards EXAMPLE MEDIA for the Create Mandate on 01/09/2026. Pause mandate to stop execution. EXAMPLE BANK"
         assertTrue(SmsParser.isNonLedgerNotice(sms))
         assertFalse(SmsParser.looksLikeTransaction(sms))
         assertNull(SmsParser.parse(sms, fixedNow))

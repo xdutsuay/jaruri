@@ -39,7 +39,7 @@ class SmsBalanceParseTest {
     @Test
     fun creditCardExtractsAvailableLimit() {
         val sms =
-            "Delicious Purchase! INR 199.00 spent on your IDFC FIRST Bank Credit Card ending XX2468 at Zomato on 24 SEP 2026 at 06:01 PM Avbl Limit: INR 50000.00 If not done by you, call 180010888"
+            "Delicious Purchase! INR 199.00 spent on your IDFC FIRST Bank Credit Card ending XX2468 at Zomato on 24 SEP 2026 at 06:01 PM Avbl Limit: INR 50,000.00 If not done by you, call 180010888"
         val p = SmsParser.parse(sms, fixedNow)!!
         assertEquals("2468", p.cardLast4)
         assertNull(p.accountLast4)
@@ -71,7 +71,7 @@ class SmsBalanceParseTest {
     @Test
     fun maskedLongAccountUsesLast4() {
         val sms =
-            "Your A/C XXXXX881199 is credited with INR 50.00 on 23/09/26 15:46. Your new balance is INR 10,075.00. Team IDFC FIRST Bank"
+            "Your A/C XXXXX881199 is credited with INR 75.00 on 23/09/26 15:46. Your new balance is INR 10,075.00. Team IDFC FIRST Bank"
         val p = SmsParser.parse(sms, fixedNow)!!
         assertEquals("1199", p.accountLast4)
         assertEquals(10075.00, p.reportedBalance!!, 0.001)
