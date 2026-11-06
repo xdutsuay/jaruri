@@ -95,7 +95,7 @@ object SmsBalanceReplay {
         for (tx in rows) {
             val body = SmsLedgerCleanup.smsBodyFromMemo(tx.memo)
             // Stored memos used to clip the SMS at 160 characters, which chops
-            // "8,500.00" into "1,52". Only a complete snippet is safe.
+            // "9,87,654.32" into "9,87". Only a complete snippet is safe.
             if (body.endsWith("...") || body.endsWith("…")) continue
             val (reported, kind) = SmsParser.extractReportedBalance(body)
             if (reported == null || kind == null) continue

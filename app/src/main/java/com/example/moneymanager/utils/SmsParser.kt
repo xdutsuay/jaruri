@@ -179,7 +179,7 @@ object SmsParser {
      * Autopay / e-mandate / scheduled-debit notices that mention an amount but are
      * not a completed ledger movement. Bank-agnostic phrasing.
      *
-     * Example: "Your account will be debited with Rs 1,500… for the Autopay…
+     * Example: "Your account will be debited with Rs 100… for the Autopay…
      * Pause mandate to stop execution."
      */
     fun isNonLedgerNotice(raw: String): Boolean {
