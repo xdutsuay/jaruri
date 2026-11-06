@@ -36,7 +36,6 @@ object CategoryIcons {
         "baby" to 0xFFEF5350.toInt(),
         "electronics" to 0xFF78909C.toInt(),
         "investment" to 0xFFFDD835.toInt(),
-        "papa" to 0xFFEF5350.toInt(),
         "others" to 0xFFE53935.toInt(),
         "salary" to 0xFF43A047.toInt(),
         "transfer" to 0xFF546E7A.toInt()

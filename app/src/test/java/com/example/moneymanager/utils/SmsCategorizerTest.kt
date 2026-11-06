@@ -129,7 +129,7 @@ class SmsCategorizerTest {
             "Shopping",
             SmsCategorizer.categorize(
                 parsed(isIncome = false, description = "Amazon India", mode = "Bank"),
-                "Your A/c XX0545 debited by Rs. 334.00; Amazon India credited. Team IDFC FIRST Bank"
+                "Your A/c XX1199 debited by Rs. 120.00; Amazon India credited. Team IDFC FIRST Bank"
             )
         )
     }

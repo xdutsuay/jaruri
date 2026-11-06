@@ -54,7 +54,7 @@ object SmsParser {
         Pattern.CASE_INSENSITIVE
     )
 
-    /** Bank account masks: A/c XX4521, A/C XXXXX540545, account ending 5555 */
+    /** Bank account masks: A/c XX4521, A/C XXXXX881199, account ending 5555 */
     private val ACCOUNT_LAST4 = Pattern.compile(
         """(?:a/?c(?:count)?(?:\s*(?:no\.?|number|num))?|ac)\s*[xX*]{2,}\s*(\d{2,})""",
         Pattern.CASE_INSENSITIVE
@@ -179,7 +179,7 @@ object SmsParser {
      * Autopay / e-mandate / scheduled-debit notices that mention an amount but are
      * not a completed ledger movement. Bank-agnostic phrasing.
      *
-     * Example: "Your account will be debited with Rs 1,500… for the Autopay…
+     * Example: "Your account will be debited with Rs 100… for the Autopay…
      * Pause mandate to stop execution."
      */
     fun isNonLedgerNotice(raw: String): Boolean {
@@ -415,7 +415,7 @@ object SmsParser {
     fun extractCardLast4(text: String): String? {
         val direct = CARD_LAST4.matcher(text)
         if (direct.find()) return direct.group(1)
-        // "ending XX7354" only when the SMS is about a card
+        // "ending XX2468" only when the SMS is about a card
         val lower = text.lowercase(Locale.ROOT)
         if (lower.contains("card") || lower.contains("crd")) {
             val ending = CARD_ENDING_LOOSE.matcher(text)

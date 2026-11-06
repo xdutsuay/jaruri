@@ -34,7 +34,6 @@ class CategoryRepository(private val context: Context) {
             "Pet",
             "Social",
             "Investment",
-            "papa",
             "Others",
             "Transfer"
         )

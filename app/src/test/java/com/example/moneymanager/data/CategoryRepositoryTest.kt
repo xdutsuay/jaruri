@@ -32,6 +32,7 @@ class CategoryRepositoryTest {
         assertTrue(expenseCategoryNames.contains("Food"))
         assertTrue(expenseCategoryNames.contains("Clothing"))
         assertTrue(incomeCategoryNames.contains("Salary"))
+        assertFalse(expenseCategoryNames.any { it.equals("papa", ignoreCase = true) })
     }
 
     @Test

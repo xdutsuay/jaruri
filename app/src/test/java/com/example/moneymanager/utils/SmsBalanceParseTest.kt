@@ -27,11 +27,11 @@ class SmsBalanceParseTest {
     @Test
     fun idfcBankKeepsBalanceSeparateFromTxn() {
         val sms =
-            "Your A/c XX0545 debited by Rs. 334.00 on 23/09/26; Amazon India credited. RRN 626641174342. Available balance Rs. 27,613.24. Team IDFC FIRST Bank"
+            "Your A/c XX1199 debited by Rs. 120.00 on 23/09/26; Amazon India credited. RRN 111122223333. Available balance Rs. 10,000.00. Team IDFC FIRST Bank"
         val p = SmsParser.parse(sms, fixedNow)!!
-        assertEquals(334.0, p.amount!!, 0.001)
-        assertEquals("0545", p.accountLast4)
-        assertEquals(27613.24, p.reportedBalance!!, 0.001)
+        assertEquals(120.0, p.amount!!, 0.001)
+        assertEquals("1199", p.accountLast4)
+        assertEquals(10000.00, p.reportedBalance!!, 0.001)
         assertEquals(BalanceKind.AVAILABLE, p.reportedBalanceKind)
         assertEquals("IDFC", p.bankHint)
     }
@@ -39,11 +39,11 @@ class SmsBalanceParseTest {
     @Test
     fun creditCardExtractsAvailableLimit() {
         val sms =
-            "Delicious Purchase! INR 250.38 spent on your IDFC FIRST Bank Credit Card ending XX7354 at Zomato on 24 SEP 2026 at 06:01 PM Avbl Limit: INR 161337.57 If not done by you, call 180010888"
+            "Delicious Purchase! INR 199.00 spent on your IDFC FIRST Bank Credit Card ending XX2468 at Zomato on 24 SEP 2026 at 06:01 PM Avbl Limit: INR 50,000.00 If not done by you, call 180010888"
         val p = SmsParser.parse(sms, fixedNow)!!
-        assertEquals("7354", p.cardLast4)
+        assertEquals("2468", p.cardLast4)
         assertNull(p.accountLast4)
-        assertEquals(161337.57, p.reportedBalance!!, 0.001)
+        assertEquals(50000.00, p.reportedBalance!!, 0.001)
         assertEquals(BalanceKind.AVAILABLE_LIMIT, p.reportedBalanceKind)
         assertEquals("IDFC", p.bankHint)
     }
@@ -51,12 +51,12 @@ class SmsBalanceParseTest {
     @Test
     fun newBalAbbreviationIsSeparateFromTheDebit() {
         val sms =
-            "Your A/C XXXXX540545 is debited by INR 41,000.00 on 01/10/26 13:20. New Bal :INR 1,52,378.24."
+            "Your A/C XXXXX881199 is debited by INR 2,500.00 on 01/10/26 13:20. New Bal :INR 8,500.00."
         val p = SmsParser.parse(sms, fixedNow)!!
-        assertEquals(41000.0, p.amount!!, 0.001)
+        assertEquals(2500.0, p.amount!!, 0.001)
         assertEquals(false, p.isIncome)
-        assertEquals("0545", p.accountLast4)
-        assertEquals(152378.24, p.reportedBalance!!, 0.001)
+        assertEquals("1199", p.accountLast4)
+        assertEquals(8500.00, p.reportedBalance!!, 0.001)
         assertEquals(BalanceKind.AVAILABLE, p.reportedBalanceKind)
     }
 
@@ -71,10 +71,10 @@ class SmsBalanceParseTest {
     @Test
     fun maskedLongAccountUsesLast4() {
         val sms =
-            "Your A/C XXXXX540545 is credited with INR 50.00 on 23/09/26 15:46. Your new balance is INR 27,663.24. Team IDFC FIRST Bank"
+            "Your A/C XXXXX881199 is credited with INR 75.00 on 23/09/26 15:46. Your new balance is INR 10,075.00. Team IDFC FIRST Bank"
         val p = SmsParser.parse(sms, fixedNow)!!
-        assertEquals("0545", p.accountLast4)
-        assertEquals(27663.24, p.reportedBalance!!, 0.001)
+        assertEquals("1199", p.accountLast4)
+        assertEquals(10075.00, p.reportedBalance!!, 0.001)
         assertNotNull(p.bankHint)
     }
 
