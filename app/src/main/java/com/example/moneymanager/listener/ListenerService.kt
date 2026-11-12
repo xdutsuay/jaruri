@@ -16,6 +16,8 @@ import android.service.quicksettings.TileService
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.example.moneymanager.R
+import com.example.moneymanager.listener.transcribe.SttModelStore
+import com.example.moneymanager.listener.transcribe.TranscriptionScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -211,7 +213,17 @@ class ListenerService : Service() {
             else -> Unit
         }
         scope.launch {
-            withContext(Dispatchers.IO) { repo.finish(id, endedAt, reason) }
+            withContext(Dispatchers.IO) {
+                repo.finish(id, endedAt, reason)
+                // v2: transcribe automatically when a speech model is installed.
+                if (SttModelStore(applicationContext).isInstalled) {
+                    try {
+                        TranscriptionScheduler.enqueue(applicationContext, id)
+                    } catch (e: Exception) {
+                        android.util.Log.w(TAG, "auto-transcribe not queued", e)
+                    }
+                }
+            }
             sessionId = -1
             stopSelf()
         }

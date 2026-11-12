@@ -287,5 +287,47 @@
     <string name="listener_pick_part">Part %1$d</string>
     <string name="listener_no_player">No app found to play audio.</string>
     <string name="listener_notif_permission_hint">Notifications are off, so the Stop button won\'t show in the shade. Use this screen or the Quick Settings tile to stop.</string>
+
+    <!-- Listener v2: transcription, search, export, notes -->
+    <string name="listener_stt_no_model">No speech model imported. Import a Vosk model (.zip) on the Listener screen.</string>
+    <string name="listener_stt_notif_title">Transcribing on this phone</string>
+    <string name="listener_stt_channel">Listener transcription</string>
+    <string name="listener_stt_model_none">Transcription: no speech model yet. Import a Vosk model .zip to turn speech into searchable text on this phone.</string>
+    <string name="listener_stt_model_installed">Speech model: %1$s</string>
+    <string name="listener_stt_import">Import model</string>
+    <string name="listener_stt_remove">Remove</string>
+    <string name="listener_stt_importing">Importing model…</string>
+    <string name="listener_stt_imported">Model ready: %1$s</string>
+    <string name="listener_stt_import_failed">Import failed: %1$s</string>
+    <string name="listener_stt_remove_confirm">Remove the speech model? Existing transcripts stay.</string>
+    <string name="listener_search_hint">Search transcripts</string>
+    <string name="listener_search_none">No matches.</string>
+    <string name="listener_search_hit_sub">%1$s · %2$s</string>
+    <string name="listener_tr_state_none">Not transcribed</string>
+    <string name="listener_tr_state_queued">Queued for transcription</string>
+    <string name="listener_tr_state_running">Transcribing… %1$d%%</string>
+    <string name="listener_tr_state_done">Transcript ready</string>
+    <string name="listener_tr_state_failed">Transcription failed: %1$s</string>
+    <string name="listener_tr_state_cancelled">Transcription cancelled (%1$d of %2$d parts done)</string>
+    <string name="listener_tr_state_paused">Transcription paused (%1$d of %2$d parts done)</string>
+    <string name="listener_tr_transcribe">Transcribe</string>
+    <string name="listener_tr_resume">Resume</string>
+    <string name="listener_tr_cancel">Cancel</string>
+    <string name="listener_tr_again">Transcribe again</string>
+    <string name="listener_tr_again_confirm">Delete this transcript and transcribe again with the current model?</string>
+    <string name="listener_tr_empty">No transcript yet.</string>
+    <string name="listener_export">Export transcript</string>
+    <string name="listener_export_markdown">Markdown (.md)</string>
+    <string name="listener_export_text">Plain text (.txt)</string>
+    <string name="listener_export_nothing">Nothing to export yet.</string>
+    <string name="listener_notes_title">Keyword highlights (not AI)</string>
+    <string name="listener_notes_explainer">Picked by simple keyword rules on this phone. Not a summary; check the transcript.</string>
+    <string name="listener_notes_actions">Possible to-dos</string>
+    <string name="listener_notes_key">Frequent-topic lines</string>
+    <string name="listener_notes_empty">Nothing stood out.</string>
+    <string name="listener_player_play">Play</string>
+    <string name="listener_player_pause">Pause</string>
+    <string name="listener_player_error">Couldn\'t play this audio.</string>
+    <string name="listener_session_meta">%1$s · %2$s · %3$s</string>
 </resources>
 
