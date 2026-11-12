@@ -19,7 +19,16 @@
         <action
             android:id="@+id/action_hub_to_usage"
             app:destination="@id/nav_usage" />
+        <action
+            android:id="@+id/action_hub_to_listener"
+            app:destination="@id/nav_listener" />
     </fragment>
+
+    <fragment
+        android:id="@+id/nav_listener"
+        android:name="com.example.moneymanager.ui.ListenerFragment"
+        android:label="@string/listener_title"
+        tools:layout="@layout/fragment_listener" />
 
     <fragment
         android:id="@+id/nav_time"

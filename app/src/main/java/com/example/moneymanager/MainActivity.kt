@@ -17,6 +17,8 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.example.moneymanager.databinding.ActivityMainBinding
+import com.example.moneymanager.listener.ListenerService
+import com.example.moneymanager.ui.ListenerFragment
 import com.example.moneymanager.viewmodel.MainViewModel
 import com.google.android.material.navigation.NavigationView
 
@@ -46,6 +48,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_hub,
                 R.id.nav_time,
                 R.id.nav_usage,
+                R.id.nav_listener,
                 R.id.nav_home,
                 R.id.nav_chart,
                 R.id.nav_categories,
@@ -94,12 +97,35 @@ class MainActivity : AppCompatActivity() {
         }
 
         handleDeepLink(intent)
+        if (savedInstanceState == null) handleListenerIntent(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         handleDeepLink(intent)
+        handleListenerIntent(intent)
+    }
+
+    /** Listener QS tile / notification → Listener screen (tile also asks it to start). */
+    private fun handleListenerIntent(intent: Intent?) {
+        val action = intent?.action ?: return
+        if (action != ListenerService.ACTION_OPEN_LISTENER &&
+            action != ListenerService.ACTION_START_FROM_TILE
+        ) return
+        if (action == ListenerService.ACTION_START_FROM_TILE) {
+            ListenerFragment.pendingAutoStart.set(true)
+        }
+        intent.action = null // don't replay on recreation
+        binding.root.post {
+            try {
+                val nav = findNavController(R.id.nav_host_fragment)
+                if (nav.currentDestination?.id != R.id.nav_listener) {
+                    nav.navigate(R.id.nav_listener)
+                }
+            } catch (_: Exception) {
+            }
+        }
     }
 
     private fun handleDeepLink(intent: Intent?) {
