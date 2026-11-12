@@ -295,6 +295,7 @@
     <string name="listener_stt_model_none">Transcription: no speech model yet. Import a Vosk model .zip to turn speech into searchable text on this phone.</string>
     <string name="listener_stt_model_installed">Speech model: %1$s</string>
     <string name="listener_stt_import">Import model</string>
+    <string name="listener_stt_no_picker">No file picker available on this phone.</string>
     <string name="listener_stt_remove">Remove</string>
     <string name="listener_stt_importing">Importing model…</string>
     <string name="listener_stt_imported">Model ready: %1$s</string>

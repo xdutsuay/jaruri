@@ -14,6 +14,9 @@ interface ListenerSessionDao {
     @Query("SELECT * FROM listener_sessions WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): ListenerSessionEntity?
 
+    @Query("SELECT * FROM listener_sessions WHERE id = :id")
+    fun observeById(id: Long): Flow<ListenerSessionEntity?>
+
     @Query("SELECT * FROM listener_sessions WHERE state = :state")
     suspend fun getByState(state: String): List<ListenerSessionEntity>
 

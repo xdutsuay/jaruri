@@ -70,9 +70,13 @@ class TranscriptionWorker(
                 }
             }
         } catch (e: CancellationException) {
-            withContext(NonCancellable) { recordStop(db, sessionId) }
+            withContext(NonCancellable) {
+                recordStop(db, sessionId)
+                dropIfSessionDeleted(db, sessionId)
+            }
             throw e
         }
+        dropIfSessionDeleted(db, sessionId)
         return when (outcome) {
             TranscriptionRunner.Outcome.Done -> Result.success()
             is TranscriptionRunner.Outcome.Failed -> Result.failure()
@@ -81,6 +85,11 @@ class TranscriptionWorker(
                 if (isStopped) Result.retry() else Result.success()
             }
         }
+    }
+
+    /** The session was deleted while we worked: remove anything we just wrote. */
+    private suspend fun dropIfSessionDeleted(db: AppDatabase, sessionId: Long) {
+        if (db.listenerSessionDao().getById(sessionId) == null) db.transcriptDao().deleteForSession(sessionId)
     }
 
     private suspend fun recordStop(db: AppDatabase, sessionId: Long) {

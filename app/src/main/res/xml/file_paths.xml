@@ -2,5 +2,7 @@
 <paths>
     <!-- Listener: play/share chunks from app-private storage. -->
     <files-path name="listener" path="listener/" />
+    <!-- Listener v2: transcript exports handed to the share sheet. -->
+    <cache-path name="exports" path="exports/" />
     <external-path name="external_files" path="." />
 </paths>

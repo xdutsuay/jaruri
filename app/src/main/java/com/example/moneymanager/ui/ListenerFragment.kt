@@ -20,6 +20,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.os.bundleOf
+import androidx.core.widget.doAfterTextChanged
+import androidx.navigation.fragment.findNavController
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -31,6 +34,8 @@ import com.example.moneymanager.listener.ListenerService
 import com.example.moneymanager.listener.ListenerSessionEntity
 import com.example.moneymanager.listener.ListenerState
 import com.example.moneymanager.listener.ListenerStopReason
+import com.example.moneymanager.listener.transcribe.TranscriptExporter
+import com.example.moneymanager.listener.transcribe.TranscriptHit
 import com.example.moneymanager.viewmodel.ListenerViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
@@ -66,6 +71,19 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
         }
     }
 
+    private val pickModel = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@registerForActivityResult
+        viewModel.importModel(uri) { result ->
+            val ctx = context ?: return@importModel
+            result.fold(
+                onSuccess = { Toast.makeText(ctx, ctx.getString(R.string.listener_stt_imported, it), Toast.LENGTH_LONG).show() },
+                onFailure = {
+                    Toast.makeText(ctx, ctx.getString(R.string.listener_stt_import_failed, it.message ?: it.javaClass.simpleName), Toast.LENGTH_LONG).show()
+                }
+            )
+        }
+    }
+
     private val requestNotifications = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -84,11 +102,72 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
         freeText = view.findViewById(R.id.tv_listener_free)
         val empty = view.findViewById<TextView>(R.id.tv_listener_empty)
 
-        val adapter = Adapter(onClick = { play(it) }, onLongClick = { showActions(it) })
-        view.findViewById<RecyclerView>(R.id.rv_listener_sessions).apply {
+        val adapter = Adapter(onClick = { openSession(it.id, -1, it) }, onLongClick = { showActions(it) })
+        val sessionsList = view.findViewById<RecyclerView>(R.id.rv_listener_sessions).apply {
             layoutManager = LinearLayoutManager(requireContext())
             this.adapter = adapter
         }
+        val hitsAdapter = HitsAdapter { openSession(it.sessionId, it.startMs, null) }
+        val hitsList = view.findViewById<RecyclerView>(R.id.rv_listener_hits).apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            this.adapter = hitsAdapter
+        }
+        val listHeader = view.findViewById<TextView>(R.id.tv_listener_list_header)
+        var sessionsEmpty = false
+        var searching = false
+        fun renderLists() {
+            sessionsList.visibility = if (searching) View.GONE else View.VISIBLE
+            hitsList.visibility = if (searching) View.VISIBLE else View.GONE
+            if (searching) {
+                listHeader.text = getString(R.string.listener_search_hint)
+                empty.setText(R.string.listener_search_none)
+                empty.visibility = if (hitsAdapter.itemCount == 0) View.VISIBLE else View.GONE
+            } else {
+                listHeader.setText(R.string.listener_sessions_header)
+                empty.setText(R.string.listener_empty)
+                empty.visibility = if (sessionsEmpty) View.VISIBLE else View.GONE
+            }
+        }
+
+        view.findViewById<TextInputEditText>(R.id.et_listener_search)
+            .doAfterTextChanged { viewModel.setQuery(it?.toString().orEmpty()) }
+        viewModel.search.observe(viewLifecycleOwner) { result ->
+            searching = result != null
+            hitsAdapter.submit(result?.hits.orEmpty())
+            renderLists()
+        }
+
+        val modelText = view.findViewById<TextView>(R.id.tv_listener_model)
+        val importBtn = view.findViewById<MaterialButton>(R.id.btn_listener_model_import)
+        val removeBtn = view.findViewById<MaterialButton>(R.id.btn_listener_model_remove)
+        importBtn.setOnClickListener {
+            try {
+                pickModel.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream"))
+            } catch (_: ActivityNotFoundException) {
+                Toast.makeText(requireContext(), R.string.listener_stt_no_picker, Toast.LENGTH_SHORT).show()
+            }
+        }
+        removeBtn.setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setMessage(R.string.listener_stt_remove_confirm)
+                .setPositiveButton(R.string.listener_stt_remove) { _, _ -> viewModel.removeModel() }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+        }
+        fun renderModel() {
+            val busy = viewModel.modelBusy.value == true
+            val name = viewModel.modelName.value
+            modelText.text = when {
+                busy -> getString(R.string.listener_stt_importing)
+                name != null -> getString(R.string.listener_stt_model_installed, name)
+                else -> getString(R.string.listener_stt_model_none)
+            }
+            importBtn.isEnabled = !busy
+            removeBtn.isEnabled = !busy
+            removeBtn.visibility = if (name != null) View.VISIBLE else View.GONE
+        }
+        viewModel.modelName.observe(viewLifecycleOwner) { renderModel() }
+        viewModel.modelBusy.observe(viewLifecycleOwner) { renderModel() }
 
         toggle?.setOnClickListener {
             if (ListenerState.isBusy) ListenerService.stop(requireContext()) else beginStartFlow()
@@ -97,7 +176,8 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
         viewModel.status.observe(viewLifecycleOwner) { render(it) }
         viewModel.sessions.observe(viewLifecycleOwner) { list ->
             adapter.submit(list)
-            empty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+            sessionsEmpty = list.isEmpty()
+            renderLists()
         }
         viewModel.lastError.observe(viewLifecycleOwner) { err ->
             if (err != null) {
@@ -223,6 +303,17 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
     }
 
     // ---- session actions ----
+
+    private fun openSession(sessionId: Long, startMs: Long, session: ListenerSessionEntity?) {
+        if (session?.state == ListenerSessionEntity.STATE_RECORDING) {
+            Toast.makeText(requireContext(), R.string.listener_busy_recording, Toast.LENGTH_SHORT).show()
+            return
+        }
+        findNavController().navigate(
+            R.id.action_listener_to_session,
+            bundleOf(ListenerSessionFragment.ARG_SESSION_ID to sessionId, ListenerSessionFragment.ARG_START_MS to startMs)
+        )
+    }
 
     private fun uriFor(file: File): Uri =
         FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.fileprovider", file)
@@ -382,6 +473,40 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
                 onLongClick(item)
                 true
             }
+        }
+
+        override fun getItemCount(): Int = items.size
+    }
+
+    private class HitsAdapter(private val onClick: (TranscriptHit) -> Unit) : RecyclerView.Adapter<HitsAdapter.VH>() {
+        private var items: List<TranscriptHit> = emptyList()
+        private val df = SimpleDateFormat("d MMM yyyy", Locale.getDefault())
+
+        fun submit(list: List<TranscriptHit>) {
+            items = list
+            notifyDataSetChanged()
+        }
+
+        class VH(v: View) : RecyclerView.ViewHolder(v) {
+            val header: TextView = v.findViewById(R.id.tv_seg_header)
+            val time: TextView = v.findViewById(R.id.tv_seg_time)
+            val text: TextView = v.findViewById(R.id.tv_seg_text)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
+            VH(LayoutInflater.from(parent.context).inflate(R.layout.item_transcript_segment, parent, false))
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            val hit = items[position]
+            holder.header.visibility = View.VISIBLE
+            holder.header.text = hit.sessionTitle
+            holder.time.text = holder.itemView.context.getString(
+                R.string.listener_search_hit_sub,
+                df.format(Date(hit.sessionStartedAt)),
+                TranscriptExporter.timestamp(hit.startMs)
+            )
+            holder.text.text = hit.text
+            holder.itemView.setOnClickListener { onClick(hit) }
         }
 
         override fun getItemCount(): Int = items.size

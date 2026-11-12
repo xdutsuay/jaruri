@@ -79,13 +79,65 @@
             android:layout_marginTop="8dp"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
+
+        <!-- v2: on-device speech model -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tv_listener_model"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/listener_stt_model_none"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_listener_model_import"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/listener_stt_import" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_listener_model_remove"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/listener_stt_remove"
+                android:visibility="gone" />
+        </LinearLayout>
     </LinearLayout>
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_listener_search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp"
+        android:hint="@string/listener_search_hint"
+        app:endIconMode="clear_text">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_listener_search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+
     <TextView
+        android:id="@+id/tv_listener_list_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="16dp"
-        android:paddingTop="16dp"
+        android:paddingTop="12dp"
         android:paddingBottom="4dp"
         android:text="@string/listener_sessions_header"
         android:textColor="@color/text_primary"
@@ -109,4 +161,13 @@
         android:layout_weight="1"
         android:padding="8dp"
         android:clipToPadding="false" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_listener_hits"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp"
+        android:clipToPadding="false"
+        android:visibility="gone" />
 </LinearLayout>
