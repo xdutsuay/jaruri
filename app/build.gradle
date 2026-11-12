@@ -40,6 +40,13 @@ android {
         includeInBundle = false
     }
     packaging {
+        jniLibs {
+            // Listener transcription (Vosk): compress native libs in the APK and
+            // ship ARM only. x86/x86_64 libvosk (~20 MB) would only serve emulators,
+            // where transcription reports "unavailable" instead.
+            useLegacyPackaging = true
+            excludes += ['lib/x86/libvosk.so', 'lib/x86_64/libvosk.so']
+        }
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
             excludes += 'META-INF/DEPENDENCIES'
@@ -88,6 +95,11 @@ dependencies {
     // DataStore
     implementation "androidx.datastore:datastore-preferences:1.0.0"
 
+    // Listener: offline speech-to-text (Apache-2.0; native libs from Maven, model imported by the user)
+    implementation "com.alphacephei:vosk-android:0.3.75"
+    // Listener: resumable background transcription
+    implementation "androidx.work:work-runtime-ktx:2.9.1"
+
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.mockito:mockito-core:4.5.1'
     testImplementation 'androidx.test:core:1.5.0'
@@ -95,6 +107,7 @@ dependencies {
     testImplementation 'org.robolectric:robolectric:4.10.3'
     testImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     testImplementation "androidx.navigation:navigation-testing:$nav_version"
+    testImplementation "androidx.work:work-testing:2.9.1"
     debugImplementation "androidx.fragment:fragment-testing:1.6.2"
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

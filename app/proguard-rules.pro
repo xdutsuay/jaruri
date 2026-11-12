@@ -18,3 +18,10 @@
 
 # DataStore / protobuf
 -dontwarn com.google.protobuf.**
+
+# Listener transcription: Vosk talks to libvosk through JNA (reflection + native callbacks).
+-keep class com.sun.jna.** { *; }
+-keep class * implements com.sun.jna.** { *; }
+-keep class org.vosk.** { *; }
+-dontwarn java.awt.**
+-dontwarn com.sun.jna.**

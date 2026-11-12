@@ -3,25 +3,26 @@ package com.example.moneymanager.listener.transcribe
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface TranscriptDao {
+abstract class TranscriptDao {
     @Query("SELECT * FROM transcript_segments WHERE sessionId = :sessionId ORDER BY startMs, id")
-    fun observeForSession(sessionId: Long): Flow<List<TranscriptSegmentEntity>>
+    abstract fun observeForSession(sessionId: Long): Flow<List<TranscriptSegmentEntity>>
 
     @Query("SELECT * FROM transcript_segments WHERE sessionId = :sessionId ORDER BY startMs, id")
-    suspend fun forSession(sessionId: Long): List<TranscriptSegmentEntity>
+    abstract suspend fun forSession(sessionId: Long): List<TranscriptSegmentEntity>
 
     @Insert
-    suspend fun insertAll(segments: List<TranscriptSegmentEntity>)
+    abstract suspend fun insertAll(segments: List<TranscriptSegmentEntity>)
 
     /** Drops partial output of chunks at or after [fromChunk] (used on resume). */
     @Query("DELETE FROM transcript_segments WHERE sessionId = :sessionId AND chunkIndex >= :fromChunk")
-    suspend fun deleteFromChunk(sessionId: Long, fromChunk: Int)
+    abstract suspend fun deleteFromChunk(sessionId: Long, fromChunk: Int)
 
     @Query("DELETE FROM transcript_segments WHERE sessionId = :sessionId")
-    suspend fun deleteForSession(sessionId: Long)
+    abstract suspend fun deleteForSession(sessionId: Long)
 
     /** [match] must come from [FtsQuery.build]; never pass raw user input. */
     @Query(
@@ -36,5 +37,31 @@ interface TranscriptDao {
         LIMIT :limit
         """
     )
-    suspend fun search(match: String, limit: Int = 200): List<TranscriptHit>
+    abstract suspend fun search(match: String, limit: Int = 200): List<TranscriptHit>
+
+    @Query(
+        "UPDATE listener_sessions SET transcriptState = :state, transcriptError = :error WHERE id = :sessionId"
+    )
+    abstract suspend fun setState(sessionId: Long, state: String, error: String?)
+
+    /** Moves to RUNNING unless the user already cancelled; returns rows changed. */
+    @Query(
+        "UPDATE listener_sessions SET transcriptState = 'RUNNING', transcriptError = NULL " +
+            "WHERE id = :sessionId AND transcriptState != 'CANCELLED'"
+    )
+    abstract suspend fun markRunningUnlessCancelled(sessionId: Long): Int
+
+    @Query("UPDATE listener_sessions SET transcribedChunks = :done WHERE id = :sessionId")
+    abstract suspend fun setTranscribedChunks(sessionId: Long, done: Int)
+
+    @Query("UPDATE listener_sessions SET transcriptState = :state, transcriptError = NULL, transcribedChunks = 0 WHERE id = :sessionId")
+    abstract suspend fun resetProgress(sessionId: Long, state: String)
+
+    /** One chunk's output and the resume pointer land together or not at all. */
+    @Transaction
+    open suspend fun commitChunk(sessionId: Long, chunkIndex: Int, segments: List<TranscriptSegmentEntity>) {
+        deleteFromChunk(sessionId, chunkIndex)
+        if (segments.isNotEmpty()) insertAll(segments)
+        setTranscribedChunks(sessionId, chunkIndex + 1)
+    }
 }
