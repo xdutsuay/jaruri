@@ -91,7 +91,7 @@ class ListenerRepositoryTest {
         writeSegment(stale.dirName, 1, 10, mtime = 1_120_000)
         val active = repo.create("active", 2_000_000)
 
-        val n = repo.reconcileInterrupted(activeSessionId = active.id)
+        val n = repo.reconcileInterrupted { it.id == active.id }
         assertEquals(1, n)
 
         val s = repo.get(stale.id)!!
@@ -108,9 +108,22 @@ class ListenerRepositoryTest {
     @Test
     fun reconcileWithNoActiveServiceClosesEverything() = runBlocking {
         val s = repo.create("x", 10)
-        assertEquals(1, repo.reconcileInterrupted(activeSessionId = null))
+        assertEquals(1, repo.reconcileInterrupted { false })
         assertEquals(ListenerSessionEntity.STATE_INTERRUPTED, repo.get(s.id)!!.state)
-        assertEquals(0, repo.reconcileInterrupted(activeSessionId = null))
+        assertEquals(0, repo.reconcileInterrupted { false })
+    }
+
+    @Test
+    fun startingSessionIsOwnedByStartTimeBeforeItHasAnId() = runBlocking {
+        val s = repo.create("new", 7_000)
+        ListenerState.set(ListenerState.Status.Starting(7_000))
+        try {
+            assertEquals(0, repo.reconcileInterrupted())
+            assertEquals(ListenerSessionEntity.STATE_RECORDING, repo.get(s.id)!!.state)
+        } finally {
+            ListenerState.set(ListenerState.Status.Idle)
+        }
+        assertEquals(1, repo.reconcileInterrupted())
     }
 
     @Test

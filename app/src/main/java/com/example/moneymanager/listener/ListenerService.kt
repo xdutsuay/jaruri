@@ -64,13 +64,13 @@ class ListenerService : Service() {
         when (intent?.action) {
             ACTION_START -> startSession(intent.getStringExtra(EXTRA_TITLE))
             ACTION_STOP -> stopSession(ListenerStopReason.USER)
-            else -> if (!ListenerState.isRecording) stopSelf()
+            else -> if (!ListenerState.isBusy) stopSelf()
         }
         return START_NOT_STICKY
     }
 
     private fun startSession(requestedTitle: String?) {
-        if (ListenerState.isRecording || stopping) return
+        if (ListenerState.isBusy || stopping) return
         ListenerState.reportError(null)
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
@@ -108,11 +108,20 @@ class ListenerService : Service() {
         maxMs = debugMaxOverride() ?: ListenerPolicy.DEFAULT_MAX_SESSION_MS
         startedAt = now
         stopping = false
+        ListenerState.set(ListenerState.Status.Starting(now))
 
         scope.launch {
             val row = withContext(Dispatchers.IO) { repo.create(title, now) }
             sessionId = row.id
             sessionDir = row.dirName
+            if (stopping) {
+                // Stop arrived while the row was being created.
+                withContext(Dispatchers.IO) {
+                    repo.finish(row.id, System.currentTimeMillis(), ListenerStopReason.USER)
+                }
+                endStartedButCancelled()
+                return@launch
+            }
             segmentIndex = 0
             recorder = ListenerRecorder(applicationContext) { msg ->
                 handler.post { onRecorderError(msg) }
@@ -174,7 +183,11 @@ class ListenerService : Service() {
 
     private fun stopSession(reason: ListenerStopReason) {
         if (stopping) return
-        if (!ListenerState.isRecording && sessionId <= 0) {
+        if (ListenerState.status.value is ListenerState.Status.Starting) {
+            stopping = true // the start coroutine sees this and closes the row
+            return
+        }
+        if (!ListenerState.isRecording || sessionId <= 0) {
             stopSelf()
             return
         }
@@ -204,6 +217,14 @@ class ListenerService : Service() {
         }
     }
 
+    private fun endStartedButCancelled() {
+        sessionId = -1
+        ListenerState.set(ListenerState.Status.Idle)
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        refreshTile()
+        stopSelf()
+    }
+
     private fun failStart(message: String) {
         ListenerState.reportError(message)
         ListenerState.set(ListenerState.Status.Idle)
@@ -228,6 +249,8 @@ class ListenerService : Service() {
                 }
             }
             refreshTile()
+        } else if (ListenerState.isBusy) {
+            ListenerState.set(ListenerState.Status.Idle)
         }
         scope.cancel()
         super.onDestroy()

@@ -75,10 +75,12 @@ class ListenerRepository(
      *
      * @return number of rows marked INTERRUPTED.
      */
-    suspend fun reconcileInterrupted(activeSessionId: Long?): Int {
+    suspend fun reconcileInterrupted(
+        isOwnedByLiveService: (ListenerSessionEntity) -> Boolean = ListenerState::ownsSession
+    ): Int {
         var n = 0
         for (row in dao.getByState(ListenerSessionEntity.STATE_RECORDING)) {
-            if (row.id == activeSessionId) continue
+            if (isOwnedByLiveService(row)) continue
             val segs = storage.segments(row.dirName)
             val lastWrite = segs.maxOfOrNull { it.lastModified() } ?: row.startedAt
             val endedAt = maxOf(lastWrite, row.startedAt)

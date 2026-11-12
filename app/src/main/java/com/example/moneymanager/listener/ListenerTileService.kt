@@ -33,7 +33,7 @@ class ListenerTileService : TileService() {
 
     override fun onClick() {
         super.onClick()
-        if (ListenerState.isRecording) {
+        if (ListenerState.isBusy) {
             ListenerService.stop(this)
             qsTile?.apply {
                 state = Tile.STATE_INACTIVE
@@ -62,7 +62,7 @@ class ListenerTileService : TileService() {
 
     private fun updateTile() {
         val tile = qsTile ?: return
-        val on = ListenerState.isRecording
+        val on = ListenerState.isBusy
         tile.label = getString(R.string.listener_title)
         tile.state = if (on) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
