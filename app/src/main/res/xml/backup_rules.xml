@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
+    <!-- Only prefs + database are included, so Listener audio (files/listener/) is
+         already excluded on Android 11 and below. Keep it that way. -->
     <include domain="sharedpref" path="."/>
     <include domain="database" path="."/>
 </full-backup-content>

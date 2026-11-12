@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
+    <!-- Listener: play/share chunks from app-private storage. -->
+    <files-path name="listener" path="listener/" />
     <external-path name="external_files" path="." />
 </paths>

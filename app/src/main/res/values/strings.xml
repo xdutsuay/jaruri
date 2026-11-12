@@ -240,5 +240,52 @@
     <string name="settings_sms_history_backfill">Deep SMS history scan</string>
     <string name="settings_sms_history_backfill_hint">One-shot deeper inbox rescan (beyond Import SMS). New rows need category review. Resume-safe.</string>
     <string name="settings_sms_history_running">Scanning inbox…</string>
+
+    <!-- Listener -->
+    <string name="menu_listener">Listener</string>
+    <string name="listener_title">Listener</string>
+    <string name="hub_listener_title">Listener</string>
+    <string name="hub_listener_body">Record a meeting until you stop it</string>
+    <string name="listener_intro">Turn it on for a meeting. It keeps recording until you press Stop (safety stop after 4 hours). Audio stays on this phone.</string>
+    <string name="listener_title_hint">Title (optional)</string>
+    <string name="listener_start">Start listening</string>
+    <string name="listener_stop">Stop</string>
+    <string name="listener_status_idle">Off</string>
+    <string name="listener_status_recording">Recording · part %1$d</string>
+    <string name="listener_free_space">Free space: %1$s (~%2$d h of audio)</string>
+    <string name="listener_sessions_header">Recordings</string>
+    <string name="listener_empty">No recordings yet.</string>
+    <string name="listener_item_sub">%1$s · %2$s · %3$d part(s)</string>
+    <string name="listener_state_recording">Recording now</string>
+    <string name="listener_state_interrupted">Interrupted · audio up to the cut is kept</string>
+    <string name="listener_state_stopped_max">Auto-stopped at the time limit</string>
+    <string name="listener_state_stopped_storage">Auto-stopped: low storage</string>
+    <string name="listener_consent_title">Before you record</string>
+    <string name="listener_consent_body">Tell everyone in the room that you are recording. Recording people without their consent is illegal in some places.\n\nRecordings stay in Jaruri\'s private storage on this phone. Nothing is uploaded, and they are left out of backups. Phone and VoIP call audio from other apps can\'t be captured.</string>
+    <string name="listener_consent_ok">I understand</string>
+    <string name="listener_err_mic_permission">Microphone permission is needed to record.</string>
+    <string name="listener_err_fgs">Android didn\'t allow the recorder to start (%1$s). Open Jaruri and start from the Listener screen.</string>
+    <string name="listener_err_low_storage_start">Not enough free space to start (needs 300 MB).</string>
+    <string name="listener_err_recorder">Couldn\'t open the microphone. Another app may be using it.</string>
+    <string name="listener_notif_recording">Listener is recording</string>
+    <string name="listener_notif_stopped">Listener stopped</string>
+    <string name="listener_notice_max_duration">Reached the %1$d-minute safety limit. The recording is saved.</string>
+    <string name="listener_notice_low_storage">Storage is almost full. The recording is saved.</string>
+    <string name="listener_notice_recorder_error">The microphone stopped working. Audio up to that point is saved.</string>
+    <string name="listener_channel_ongoing">Listener recording</string>
+    <string name="listener_channel_notices">Listener notices</string>
+    <string name="listener_tile_on">Recording</string>
+    <string name="listener_tile_off">Off</string>
+    <string name="listener_action_play">Play</string>
+    <string name="listener_action_rename">Rename</string>
+    <string name="listener_action_share">Share audio</string>
+    <string name="listener_action_delete">Delete</string>
+    <string name="listener_delete_confirm">Delete \"%1$s\" and its audio? This can\'t be undone.</string>
+    <string name="listener_delete_failed">Couldn\'t delete all audio files. Try again.</string>
+    <string name="listener_busy_recording">Stop the recording first.</string>
+    <string name="listener_no_audio">No audio saved for this session.</string>
+    <string name="listener_pick_part">Part %1$d</string>
+    <string name="listener_no_player">No app found to play audio.</string>
+    <string name="listener_notif_permission_hint">Notifications are off, so the Stop button won\'t show in the shade. Use this screen or the Quick Settings tile to stop.</string>
 </resources>
 

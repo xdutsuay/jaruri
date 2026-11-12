@@ -2,8 +2,11 @@
 <data-extraction-rules>
     <cloud-backup>
         <include domain="root" />
+        <!-- Listener audio never leaves the phone. -->
+        <exclude domain="file" path="listener/" />
     </cloud-backup>
     <device-transfer>
         <include domain="root" />
+        <exclude domain="file" path="listener/" />
     </device-transfer>
 </data-extraction-rules>
