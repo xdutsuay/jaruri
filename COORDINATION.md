@@ -40,12 +40,12 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-- Status: AVAILABLE
-- Active agent: none
-- Role: none
-- Claimed at: none
-- Scope lock: none
-- Expected deliverable: none
+- Status: LOCKED
+- Active agent: Gangadhar (Grok Bot)
+- Role: implementer (local branch `feature/listener`, no push)
+- Claimed at: 2026-11-12 23:40 IST
+- Scope lock: Listener v1 — new `listener/` package, `AppDatabase` v11→v12, `HubFragment`/`fragment_hub.xml`, `nav_graph.xml`, `menu_drawer.xml`, `MainActivity.kt` top-level ids, `strings.xml`, `AndroidManifest.xml`, backup/data-extraction rules, `file_paths.xml`, README/docs
+- Expected deliverable: Listener v1 per plan (manual mic recording FGS + QS tile), tests green, debug APK, emulator evidence
 
 ## Baton
 
@@ -55,6 +55,18 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 - Next step: AppDatabase now v11; do not bump without reading current version; validate payee/refund/FY/quick-add on device
 
 ## Work Log
+
+### 2026-11-12 - Gangadhar (Grok Bot) Listener v1
+
+- Scope:
+  - Hub card "Listener": manual start/stop meeting recorder (foreground service, type microphone), sessions list, QS tile, consent notice, free-space checks, 4 h safety auto-stop
+- Observations:
+  - Started from AppDatabase v11; this work adds `listener_sessions` via MIGRATION_11_12 (additive)
+- Action taken:
+  - (in progress)
+- Validation:
+  - (pending)
+
 
 ### 2026-10-06 - EM (Cursor) money polish 1–6
 
