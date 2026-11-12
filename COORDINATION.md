@@ -40,12 +40,12 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-- Status: AVAILABLE
-- Active agent: none
-- Role: none
-- Claimed at: none
-- Scope lock: none
-- Expected deliverable: none
+- Status: CLAIMED
+- Active agent: Gangadhar (Grok Bot)
+- Role: implementation (branch `feature/listener`)
+- Claimed at: 2026-11-13 00:15 IST
+- Scope lock: Listener v2 — `listener/` (+ new `listener/transcribe/`), `AppDatabase` v12→v13, `ListenerFragment` + new session screen, `nav_graph.xml`, `strings.xml`, `AndroidManifest.xml`, `app/build.gradle` (vosk, jna, work-runtime), `proguard-rules.pro`, `file_paths.xml`, docs
+- Expected deliverable: offline transcription (Vosk), transcript search (FTS4), transcript export, keyword-heuristic notes; tests green; debug APK
 
 ## Baton
 
@@ -55,6 +55,18 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 - Next step: AppDatabase is now **v12** (`listener_sessions`); do not bump without reading current version. On-device checks still pending (see Work Log).
 
 ## Work Log
+
+### 2026-11-13 - Gangadhar (Grok Bot) Listener v2
+
+- Scope:
+  - On-device transcription of finished sessions (no network), FTS search, transcript export, labelled heuristic notes
+- Observations:
+  - Starting from AppDatabase v12; adds MIGRATION_12_13
+- Action taken:
+  - (in progress)
+- Validation:
+  - (pending)
+
 
 ### 2026-11-12 - Gangadhar (Grok Bot) Listener v1
 
