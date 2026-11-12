@@ -40,19 +40,16 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-- Status: CLAIMED
-- Active agent: Gangadhar (Grok Bot)
-- Role: implementation (branch `feature/listener`)
-- Claimed at: 2026-11-13 00:15 IST
-- Scope lock: Listener v2 — `listener/` (+ new `listener/transcribe/`), `AppDatabase` v12→v13, `ListenerFragment` + new session screen, `nav_graph.xml`, `strings.xml`, `AndroidManifest.xml`, `app/build.gradle` (vosk, jna, work-runtime), `proguard-rules.pro`, `file_paths.xml`, docs
-- Expected deliverable: offline transcription (Vosk), transcript search (FTS4), transcript export, keyword-heuristic notes; tests green; debug APK
+- Status: AVAILABLE
+- Active agent: none
+- Released at: 2026-11-13 00:35 IST by Gangadhar (Grok Bot) after Listener v2
 
 ## Baton
 
-- Previous agent: Gangadhar (Grok Bot) Listener v1 (local branch `feature/listener`, not pushed)
+- Previous agent: Gangadhar (Grok Bot) Listener v2 (branch `feature/listener`, pushed to origin)
 - Baton state: HANDOFF
-- Next agent: Kaustubh review → device run on realme
-- Next step: AppDatabase is now **v12** (`listener_sessions`); do not bump without reading current version. On-device checks still pending (see Work Log).
+- Next agent: Kaustubh review → device run on realme (arm64 phone; emulators report transcription unavailable)
+- Next step: AppDatabase is now **v13** (`transcript_segments`, `transcript_fts`, transcript columns on `listener_sessions`); do not bump without reading current version. On-device checks pending: see `docs/listener.md` and the evidence checklist.
 
 ## Work Log
 
@@ -61,11 +58,20 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 - Scope:
   - On-device transcription of finished sessions (no network), FTS search, transcript export, labelled heuristic notes
 - Observations:
-  - Starting from AppDatabase v12; adds MIGRATION_12_13
+  - Starting from AppDatabase v12; adds MIGRATION_12_13 (additive)
+  - No emulator on the build box (no KVM), so nothing ran on a device
 - Action taken:
-  - (in progress)
+  - `listener/transcribe/`: Vosk engine behind a `SpeechEngine` interface, MediaCodec decoder, safe model import (`SttModelStore`), resumable `TranscriptionRunner`, WorkManager `TranscriptionWorker`/`TranscriptionScheduler` (foreground dataSync best-effort), FTS4 search, `ChunkPlayer`, `TranscriptExporter`, `HeuristicSummarizer` (labelled not AI)
+  - Room v12→v13 + migration test; auto-queue on stop when a model is installed
+  - UI: model import/remove + search on Listener screen; new `nav_listener_session` screen (player, transcript seek, transcribe/cancel/resume, export, highlights)
+  - Manifest: `FOREGROUND_SERVICE_DATA_SYNC`, WorkManager `SystemForegroundService` typed dataSync, `ACCESS_NETWORK_STATE` removed; still no INTERNET
+  - build.gradle: vosk-android 0.3.75, work-runtime-ktx 2.9.1 (+ work-testing); ARM-only compressed native libs; proguard keeps for JNA/Vosk
+  - Docs: `docs/listener.md` (engine trade-offs, APK size, F-Droid risk), README line. Version NOT bumped
 - Validation:
-  - (pending)
+  - `./gradlew :app:testDebugUnitTest`: 192 tests, 0 failures (v1 ended at 145)
+  - `assembleDebug` OK; debug APK 15.48 MB (v1 7.62 MB); aapt2: no INTERNET
+  - `lintDebug`: the same 6 pre-existing errors as main, none in Listener files
+  - NOT verified: Vosk native load, MediaCodec decode, real model accuracy/speed, foreground job on Android 14, battery
 
 
 ### 2026-11-12 - Gangadhar (Grok Bot) Listener v1
