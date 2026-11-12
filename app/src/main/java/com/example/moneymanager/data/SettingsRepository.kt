@@ -29,6 +29,7 @@ class SettingsRepository(private val context: Context) {
         val FISCAL_YEAR_MODE = stringPreferencesKey("fiscal_year_mode")
         val SMS_HISTORY_BACKFILL_CURSOR = longPreferencesKey("sms_history_backfill_cursor")
         val SMS_HISTORY_MAX_SCAN = intPreferencesKey("sms_history_max_scan")
+        val LISTENER_CONSENT_ACCEPTED = booleanPreferencesKey("listener_consent_accepted")
 
         const val FY_CALENDAR = "CALENDAR"
         const val FY_APR_MAR = "APR_MAR"
@@ -162,6 +163,17 @@ class SettingsRepository(private val context: Context) {
     suspend fun setSmsBalanceReplayV1Done(done: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[SMS_BALANCE_REPLAY_V1] = done
+        }
+    }
+
+    /** Listener: user acknowledged the recording-consent notice once. */
+    val listenerConsentAccepted: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[LISTENER_CONSENT_ACCEPTED] ?: false
+    }
+
+    suspend fun setListenerConsentAccepted(accepted: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LISTENER_CONSENT_ACCEPTED] = accepted
         }
     }
 
