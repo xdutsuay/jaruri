@@ -41,6 +41,8 @@ object ListenerState {
         Status.Idle -> false
     }
 
+    internal fun activeSessionIdForTest(): Long? = (_status.value as? Status.Recording)?.sessionId
+
     internal fun set(status: Status) {
         _status.value = status
     }
