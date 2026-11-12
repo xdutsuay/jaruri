@@ -2,6 +2,7 @@ package com.example.moneymanager.listener
 
 import android.content.Context
 import com.example.moneymanager.data.AppDatabase
+import com.example.moneymanager.listener.transcribe.TranscriptDao
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -11,11 +12,13 @@ import kotlinx.coroutines.flow.Flow
  */
 class ListenerRepository(
     private val dao: ListenerSessionDao,
-    val storage: ListenerStorage
+    val storage: ListenerStorage,
+    private val transcriptDao: TranscriptDao? = null
 ) {
     constructor(context: Context) : this(
         AppDatabase.getDatabase(context).listenerSessionDao(),
-        ListenerStorage(context)
+        ListenerStorage(context),
+        AppDatabase.getDatabase(context).transcriptDao()
     )
 
     val sessions: Flow<List<ListenerSessionEntity>> = dao.getAll()
@@ -104,10 +107,11 @@ class ListenerRepository(
         if (t.isNotEmpty()) dao.rename(id, t)
     }
 
-    /** Deletes audio files then the row. Returns false (row kept) if files remain. */
+    /** Deletes audio files, then transcript segments (FTS follows via triggers), then the row. Returns false (row kept) if files remain. */
     suspend fun delete(id: Long): Boolean {
         val row = dao.getById(id) ?: return true
         if (!storage.deleteSession(row.dirName)) return false
+        transcriptDao?.deleteForSession(id)
         dao.deleteById(id)
         return true
     }

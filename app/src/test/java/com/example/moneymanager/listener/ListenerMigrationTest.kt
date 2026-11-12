@@ -50,8 +50,72 @@ class ListenerMigrationTest {
             "INSERT INTO time_entries (label, category, durationMinutes, startedAt, notes, createdAt, source) " +
                 "VALUES ('standup', 'Work', 15, 1000, 'n', 1000, 'MANUAL')"
         )
+        dropV13Additions(sql)
         sql.execSQL("DROP TABLE listener_sessions")
         sql.version = 11
+        db.close()
+    }
+
+    private fun dropV13Additions(sql: SupportSQLiteDatabase) {
+        for (t in listOf("BEFORE_UPDATE", "BEFORE_DELETE", "AFTER_UPDATE", "AFTER_INSERT")) {
+            sql.execSQL("DROP TRIGGER IF EXISTS room_fts_content_sync_transcript_fts_$t")
+        }
+        sql.execSQL("DROP TABLE IF EXISTS transcript_fts")
+        sql.execSQL("DROP TABLE IF EXISTS transcript_segments")
+    }
+
+    /** v12 = v13 minus transcript tables and the three new listener_sessions columns. */
+    private fun createV12WithExistingSession() {
+        val db = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
+            .allowMainThreadQueries()
+            .build()
+        val sql = db.openHelper.writableDatabase
+        dropV13Additions(sql)
+        sql.execSQL("ALTER TABLE listener_sessions RENAME TO ls_v13")
+        sql.execSQL(
+            """
+            CREATE TABLE listener_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, title TEXT NOT NULL,
+                startedAt INTEGER NOT NULL, endedAt INTEGER, durationMs INTEGER NOT NULL,
+                segmentCount INTEGER NOT NULL, bytes INTEGER NOT NULL, state TEXT NOT NULL,
+                dirName TEXT NOT NULL, notes TEXT NOT NULL)
+            """.trimIndent()
+        )
+        sql.execSQL("DROP TABLE ls_v13")
+        sql.execSQL(
+            "INSERT INTO listener_sessions (title, startedAt, endedAt, durationMs, segmentCount, bytes, state, dirName, notes) " +
+                "VALUES ('Old meeting', 100, 200, 100, 1, 10, 'DONE', 'session-100', 'USER')"
+        )
+        sql.version = 12
+        db.close()
+    }
+
+    @Test
+    fun migrate12To13_addsTranscriptTables_keepsSessions_andFtsWorks() = runBlocking {
+        createV12WithExistingSession()
+        val db = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
+            .addMigrations(AppDatabase.MIGRATION_12_13)
+            .allowMainThreadQueries()
+            .build()
+        assertEquals(13, db.openHelper.writableDatabase.version)
+
+        val old = db.listenerSessionDao().getAll().first().single()
+        assertEquals("Old meeting", old.title)
+        assertEquals(ListenerSessionEntity.TRANSCRIPT_NONE, old.transcriptState)
+        assertEquals(0, old.transcribedChunks)
+
+        val t = db.transcriptDao()
+        t.insertAll(
+            listOf(
+                com.example.moneymanager.listener.transcribe.TranscriptSegmentEntity(
+                    sessionId = old.id, chunkIndex = 0, startMs = 0, endMs = 900, text = "budget review tomorrow"
+                )
+            )
+        )
+        // Triggers created by the migration keep the FTS index in sync.
+        val hits = t.search(com.example.moneymanager.listener.transcribe.FtsQuery.build("budg")!!)
+        assertEquals(1, hits.size)
+        assertEquals("Old meeting", hits[0].sessionTitle)
         db.close()
     }
 
@@ -60,11 +124,11 @@ class ListenerMigrationTest {
         createV11WithExistingData()
 
         val db = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(AppDatabase.MIGRATION_11_12)
+            .addMigrations(AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13)
             .allowMainThreadQueries()
             .build()
         val sql = db.openHelper.writableDatabase // triggers migrate + validation
-        assertEquals(12, sql.version)
+        assertEquals(13, sql.version)
 
         val entries = db.timeEntryDao().getAll().first()
         assertEquals(1, entries.size)
@@ -92,7 +156,7 @@ class ListenerMigrationTest {
             }
         }
         val db = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(broken)
+            .addMigrations(broken, AppDatabase.MIGRATION_12_13)
             .allowMainThreadQueries()
             .build()
         var failed = false

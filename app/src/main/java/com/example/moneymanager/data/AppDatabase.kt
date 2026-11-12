@@ -8,6 +8,9 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.moneymanager.listener.ListenerSessionDao
 import com.example.moneymanager.listener.ListenerSessionEntity
+import com.example.moneymanager.listener.transcribe.TranscriptDao
+import com.example.moneymanager.listener.transcribe.TranscriptFtsEntity
+import com.example.moneymanager.listener.transcribe.TranscriptSegmentEntity
 import com.example.moneymanager.wellbeing.UsageDailyDao
 import com.example.moneymanager.wellbeing.UsageDailyEntity
 
@@ -25,9 +28,11 @@ import com.example.moneymanager.wellbeing.UsageDailyEntity
         PayeeEntity::class,
         PayeeAliasEntity::class,
         QuickAddTemplateEntity::class,
-        ListenerSessionEntity::class
+        ListenerSessionEntity::class,
+        TranscriptSegmentEntity::class,
+        TranscriptFtsEntity::class
     ],
-    version = 12,
+    version = 13,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -43,6 +48,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun payeeDao(): PayeeDao
     abstract fun quickAddTemplateDao(): QuickAddTemplateDao
     abstract fun listenerSessionDao(): ListenerSessionDao
+    abstract fun transcriptDao(): TranscriptDao
 
     companion object {
         @Volatile private var instance: AppDatabase? = null
@@ -251,6 +257,38 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Listener v2: transcription state on sessions, timestamped transcript
+         * segments, and an FTS4 index over them (content table + Room's sync
+         * triggers, same SQL Room generates). Additive.
+         */
+        internal val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE listener_sessions ADD COLUMN transcriptState TEXT NOT NULL DEFAULT 'NONE'")
+                db.execSQL("ALTER TABLE listener_sessions ADD COLUMN transcribedChunks INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE listener_sessions ADD COLUMN transcriptError TEXT")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `transcript_segments` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`sessionId` INTEGER NOT NULL, `chunkIndex` INTEGER NOT NULL, `startMs` INTEGER NOT NULL, " +
+                        "`endMs` INTEGER NOT NULL, `text` TEXT NOT NULL)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_transcript_segments_sessionId` ON `transcript_segments` (`sessionId`)"
+                )
+                db.execSQL(
+                    "CREATE VIRTUAL TABLE IF NOT EXISTS `transcript_fts` USING FTS4(`text` TEXT NOT NULL, content=`transcript_segments`)"
+                )
+                for (sql in TRANSCRIPT_FTS_TRIGGERS) db.execSQL(sql)
+            }
+        }
+
+        private val TRANSCRIPT_FTS_TRIGGERS = listOf(
+            "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_transcript_fts_BEFORE_UPDATE BEFORE UPDATE ON `transcript_segments` BEGIN DELETE FROM `transcript_fts` WHERE `docid`=OLD.`rowid`; END",
+            "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_transcript_fts_BEFORE_DELETE BEFORE DELETE ON `transcript_segments` BEGIN DELETE FROM `transcript_fts` WHERE `docid`=OLD.`rowid`; END",
+            "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_transcript_fts_AFTER_UPDATE AFTER UPDATE ON `transcript_segments` BEGIN INSERT INTO `transcript_fts`(`docid`, `text`) VALUES (NEW.`rowid`, NEW.`text`); END",
+            "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_transcript_fts_AFTER_INSERT AFTER INSERT ON `transcript_segments` BEGIN INSERT INTO `transcript_fts`(`docid`, `text`) VALUES (NEW.`rowid`, NEW.`text`); END"
+        )
+
         private fun addTimeEntrySourceColumnIfMissing(db: SupportSQLiteDatabase) {
             val cursor = db.query("PRAGMA table_info(time_entries)")
             var hasSource = false
@@ -287,7 +325,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_8_9,
                         MIGRATION_9_10,
                         MIGRATION_10_11,
-                        MIGRATION_11_12
+                        MIGRATION_11_12,
+                        MIGRATION_12_13
                     )
                     .fallbackToDestructiveMigration()
                     .build().also { instance = it }

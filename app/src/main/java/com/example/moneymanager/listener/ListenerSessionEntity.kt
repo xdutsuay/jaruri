@@ -1,5 +1,6 @@
 package com.example.moneymanager.listener
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -22,11 +23,26 @@ data class ListenerSessionEntity(
     /** Folder name under `filesDir/listener/`. */
     val dirName: String,
     /** Why it stopped (see [ListenerStopReason]) or free text. */
-    val notes: String = ""
+    val notes: String = "",
+    /** v13: see [TRANSCRIPT_NONE] etc. */
+    @ColumnInfo(defaultValue = "'NONE'")
+    val transcriptState: String = TRANSCRIPT_NONE,
+    /** v13: chunks (in recording order) fully transcribed; resume point. */
+    @ColumnInfo(defaultValue = "0")
+    val transcribedChunks: Int = 0,
+    /** v13: last transcription failure, shown to the user. */
+    val transcriptError: String? = null
 ) {
     companion object {
         const val STATE_RECORDING = "RECORDING"
         const val STATE_DONE = "DONE"
         const val STATE_INTERRUPTED = "INTERRUPTED"
+
+        const val TRANSCRIPT_NONE = "NONE"
+        const val TRANSCRIPT_QUEUED = "QUEUED"
+        const val TRANSCRIPT_RUNNING = "RUNNING"
+        const val TRANSCRIPT_DONE = "DONE"
+        const val TRANSCRIPT_FAILED = "FAILED"
+        const val TRANSCRIPT_CANCELLED = "CANCELLED"
     }
 }
