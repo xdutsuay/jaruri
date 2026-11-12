@@ -6,6 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.moneymanager.listener.ListenerSessionDao
+import com.example.moneymanager.listener.ListenerSessionEntity
 import com.example.moneymanager.wellbeing.UsageDailyDao
 import com.example.moneymanager.wellbeing.UsageDailyEntity
 
@@ -22,9 +24,10 @@ import com.example.moneymanager.wellbeing.UsageDailyEntity
         UsageDailyEntity::class,
         PayeeEntity::class,
         PayeeAliasEntity::class,
-        QuickAddTemplateEntity::class
+        QuickAddTemplateEntity::class,
+        ListenerSessionEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -39,6 +42,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun usageDailyDao(): UsageDailyDao
     abstract fun payeeDao(): PayeeDao
     abstract fun quickAddTemplateDao(): QuickAddTemplateDao
+    abstract fun listenerSessionDao(): ListenerSessionDao
 
     companion object {
         @Volatile private var instance: AppDatabase? = null
@@ -225,6 +229,28 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** Listener v1: manual meeting recordings (index only; audio in filesDir). Additive. */
+        internal val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS listener_sessions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        title TEXT NOT NULL,
+                        startedAt INTEGER NOT NULL,
+                        endedAt INTEGER,
+                        durationMs INTEGER NOT NULL,
+                        segmentCount INTEGER NOT NULL,
+                        bytes INTEGER NOT NULL,
+                        state TEXT NOT NULL,
+                        dirName TEXT NOT NULL,
+                        notes TEXT NOT NULL
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         private fun addTimeEntrySourceColumnIfMissing(db: SupportSQLiteDatabase) {
             val cursor = db.query("PRAGMA table_info(time_entries)")
             var hasSource = false
@@ -260,7 +286,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_7_8,
                         MIGRATION_8_9,
                         MIGRATION_9_10,
-                        MIGRATION_10_11
+                        MIGRATION_10_11,
+                        MIGRATION_11_12
                     )
                     .fallbackToDestructiveMigration()
                     .build().also { instance = it }
