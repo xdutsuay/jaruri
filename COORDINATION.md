@@ -40,19 +40,19 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-- Status: LOCKED
-- Active agent: Gangadhar (Grok Bot)
-- Role: implementer (local branch `feature/listener`, no push)
-- Claimed at: 2026-11-12 23:40 IST
-- Scope lock: Listener v1 — new `listener/` package, `AppDatabase` v11→v12, `HubFragment`/`fragment_hub.xml`, `nav_graph.xml`, `menu_drawer.xml`, `MainActivity.kt` top-level ids, `strings.xml`, `AndroidManifest.xml`, backup/data-extraction rules, `file_paths.xml`, README/docs
-- Expected deliverable: Listener v1 per plan (manual mic recording FGS + QS tile), tests green, debug APK, emulator evidence
+- Status: AVAILABLE
+- Active agent: none
+- Role: none
+- Claimed at: none
+- Scope lock: none
+- Expected deliverable: none
 
 ## Baton
 
-- Previous agent: EM (Cursor) money polish 1–6
+- Previous agent: Gangadhar (Grok Bot) Listener v1 (local branch `feature/listener`, not pushed)
 - Baton state: HANDOFF
-- Next agent: peers / user validation
-- Next step: AppDatabase now v11; do not bump without reading current version; validate payee/refund/FY/quick-add on device
+- Next agent: Kaustubh review → device run on realme
+- Next step: AppDatabase is now **v12** (`listener_sessions`); do not bump without reading current version. On-device checks still pending (see Work Log).
 
 ## Work Log
 
@@ -63,9 +63,16 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 - Observations:
   - Started from AppDatabase v11; this work adds `listener_sessions` via MIGRATION_11_12 (additive)
 - Action taken:
-  - (in progress)
+  - `listener/` package: policy, entity/dao, storage, repository (reconcile → INTERRUPTED), state, recorder, FGS (type microphone), notifications, QS tile
+  - Room v11→v12 `MIGRATION_11_12` (additive) + migration test that fabricates v11 and lets Room validate
+  - Hub card, drawer item, `nav_listener`, `ListenerFragment` + `ListenerViewModel`; consent flag in `SettingsRepository`
+  - Manifest: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MICROPHONE`; no INTERNET, no boot receiver
+  - `data_extraction_rules.xml` excludes `files/listener/`; `file_paths.xml` adds `listener/`
+  - Docs: `docs/listener.md`, README feature line. App version NOT bumped (version bumps are release commits here)
 - Validation:
-  - (pending)
+  - `testDebugUnitTest`: 145 tests, 0 failures (baseline 117 + 28 new), JDK 21, Robolectric SDK 33
+  - `assembleDebug` OK; `lintDebug`: 0 new errors (6 remaining errors pre-exist on main in untouched files)
+  - Emulator NOT run: this box can't use KVM (nested-KVM kernel BUG, see /workspace/nagasa-build/emulator-diagnosis.txt). Needs a device run: real audio, Android 14 FGS start, tile, force-stop → INTERRUPTED, OEM background kill
 
 
 ### 2026-10-06 - EM (Cursor) money polish 1–6
