@@ -53,11 +53,17 @@ class ListenerTileService : TileService() {
                 )
                 startActivityAndCollapse(pi)
             } else {
-                @Suppress("DEPRECATION")
-                startActivityAndCollapse(intent)
+                launchLegacy(intent)
             }
         }
         if (isLocked) unlockAndRun(launch) else launch()
+    }
+
+    /** The PendingIntent overload only exists on API 34+; below that the Intent one is the API. */
+    @Suppress("DEPRECATION")
+    @android.annotation.SuppressLint("StartActivityAndCollapseDeprecated")
+    private fun launchLegacy(intent: Intent) {
+        startActivityAndCollapse(intent)
     }
 
     private fun updateTile() {

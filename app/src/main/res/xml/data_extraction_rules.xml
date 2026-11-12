@@ -2,11 +2,15 @@
 <data-extraction-rules>
     <cloud-backup>
         <include domain="root" />
+        <!-- Redundant with root (files/ is under it); lint needs an explicit
+             file-domain include before it accepts the exclude below. -->
+        <include domain="file" path="." />
         <!-- Listener audio never leaves the phone. -->
         <exclude domain="file" path="listener/" />
     </cloud-backup>
     <device-transfer>
         <include domain="root" />
+        <include domain="file" path="." />
         <exclude domain="file" path="listener/" />
     </device-transfer>
 </data-extraction-rules>

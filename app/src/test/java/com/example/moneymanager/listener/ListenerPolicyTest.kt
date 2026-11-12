@@ -75,5 +75,6 @@ class ListenerPolicyTest {
         assertEquals("00:00", ListenerPolicy.formatElapsed(-10))
         assertEquals("14.0 MB", ListenerPolicy.formatBytes(14L * 1024 * 1024))
         assertEquals("512 KB", ListenerPolicy.formatBytes(512L * 1024))
+        assertEquals("2.5 GB", ListenerPolicy.formatBytes(2560L * 1024 * 1024))
     }
 }
