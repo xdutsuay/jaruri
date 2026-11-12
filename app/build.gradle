@@ -46,6 +46,10 @@ android {
             // where transcription reports "unavailable" instead.
             useLegacyPackaging = true
             excludes += ['lib/x86/libvosk.so', 'lib/x86_64/libvosk.so']
+            // JNA (only used by Vosk): no use without libvosk, and mips/armeabi
+            // are ABIs no minSdk-24 device runs.
+            excludes += ['lib/x86/libjnidispatch.so', 'lib/x86_64/libjnidispatch.so',
+                         'lib/mips/**', 'lib/mips64/**', 'lib/armeabi/**']
         }
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
