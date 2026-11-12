@@ -23,6 +23,7 @@ Local Android money and time tracker (Kotlin). Tracks income/expenses and manual
 - Settings: currency selector (₹ default), date format, demo history, opt-in SMS auto-import
 - SMS import: inbox, paste, sample SMS, editable preview
 - **Time**: manual time entries with category, duration, date, and monthly totals
+- **Listener** (unreleased, on `feature/listener`): manual meeting recorder: start it, and it records until you stop it (4 h safety stop). Microphone foreground service with a Stop notification, Quick Settings tile, 15-min local audio chunks, sessions list. Audio stays on the phone and is excluded from backups. See [docs/listener.md](docs/listener.md)
 - **No Google account, Play Services, or network permission** on `main`
 
 ## Branches
