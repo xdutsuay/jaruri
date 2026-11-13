@@ -3,6 +3,7 @@ package com.example.moneymanager.viewmodel
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import com.example.moneymanager.data.CategoryRepository
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -25,12 +26,17 @@ class CategoryListConsistencyTest {
 
     @Test
     fun unobservedLiveDataIsEmpty_butCategoryNamesIsAlwaysTheFullList() = runBlocking {
+        // DataStore is process-wide in tests, so compare with the repository, not literals.
+        val repo = CategoryRepository(app)
+        val unique = "Fuel-" + System.nanoTime()
+        repo.addCategory(unique, CategoryRepository.TYPE_EXPENSE)
         val vm = MainViewModel(app)
         assertNull("this is why reading .value was wrong", vm.expenseCategories.value)
-        assertEquals(CategoryRepository.DEFAULT_EXPENSE_CATEGORY_NAMES, vm.categoryNames("EXPENSE"))
-        assertEquals(CategoryRepository.DEFAULT_INCOME_CATEGORY_NAMES, vm.categoryNames("INCOME"))
-        CategoryRepository(app).addCategory("Fuel", CategoryRepository.TYPE_EXPENSE)
-        assertEquals(CategoryRepository.DEFAULT_EXPENSE_CATEGORY_NAMES + "Fuel", vm.categoryNames("EXPENSE"))
+        val expense = vm.categoryNames("EXPENSE")
+        assertEquals(repo.expenseCategories.first().map { it.name }, expense)
+        assertTrue(expense.containsAll(CategoryRepository.DEFAULT_EXPENSE_CATEGORY_NAMES) && unique in expense)
+        assertTrue("more than the old 5-item fallback", expense.size > 5)
+        assertEquals(repo.incomeCategories.first().map { it.name }, vm.categoryNames("INCOME"))
     }
 
     @Test
