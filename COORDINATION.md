@@ -40,9 +40,12 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-- Status: RELEASED
-- Last holder: Gangadhar (Grok Bot), Tunnel v1 (claimed 2026-11-13 11:51 IST)
-- Scope released: product flavors (`offline` default, `tunnel`), `app/src/tunnel/**`, `AppDatabase` v13→v14, `HubFragment`/`fragment_hub.xml`, backup rules, `app/build.gradle`, docs; plus (scope grew) `ListenerService` lint suppression, main `strings.xml` hub strings, `src/test` NoNetworkOutsideTunnelTest, `src/testOffline`, `metadata/fdroid-template.md`
+- Status: CLAIMED
+- Active agent: Gangadhar (Grok Bot)
+- Role: implementation (branch `feature/listener`)
+- Claimed at: 2026-11-13 12:29 IST
+- Scope lock: Listener follow-ups (`listener/**`, `ui/Listener*`, `viewmodel/Listener*`, listener layouts/strings, main manifest receiver), `AppDatabase` v14→v15 (markers, notes, audio-deleted), Tunnel follow-ups (`app/src/tunnel/**`, `app/build.gradle` list flag), docs, evidence
+- Expected deliverable: Listener gap fixes + offline features (markers, notes, transcript edit, delete-audio-keep-text, playback speed, search date filter); Tunnel licence-clean default list + build flag + licence screen + hardening; both APKs rebuilt
 
 ## Baton
 
@@ -52,6 +55,17 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 - Next step: AppDatabase is now **v14** (`tunnel_app_rules`, `tunnel_domain_rules`, `tunnel_lists`); the DNS log lives in a separate `tunnel_log.db`. Build flavors: `offline` (default, F-Droid, no INTERNET) and `tunnel`. Do not add network code outside `src/tunnel` (NoNetworkOutsideTunnelTest enforces it).
 
 ## Work Log
+
+### 2026-11-13 - Gangadhar (Grok Bot) Listener follow-ups + Tunnel v1.1
+
+- Scope:
+  - Listener known gaps and offline Neosapien-like pieces; Tunnel licence-clean list and hardening
+- Observations:
+  - Starting from AppDatabase v14; adds MIGRATION_14_15
+- Action taken:
+  - (in progress)
+- Validation:
+  - (pending)
 
 ### 2026-11-13 - Gangadhar (Grok Bot) Tunnel v1
 
