@@ -40,19 +40,16 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-- Status: CLAIMED
-- Active agent: Gangadhar (Grok Bot)
-- Role: implementation (branch `feature/listener`)
-- Claimed at: 2026-11-13 11:55 IST
-- Scope lock: Tunnel v1 — product flavors (`offline` default, `tunnel`), new `app/src/tunnel/**`, `AppDatabase` v13→v14 (tunnel rule tables), `HubFragment`/`fragment_hub.xml` (flavor-gated card), backup rules, `app/build.gradle`, docs
-- Expected deliverable: DNS-filter VPN (tunnel flavor only), per-app bypass/best-effort block, bundled StevenBlack list, DNS log; tests green; debug APKs for both flavors
+- Status: RELEASED
+- Last holder: Gangadhar (Grok Bot), Tunnel v1 (claimed 2026-11-13 11:51 IST)
+- Scope released: product flavors (`offline` default, `tunnel`), `app/src/tunnel/**`, `AppDatabase` v13→v14, `HubFragment`/`fragment_hub.xml`, backup rules, `app/build.gradle`, docs; plus (scope grew) `ListenerService` lint suppression, main `strings.xml` hub strings, `src/test` NoNetworkOutsideTunnelTest, `src/testOffline`, `metadata/fdroid-template.md`
 
 ## Baton
 
-- Previous agent: Gangadhar (Grok Bot) Listener v2 (branch `feature/listener`, pushed to origin)
+- Previous agent: Gangadhar (Grok Bot) Tunnel v1 (branch `feature/listener`, pushed to origin)
 - Baton state: HANDOFF
-- Next agent: Kaustubh review → device run on realme (arm64 phone; emulators report transcription unavailable)
-- Next step: AppDatabase is now **v13** (`transcript_segments`, `transcript_fts`, transcript columns on `listener_sessions`); do not bump without reading current version. On-device checks pending: see `docs/listener.md` and the evidence checklist.
+- Next agent: Kaustubh review → realme run of both APKs (see evidence README, Tunnel checklist)
+- Next step: AppDatabase is now **v14** (`tunnel_app_rules`, `tunnel_domain_rules`, `tunnel_lists`); the DNS log lives in a separate `tunnel_log.db`. Build flavors: `offline` (default, F-Droid, no INTERNET) and `tunnel`. Do not add network code outside `src/tunnel` (NoNetworkOutsideTunnelTest enforces it).
 
 ## Work Log
 
@@ -62,10 +59,15 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
   - Local DNS-filter VPN in a separate `tunnel` flavor; `offline` flavor stays network-free
 - Observations:
   - Starting from AppDatabase v13; adds MIGRATION_13_14
+  - Robolectric can't build a VpnService interface, so the real VPN path is device-only
 - Action taken:
-  - (in progress)
+  - Flavors `offline` (default, no INTERNET) / `tunnel`; `FlavorFeatures` gates the hub card
+  - `src/tunnel`: DNS-only VpnService (virtual resolver only), packet codec, matcher, policy, upstream to the current network's DNS, Bypass/best-effort Block, bundled StevenBlack (gzip asset + notice), imports, separate `tunnel_log.db` (7 days / 90 days, excluded from backup), CSV/MD export, tile, notification, UI tabs
+  - Room v13→v14 (rule tables) + migration test
+  - Docs: `docs/tunnel.md`, README flavors, F-Droid note (`gradle: [offline]`)
 - Validation:
-  - (pending)
+  - testDebugUnitTest: offline 196 + tunnel 220, 0 failures; lint: only the 6 errors already on main in both variants
+  - APKs at 39bf3ec: offline 15,290,734 B (permissions identical to v2), tunnel 16,714,618 B (+INTERNET, +ACCESS_NETWORK_STATE); evidence in `/workspace/jaruri-listener/evidence/`
 
 ### 2026-11-13 - Gangadhar (Grok Bot) Listener v2
 
