@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tunnel_title">Tunnel</string>
+    <string name="tunnel_tab_status">Status</string>
+    <string name="tunnel_tab_apps">Apps</string>
+    <string name="tunnel_tab_rules">Blocklist</string>
+    <string name="tunnel_tab_log">Log</string>
+
+    <string name="tunnel_status_off">Tunnel is off</string>
+    <string name="tunnel_status_starting">Starting…</string>
+    <string name="tunnel_status_on">Filtering DNS on this phone</string>
+    <string name="tunnel_status_on_bypass">Filtering DNS on this phone (%1$d apps bypass)</string>
+    <string name="tunnel_status_paused">Paused until %1$s: lookups are not filtered</string>
+    <string name="tunnel_status_revoked">Stopped: another VPN took over, or Tunnel was turned off in Settings</string>
+    <string name="tunnel_status_failed">Couldn\'t start: %1$s</string>
+    <string name="tunnel_err_establish">Android refused the VPN (another VPN may be active)</string>
+    <string name="tunnel_turn_on">Turn on</string>
+    <string name="tunnel_turn_off">Turn off</string>
+    <string name="tunnel_pause_10">Pause 10 min</string>
+    <string name="tunnel_resume">Resume</string>
+    <string name="tunnel_stop">Stop</string>
+    <string name="tunnel_today">Today: %1$d lookups allowed, %2$d blocked</string>
+    <string name="tunnel_scope_note">DNS only. Jaruri sees which domain names are looked up, not URLs, page contents or how much data moves. Nothing is decrypted, and everything stays on this phone.</string>
+    <string name="tunnel_warn_private_dns">Private DNS is set to \"%1$s\". In that mode Android may send lookups straight to that provider, which bypasses Tunnel. Set Private DNS to Automatic or Off to filter.</string>
+    <string name="tunnel_warn_other_vpn">Another VPN is active. Turning Tunnel on will disconnect it (Android allows one VPN at a time).</string>
+    <string name="tunnel_warn_lockdown">Always-on with \"Block connections without VPN\" is set for Tunnel: if you turn it off, apps lose internet until it is back on.</string>
+    <string name="tunnel_warn_old_android">On Android 9 and below, Android doesn\'t say which app made a lookup, so per-app Block can\'t work (Bypass still does).</string>
+    <string name="tunnel_vpn_denied">VPN permission not granted.</string>
+    <string name="tunnel_notif_on">Filtering DNS · tap for the log</string>
+    <string name="tunnel_notif_paused">Paused until %1$s</string>
+    <string name="tunnel_tile_on">On</string>
+    <string name="tunnel_tile_off">Off</string>
+
+    <string name="tunnel_consent_title">Before you turn on Tunnel</string>
+    <string name="tunnel_consent_body">Tunnel runs a local VPN on this phone so that DNS lookups (the names of sites and services apps connect to) go through Jaruri.\n\n• Blocked names get no answer; everything else is looked up through your current network\'s DNS, as before.\n• Jaruri keeps a log of lookups (time, app when Android says which, name, allowed/blocked) on this phone only, for 7 days (daily counts for 90 days). It is never backed up or uploaded.\n• It can\'t see URLs, contents or passwords, and never decrypts anything.\n• This build has the internet permission only to forward allowed lookups.\n• Android allows one VPN at a time.</string>
+    <string name="tunnel_consent_ok">I understand, turn on</string>
+
+    <string name="tunnel_apps_search">Search apps</string>
+    <string name="tunnel_mode_default">Filtered (default)</string>
+    <string name="tunnel_mode_bypass">Bypass: not filtered</string>
+    <string name="tunnel_mode_block">Block: best effort</string>
+    <string name="tunnel_mode_block_explainer">Best effort: blocks this app\'s DNS lookups when Android says which app asked (Android 10+, depends on the phone). An app can still connect using addresses it already has, a shared DNS cache, or its own encrypted DNS. Strict per-app blocking needs a later version.</string>
+    <string name="tunnel_app_lookups">%1$d lookups (7 days)</string>
+    <string name="tunnel_apps_loading">Loading apps…</string>
+
+    <string name="tunnel_bundled_title">StevenBlack default list (%1$s domains)</string>
+    <string name="tunnel_bundled_body">Ads and malware hosts, bundled with the app (snapshot 8 Nov 2026). Tap for licence and sources.</string>
+    <string name="tunnel_zero_ip">Answer blocked names with 0.0.0.0 instead of \"not found\"</string>
+    <string name="tunnel_add_rule">Add rule</string>
+    <string name="tunnel_import_list">Import list</string>
+    <string name="tunnel_rule_hint">example.com or *.example.com</string>
+    <string name="tunnel_rule_block">Block</string>
+    <string name="tunnel_rule_allow">Allow (overrides lists)</string>
+    <string name="tunnel_rule_invalid">That isn\'t a domain name.</string>
+    <string name="tunnel_rules_header">Your rules</string>
+    <string name="tunnel_lists_header">Imported lists</string>
+    <string name="tunnel_rules_empty">No rules yet. Long-press a log entry to block or allow it.</string>
+    <string name="tunnel_rule_item_block">Block · %1$s</string>
+    <string name="tunnel_rule_item_allow">Allow · %1$s</string>
+    <string name="tunnel_list_item">%1$s · %2$d domains</string>
+    <string name="tunnel_delete_q">Delete \"%1$s\"?</string>
+    <string name="tunnel_imported">Imported %1$d domains</string>
+    <string name="tunnel_import_failed">Import failed: %1$s</string>
+    <string name="tunnel_no_picker">No file picker available on this phone.</string>
+
+    <string name="tunnel_log_blocked_only">Blocked only</string>
+    <string name="tunnel_log_search">Search domain or app</string>
+    <string name="tunnel_log_empty">No lookups logged yet.</string>
+    <string name="tunnel_log_unknown_app">unknown app</string>
+    <string name="tunnel_log_export">Export</string>
+    <string name="tunnel_log_export_csv">CSV (all detail)</string>
+    <string name="tunnel_log_export_md">Markdown report</string>
+    <string name="tunnel_log_clear">Clear log</string>
+    <string name="tunnel_log_clear_q">Delete all logged lookups and daily counts?</string>
+    <string name="tunnel_log_block_exact">Block %1$s</string>
+    <string name="tunnel_log_block_suffix">Block *.%1$s</string>
+    <string name="tunnel_log_allow">Allow %1$s</string>
+    <string name="tunnel_log_copy">Copy name</string>
+    <string name="tunnel_rule_added">Rule saved</string>
+    <string name="tunnel_decision_ALLOWED">allowed</string>
+    <string name="tunnel_decision_ALLOWED_RULE">allowed (your rule)</string>
+    <string name="tunnel_decision_PAUSED">paused</string>
+    <string name="tunnel_decision_BLOCKED_APP">blocked (app)</string>
+    <string name="tunnel_decision_BLOCKED_DOMAIN">blocked</string>
+    <string name="tunnel_decision_SERVFAIL">no answer</string>
+</resources>

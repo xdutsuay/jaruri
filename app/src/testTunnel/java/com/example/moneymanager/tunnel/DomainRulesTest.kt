@@ -60,7 +60,7 @@ class DomainRulesTest {
     /** The real bundled asset parses to the advertised size, off the main thread budget. */
     @Test
     fun bundledStevenBlackListParses() {
-        val f = File("src/tunnel/assets/blocklists/stevenblack-hosts.gz")
+        val f = File("src/tunnel/assets/blocklists/stevenblack-hosts.gzip")
         assertTrue("asset present at ${f.absolutePath}", f.exists())
         val t0 = System.nanoTime()
         val domains = GZIPInputStream(f.inputStream()).bufferedReader().let { HostsParser.parse(it) }
