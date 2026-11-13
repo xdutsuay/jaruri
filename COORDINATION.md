@@ -40,9 +40,12 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-- Status: RELEASED
-- Active agent: none
-- Released at: 2026-11-13 (IST) by Gangadhar (Grok Bot)
+- Status: CLAIMED
+- Active agent: Gangadhar (Grok Bot)
+- Role: implementation (branch `feature/listener`)
+- Claimed at: 2026-11-13 21:59 IST
+- Scope lock: Quick expense (`quickadd/**`, new `QuickExpenseActivity` + layout/strings/theme, main manifest entries, `MainActivity.installAppShortcuts`), docs, evidence
+- Expected deliverable: tile + launcher shortcut → translucent amount/category/note sheet that saves through the existing `transactions` table, Undo, last-used category; tests; both APKs rebuilt
 
 ## Baton
 
@@ -52,6 +55,17 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 - Next step: AppDatabase is now **v15** (`listener_markers`; `listener_sessions.userNotes`, `audioDeletedAt`; `transcript_segments.edited`). Tunnel lists: StevenBlack lives in `src/tunnelUnified` and is included only when `-Pjaruri.tunnel.unifiedList=true` (default); publishable builds pass `false` and ship the permissive list only. Do not add network code outside `src/tunnel`.
 
 ## Work Log
+
+### 2026-11-13 - Gangadhar (Grok Bot) Quick expense sheet
+
+- Scope:
+  - Reel-inspired one-tap expense logging (tile / shortcut / back-tap via Routines or Tasker), offline
+- Observations:
+  - A Quick add tile and dynamic shortcut already exist and open the full in-app QuickAddFragment; no DB change needed
+- Action taken:
+  - (in progress)
+- Validation:
+  - (pending)
 
 ### 2026-11-13 - Gangadhar (Grok Bot) Listener follow-ups + Tunnel v1.1
 
