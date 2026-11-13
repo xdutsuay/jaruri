@@ -100,6 +100,44 @@ On the session screen, tap **Export transcript** and choose **Markdown** or **Pl
 
 A real summary is **deferred**: no model small enough to ship credibly summarises on-device inside this APK, and Listener stays offline. A future on-device LLM can implement `SessionSummarizer` with `isAi = true`.
 
+## v3: offline follow-ups (no AI, no cloud)
+
+Fixed gaps:
+- **Start during the Stop window**: a Start that arrives while the previous session is still
+  finalising (Stop → service shutdown) used to be ignored. It is now queued: the service goes
+  foreground at once (Android's 5-second rule) and starts a fresh session as soon as the old one
+  is closed.
+- **Plurals**: "part(s)", "line(s)" and similar strings are real Android plurals.
+- **Cancel from the transcription notification on Android 11 and older**: WorkManager's
+  `stopReason` exists only on API 31+, so the session stayed "paused". The notification's
+  Cancel now goes through our own (non-exported) `TranscriptionCancelReceiver`, which marks the
+  transcript CANCELLED before cancelling the work.
+
+New (all on-device):
+- **Marks (bookmarks)**: a **Mark** action on the recording notification (and a button on the
+  Listener screen) saves the current offset in the session; the notification shows the count.
+  On the session screen tap a mark to seek, long-press to remove. Exported with the transcript.
+- **Notes**: free text per session (up to 10,000 chars), shown above the transcript, exported.
+- **Edit transcript lines**: long-press a line to fix it; edited lines show an "edited" tag, the
+  search index follows (FTS4 external-content triggers), and re-transcribing warns how many
+  edits will be lost.
+- **Delete audio, keep transcript**: frees the storage (the Listener screen now shows how much
+  recordings use). Refused while recording or transcribing. Play/Share are hidden for such
+  sessions and the row reads "Audio deleted · transcript kept".
+- **Playback speed**: 1×, 1.25×, 1.5×, 2× (applied while playing).
+- **Search date filter**: All / last 7 days / last 30 days chips.
+- DB v15 (`MIGRATION_14_15`, additive): `listener_markers`, `listener_sessions.userNotes`,
+  `listener_sessions.audioDeletedAt`, `transcript_segments.edited`.
+
+Deferred, and why:
+- **Tags/folders**: notes + search cover the need for now; a tag model is a schema and UI
+  decision worth making with real usage.
+- **Skip silence**: needs per-chunk silence analysis (decode + energy scan) and seek mapping;
+  doable offline but large, and it is risky to verify without a device.
+- **AI summary, speaker labels, live transcription**: no credible on-device model fits in this
+  APK; see "Not done yet".
+- **Cloud sync/backup**: Listener stays offline by design.
+
 ## Not done yet
 
 - A real AI summary (see above).
@@ -112,7 +150,7 @@ A real summary is **deferred**: no model small enough to ship credibly summarise
 
 ## Code
 
-- `listener/`: `ListenerPolicy` (pure rules), `ListenerSessionEntity` / `Dao`, `ListenerStorage`, `ListenerRepository`, `ListenerState`, `ListenerRecorder`, `ListenerService`, `ListenerNotifications`, `ListenerTileService`
+- `listener/`: `ListenerPolicy` (pure rules), `ListenerSessionEntity` / `Dao`, `ListenerStorage`, `ListenerRepository`, `ListenerState`, `ListenerRecorder`, `ListenerService`, `ListenerNotifications`, `ListenerTileService`, `ListenerMarkerEntity` / `ListenerMarkerDao`, `transcribe/TranscriptionCancelReceiver`
 - `ui/ListenerFragment.kt`, `viewmodel/ListenerViewModel.kt`, `res/layout/fragment_listener.xml`, `item_listener_session.xml`
 - `listener/transcribe/`:
   - data: `TranscriptSegmentEntity` (+ FTS entity), `TranscriptDao`, `FtsQuery`, `ChunkTimeline`, `ChunkDurations`;
@@ -122,4 +160,5 @@ A real summary is **deferred**: no model small enough to ship credibly summarise
 - `ui/ListenerSessionFragment.kt`, `viewmodel/ListenerSessionViewModel.kt`, `fragment_listener_session.xml`, `item_transcript_segment.xml`, `item_transcript_notes.xml`.
 - Tests (Robolectric, SDK 33):
   - v1: `ListenerPolicyTest`, `ListenerMigrationTest` (now also 12→13), `ListenerRepositoryTest`, `ListenerServiceTest`, `ui/ListenerFragmentTest`.
+  - v3: `ListenerV15MigrationTest`, `ListenerV3SmallTest` (plurals, cancel receiver, delete audio), `ui/ListenerV3UiTest`, new cases in `ListenerServiceTest` (queued start, marks).
   - v2: `FtsQueryTest`, `ChunkTimelineTest`, `TranscriptSearchTest`, `VoskResultParserTest`, `SttModelStoreTest`, `TranscriptionRunnerTest` (fake engine: resume, cancel, failure, clamping), `TranscriptionWorkerTest` (real worker/scheduler, no model), `TranscriptExporterTest`, `HeuristicSummarizerTest`, `ui/ListenerTranscriptUiTest` (search → open at timestamp, session screen).

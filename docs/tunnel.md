@@ -45,10 +45,17 @@ Checks that keep this honest:
   addresses or their own DoH. Strict per-app blocking would need a full packet tunnel (v2).
 
 ### Lists
-- **Bundled: StevenBlack unified hosts** (snapshot 2026-11-08, 78,215 domains), on by
-  default, switchable. Stored gzipped (`assets/blocklists/stevenblack-hosts.gzip`, 591 KB; the
-  extension is not `.gz` because AGP inflates `.gz` assets at build time). Parsed off the
-  main thread and cached. A 200k-domain matcher test bounds lookup time.
+Two bundled lists; pick one (or none) on the Rules tab. **Licences** shows both notices.
+- **StevenBlack unified hosts** (snapshot 2026-11-08, 78,215 domains, 591 KB gzipped):
+  the default when present. Lives in `src/tunnelUnified/assets/`, which is added to the tunnel
+  flavor only when the Gradle property `jaruri.tunnel.unifiedList` is true (the default).
+- **Permissive (licence-clean)** (18,902 domains, 118,573 B gzipped): built from the same
+  StevenBlack commit (`6866cc6`), but only from sources under permissive licences:
+  StevenBlack's own ad-hoc list, add.2o7Net, add.Dead, add.Risk, add.Spam, Badd-Boyz-Hosts,
+  hostsVN, UncheckyAds (MIT), AdAway (CC BY 3.0), Tiuxo (CC BY 4.0), minecraft-hosts (CC0).
+  Always present. See `src/tunnel/assets/blocklists/PERMISSIVE-NOTICE.txt`.
+- Assets use `.gzip`, not `.gz`, because AGP inflates `.gz` assets at build time. Parsed off
+  the main thread and cached per list. A 200k-domain matcher test bounds lookup time.
 - Import your own hosts/plain-domain lists (up to 1M entries each); exact and `*.suffix` rules.
 
 ## Log and retention
@@ -67,14 +74,26 @@ StevenBlack's unified list is MIT, but it **merges sources with their own terms*
 - yoyo.org (Peter Lowe): no licence stated
 
 This is fine for personal use, but it is **not "free" in F-Droid's sense**. F-Droid builds the
-`offline` flavor (no list, no tunnel), so it is unaffected. Before publishing the tunnel build
-anywhere, either drop those sources (StevenBlack publishes per-source files) or ship no
-default list.
+`offline` flavor (no list, no tunnel), so it is unaffected.
+
+**Publishable tunnel builds** leave the unified list out entirely:
+
+    ./gradlew -Pjaruri.tunnel.unifiedList=false :app:assembleTunnelRelease
+
+That build ships only the permissive list (`BuildConfig.TUNNEL_UNIFIED_LIST = false`), and a
+saved choice of the unified list falls back to it. The licences screen shows each bundled
+list's notice, including the full MIT text and the CC BY attributions.
 
 ## Size
 Debug APKs at 39bf3ec: offline 15,290,734 B, tunnel 16,714,618 B (+1.36 MiB). About
 0.59 MB is the list asset; the rest is unminified debug dex/resources for the tunnel code,
 which R8 shrinks a lot in release.
+
+## Hardening done in v1.1
+- Stop asks first when Tunnel is the **always-on VPN** (API 29+): Android may restart it, and
+  with "Block connections without VPN" every app loses internet until it is back.
+- Already in v1 and kept: long-press a log row to block/allow (exact or `*.parent`), Clear log,
+  random-garbage and truncated-packet codec tests, lockdown/Private-DNS/other-VPN warnings.
 
 ## Known limits (v1)
 - Apps or browsers using their own encrypted DNS (DoH/DoT, e.g. Chrome "Secure DNS",

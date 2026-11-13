@@ -40,19 +40,16 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-- Status: CLAIMED
-- Active agent: Gangadhar (Grok Bot)
-- Role: implementation (branch `feature/listener`)
-- Claimed at: 2026-11-13 12:29 IST
-- Scope lock: Listener follow-ups (`listener/**`, `ui/Listener*`, `viewmodel/Listener*`, listener layouts/strings, main manifest receiver), `AppDatabase` v14→v15 (markers, notes, audio-deleted), Tunnel follow-ups (`app/src/tunnel/**`, `app/build.gradle` list flag), docs, evidence
-- Expected deliverable: Listener gap fixes + offline features (markers, notes, transcript edit, delete-audio-keep-text, playback speed, search date filter); Tunnel licence-clean default list + build flag + licence screen + hardening; both APKs rebuilt
+- Status: RELEASED
+- Active agent: none
+- Released at: 2026-11-13 (IST) by Gangadhar (Grok Bot)
 
 ## Baton
 
-- Previous agent: Gangadhar (Grok Bot) Tunnel v1 (branch `feature/listener`, pushed to origin)
+- Previous agent: Gangadhar (Grok Bot) Listener v3 + Tunnel v1.1 (branch `feature/listener`, pushed to origin)
 - Baton state: HANDOFF
-- Next agent: Kaustubh review → realme run of both APKs (see evidence README, Tunnel checklist)
-- Next step: AppDatabase is now **v14** (`tunnel_app_rules`, `tunnel_domain_rules`, `tunnel_lists`); the DNS log lives in a separate `tunnel_log.db`. Build flavors: `offline` (default, F-Droid, no INTERNET) and `tunnel`. Do not add network code outside `src/tunnel` (NoNetworkOutsideTunnelTest enforces it).
+- Next agent: Kaustubh review → realme run (evidence README: "Listener v3" and "Tunnel v1.1" checklists)
+- Next step: AppDatabase is now **v15** (`listener_markers`; `listener_sessions.userNotes`, `audioDeletedAt`; `transcript_segments.edited`). Tunnel lists: StevenBlack lives in `src/tunnelUnified` and is included only when `-Pjaruri.tunnel.unifiedList=true` (default); publishable builds pass `false` and ship the permissive list only. Do not add network code outside `src/tunnel`.
 
 ## Work Log
 
@@ -63,9 +60,12 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 - Observations:
   - Starting from AppDatabase v14; adds MIGRATION_14_15
 - Action taken:
-  - (in progress)
+  - Listener: queued Start during the Stop window; real plurals; own non-exported `TranscriptionCancelReceiver` so notification Cancel sets CANCELLED on Android ≤11; notification **Mark** action + markers table; per-session notes; transcript line edit (FTS follows, "edited" tag, re-transcribe warning); delete audio keep transcript (+ storage used); playback speed 1–2×; search date chips; export includes notes and marks
+  - Tunnel: permissive licence-clean list (18,902 domains, MIT/CC BY/CC0 sources at StevenBlack 6866cc6), list chooser, Licences dialog, `jaruri.tunnel.unifiedList` Gradle flag, always-on/lockdown confirmation before Stop
+  - Deferred (docs/listener.md): tags, skip-silence, AI summary, live transcription, speaker labels, cloud
 - Validation:
-  - (pending)
+  - `testDebugUnitTest`: offline 207, tunnel 233, 0 failures; lint only the 6 pre-existing errors in both flavors
+  - APKs at 58073d9 (offline, tunnel, tunnel-publishable) with sha256 and permissions in `/workspace/jaruri-listener/evidence/`; publishable APK verified to contain no StevenBlack asset; device checks pending
 
 ### 2026-11-13 - Gangadhar (Grok Bot) Tunnel v1
 
