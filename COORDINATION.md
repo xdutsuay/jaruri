@@ -40,12 +40,9 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-- Status: CLAIMED
-- Active agent: Gangadhar (Grok Bot)
-- Role: implementation (branch `feature/listener`)
-- Claimed at: 2026-11-13 21:59 IST
-- Scope lock: Quick expense (`quickadd/**`, new `QuickExpenseActivity` + layout/strings/theme, main manifest entries, `MainActivity.installAppShortcuts`), docs, evidence
-- Expected deliverable: tile + launcher shortcut → translucent amount/category/note sheet that saves through the existing `transactions` table, Undo, last-used category; tests; both APKs rebuilt
+- Status: RELEASED
+- Active agent: none
+- Released at: 2026-11-13 23:13 IST by Gangadhar (Grok Bot)
 
 ## Baton
 
@@ -62,10 +59,14 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
   - Reel-inspired one-tap expense logging (tile / shortcut / back-tap via Routines or Tasker), offline
 - Observations:
   - A Quick add tile and dynamic shortcut already exist and open the full in-app QuickAddFragment; no DB change needed
+  - Accounts (`accounts`, `transactions.accountId`, ledger deltas, SMS last-4 mapping, transfers) already existed; the UI never let you choose an account
 - Action taken:
-  - (in progress)
+  - Quick expense sheet (tile, launcher shortcut, public action) saving through TransactionDao + ledger, Undo, last category/account
+  - Category picker bug fixed (Home read an unobserved LiveData and fell back to 5 hard-coded names); one CategoryChoices rule everywhere
+  - Accounts: picker on Add/Edit + quick sheet, signed balances, UPI wallet type, card overpayment allowed (no clamp), edit keeps payee/UPI ref, rows show account, SMS bank-name fallback when unambiguous
+  - Docs: `docs/quick-expense-and-accounts.md` (incl. realme checklist)
 - Validation:
-  - (pending)
+  - `testDebugUnitTest`: offline 235, tunnel 261, 0 failures; lint 5 errors in both flavors (all pre-existing; the tile's deprecated-API error is gone). No DB migration. No APKs built (per Kaustubh)
 
 ### 2026-11-13 - Gangadhar (Grok Bot) Listener follow-ups + Tunnel v1.1
 

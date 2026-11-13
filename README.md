@@ -24,6 +24,7 @@ Local Android money and time tracker (Kotlin). Tracks income/expenses and manual
 - SMS import: inbox, paste, sample SMS, editable preview
 - **Time**: manual time entries with category, duration, date, and monthly totals
 - **Listener** (unreleased, on `feature/listener`): manual meeting recorder: start it, and it records until you stop it (4 h safety stop). Microphone foreground service with a Stop notification, Quick Settings tile, 15-min local audio chunks, sessions list. Audio stays on the phone and is excluded from backups. v2 adds offline transcription (Vosk, with a model you import), transcript search that jumps to the moment, Markdown/text export, and keyword highlights (not AI). See [docs/listener.md](docs/listener.md)
+- **Quick expense & accounts** (on `feature/listener`): Quick Settings tile / launcher shortcut sheet for amount → category → account → note, signed per-account balances, account picker on Add/Edit. See [docs/quick-expense-and-accounts.md](docs/quick-expense-and-accounts.md)
 - **Tunnel** (unreleased, on `feature/listener`, `tunnel` flavor only): local DNS-filter VPN with per-app Bypass / best-effort Block, a domain blocklist (StevenBlack bundled by default, or a licence-clean permissive list; `-Pjaruri.tunnel.unifiedList=false` leaves StevenBlack out), and a 7-day lookup log. See [docs/tunnel.md](docs/tunnel.md)
 - **No Google account, Play Services, or network permission** on `main` and in the default `offline` flavor
 
