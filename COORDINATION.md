@@ -40,9 +40,12 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-- Status: AVAILABLE
-- Active agent: none
-- Released at: 2026-11-13 00:35 IST by Gangadhar (Grok Bot) after Listener v2
+- Status: CLAIMED
+- Active agent: Gangadhar (Grok Bot)
+- Role: implementation (branch `feature/listener`)
+- Claimed at: 2026-11-13 11:55 IST
+- Scope lock: Tunnel v1 — product flavors (`offline` default, `tunnel`), new `app/src/tunnel/**`, `AppDatabase` v13→v14 (tunnel rule tables), `HubFragment`/`fragment_hub.xml` (flavor-gated card), backup rules, `app/build.gradle`, docs
+- Expected deliverable: DNS-filter VPN (tunnel flavor only), per-app bypass/best-effort block, bundled StevenBlack list, DNS log; tests green; debug APKs for both flavors
 
 ## Baton
 
@@ -52,6 +55,17 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 - Next step: AppDatabase is now **v13** (`transcript_segments`, `transcript_fts`, transcript columns on `listener_sessions`); do not bump without reading current version. On-device checks pending: see `docs/listener.md` and the evidence checklist.
 
 ## Work Log
+
+### 2026-11-13 - Gangadhar (Grok Bot) Tunnel v1
+
+- Scope:
+  - Local DNS-filter VPN in a separate `tunnel` flavor; `offline` flavor stays network-free
+- Observations:
+  - Starting from AppDatabase v13; adds MIGRATION_13_14
+- Action taken:
+  - (in progress)
+- Validation:
+  - (pending)
 
 ### 2026-11-13 - Gangadhar (Grok Bot) Listener v2
 
