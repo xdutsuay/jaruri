@@ -330,5 +330,8 @@
     <string name="listener_player_pause">Pause</string>
     <string name="listener_player_error">Couldn\'t play this audio.</string>
     <string name="listener_session_meta">%1$s · %2$s · %3$s</string>
+    <!-- Tunnel hub card (shown only in the tunnel flavor) -->
+    <string name="hub_tunnel_title">Tunnel</string>
+    <string name="hub_tunnel_body">Local DNS filter: block domains, set apps to bypass or block, see what apps look up</string>
 </resources>
 

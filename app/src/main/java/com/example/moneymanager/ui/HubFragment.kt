@@ -5,6 +5,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.moneymanager.R
+import com.example.moneymanager.flavor.FlavorFeatures
 import com.google.android.material.card.MaterialCardView
 
 class HubFragment : Fragment(R.layout.fragment_hub) {
@@ -22,6 +23,12 @@ class HubFragment : Fragment(R.layout.fragment_hub) {
         }
         view.findViewById<MaterialCardView>(R.id.card_listener).setOnClickListener {
             findNavController().navigate(R.id.action_hub_to_listener)
+        }
+        // Only the tunnel flavor ships the Tunnel; the offline flavor keeps the card hidden.
+        val tunnel = FlavorFeatures.tunnel
+        view.findViewById<MaterialCardView>(R.id.card_tunnel).apply {
+            visibility = if (tunnel != null) View.VISIBLE else View.GONE
+            setOnClickListener { tunnel?.open(requireContext()) }
         }
     }
 }
