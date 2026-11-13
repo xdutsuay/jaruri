@@ -1,5 +1,8 @@
 package com.example.moneymanager.ui
 
+import com.example.moneymanager.utils.CategoryChoices
+import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -151,17 +154,13 @@ class HomeFragment : Fragment() {
         )
     }
 
-    private fun showCategorizeDialog(tx: TransactionEntity) {
-        val categories = if (tx.type == "INCOME") {
-            viewModel.incomeCategories.value?.map { it.name }.orEmpty()
-        } else {
-            viewModel.expenseCategories.value?.map { it.name }.orEmpty()
-        }.ifEmpty {
-            listOf("Others", "Food", "Shopping", "Bills", "Transfer")
-        }
+    private fun showCategorizeDialog(tx: TransactionEntity) = viewLifecycleOwner.lifecycleScope.launch {
+        // Read the user's list now. The old code used expenseCategories.value, which is null
+        // until some other screen has observed it, and then fell back to a 5-item list.
+        val categories = CategoryChoices.forPicker(viewModel.categoryNames(tx.type), tx.category)
+        if (!isAdded || categories.isEmpty()) return@launch
         val labels = categories.toTypedArray()
-        val preselect = categories.indexOfFirst { it.equals(tx.category, ignoreCase = true) }
-            .coerceAtLeast(0)
+        val preselect = CategoryChoices.indexOf(categories, tx.category).coerceAtLeast(0)
 
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.categorize_title)

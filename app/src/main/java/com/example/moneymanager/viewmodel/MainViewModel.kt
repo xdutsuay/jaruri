@@ -21,6 +21,7 @@ import com.example.moneymanager.utils.SmsCategoryBackfill
 import com.example.moneymanager.utils.SmsLedgerCleanup
 import com.example.moneymanager.utils.SubscriptionDetector
 import com.example.moneymanager.utils.TransactionAccounting
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -43,6 +44,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val categoryRules: LiveData<List<CategoryRuleEntity>> = ruleDao.getAll().asLiveData()
     val expenseCategories: LiveData<List<Category>> = categoryRepository.expenseCategories.asLiveData()
     val incomeCategories: LiveData<List<Category>> = categoryRepository.incomeCategories.asLiveData()
+
+    /**
+     * Category names for [type] read straight from the repository. Use this for one-off pickers:
+     * the LiveData above only holds a value once something has observed it.
+     */
+    suspend fun categoryNames(type: String): List<String> =
+        (if (type.equals("INCOME", true)) categoryRepository.incomeCategories else categoryRepository.expenseCategories)
+            .first().map { it.name }
 
     val currencySymbol: LiveData<String> = settingsRepository.currencySymbol.asLiveData()
     val dateFormat: LiveData<String> = settingsRepository.dateFormat.asLiveData()

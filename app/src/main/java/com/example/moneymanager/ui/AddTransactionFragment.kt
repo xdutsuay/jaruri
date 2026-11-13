@@ -1,5 +1,6 @@
 package com.example.moneymanager.ui
 
+import com.example.moneymanager.utils.CategoryChoices
 import android.os.Bundle
 import android.view.View
 import android.widget.*
@@ -21,6 +22,8 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
     private var incomeCategoryNames: List<String> = emptyList()
     private var editingId: Long = -1L
     private var editingDate: Long = System.currentTimeMillis()
+    private var editingCategory: String? = null
+    private var editingType: String? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -70,6 +73,8 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
             viewLifecycleOwner.lifecycleScope.launch {
                 val tx = viewModel.getTransaction(editingId) ?: return@launch
                 editingDate = tx.dateTimestamp
+                editingCategory = tx.category
+                editingType = tx.type
                 etAmount.setText(tx.amount.toString())
                 etMemo.setText(tx.memo)
                 if (tx.type == "INCOME") {
@@ -78,7 +83,7 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
                     rgType.check(R.id.rbExpense)
                 }
                 updateCategorySpinner(spCategory, rgType)
-                val idx = categoryAdapter.getPosition(tx.category)
+                val idx = CategoryChoices.indexOf((0 until categoryAdapter.count).map { categoryAdapter.getItem(it).toString() }, tx.category)
                 if (idx >= 0) spCategory.setSelection(idx)
             }
         }
@@ -160,12 +165,12 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
     }
 
     private fun updateCategorySpinner(spinner: Spinner, radioGroup: RadioGroup) {
-        val currentCategories = if (isIncomeSelected(radioGroup)) {
-            incomeCategoryNames
-        } else {
-            expenseCategoryNames
-        }
         val previousSelection = spinner.selectedItem?.toString()
+        // Keep the edited row's own category even if it was removed from the list.
+        val currentCategories = CategoryChoices.forPicker(
+            if (isIncomeSelected(radioGroup)) incomeCategoryNames else expenseCategoryNames,
+            editingCategory?.takeIf { editingType == if (isIncomeSelected(radioGroup)) "INCOME" else "EXPENSE" }
+        )
 
         categoryAdapter.clear()
         categoryAdapter.addAll(currentCategories)
@@ -175,8 +180,9 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
             return
         }
 
-        val selectedIndex = previousSelection?.let(currentCategories::indexOf)
-            ?.takeIf { it >= 0 }
+        val selectedIndex = CategoryChoices.indexOf(currentCategories, previousSelection)
+            .takeIf { it >= 0 }
+            ?: CategoryChoices.indexOf(currentCategories, editingCategory).takeIf { it >= 0 }
             ?: 0
         spinner.setSelection(selectedIndex)
     }

@@ -7,6 +7,7 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.moneymanager.data.CategoryRepository
 import com.example.moneymanager.data.SettingsRepository
+import com.example.moneymanager.utils.CategoryChoices
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -14,7 +15,8 @@ class QuickExpenseViewModel(application: Application) : AndroidViewModel(applica
     private val store = QuickExpenseStore(application)
 
     val categories: LiveData<List<String>> =
-        CategoryRepository(application).expenseCategories.map { list -> list.map { it.name } }.asLiveData()
+        CategoryRepository(application).expenseCategories
+            .map { list -> CategoryChoices.forPicker(list.map { it.name }) }.asLiveData()
     val currencySymbol: LiveData<String> = SettingsRepository(application).currencySymbol.asLiveData()
 
     /** Set while a save is in flight or its Undo bar is showing, so Save can't double-fire. */
