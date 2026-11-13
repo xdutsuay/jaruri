@@ -373,5 +373,20 @@
         <item quantity="other">Transcribe again? This replaces the transcript, including %1$d lines you corrected by hand.</item>
     </plurals>
     <string name="listener_marked">Marked at %1$s</string>
+    <!-- Quick expense sheet -->
+    <string name="quick_expense_title">Quick expense</string>
+    <string name="quick_expense_amount">Amount</string>
+    <string name="quick_expense_note">Note (optional)</string>
+    <string name="quick_expense_save">Save</string>
+    <string name="quick_expense_full">Full form</string>
+    <string name="quick_expense_close">Close</string>
+    <string name="quick_expense_undo">Undo</string>
+    <string name="quick_expense_undone">Removed</string>
+    <string name="quick_expense_saved">Saved %1$s · %2$s</string>
+    <string name="quick_expense_err_empty">Enter an amount</string>
+    <string name="quick_expense_err_invalid">Use digits and up to 2 decimals</string>
+    <string name="quick_expense_err_large">That amount is too large</string>
+    <string name="quick_expense_err_category">Add an expense category in Jaruri first</string>
+    <string name="quick_expense_shortcut_long">Quick expense (amount, category, note)</string>
 </resources>
 

@@ -16,6 +16,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
+import com.example.moneymanager.quickadd.QuickExpenseActivity
 import com.example.moneymanager.databinding.ActivityMainBinding
 import com.example.moneymanager.listener.ListenerService
 import com.example.moneymanager.ui.ListenerFragment
@@ -169,7 +170,7 @@ class MainActivity : AppCompatActivity() {
             }
             // Prefer navigating to quick-add screen via dedicated shortcut action
             val quickAdd = Intent(this, MainActivity::class.java).apply {
-                action = "com.example.moneymanager.action.QUICK_ADD"
+                action = ACTION_QUICK_ADD
             }
             val shortcut = ShortcutInfoCompat.Builder(this, "quick_add")
                 .setShortLabel(getString(R.string.money_shortcut_quick_add))
@@ -177,8 +178,15 @@ class MainActivity : AppCompatActivity() {
                 .setIcon(IconCompat.createWithResource(this, R.drawable.ic_add))
                 .setIntent(quickAdd)
                 .build()
-            ShortcutManagerCompat.setDynamicShortcuts(this, listOf(shortcut))
-            if (intent?.action == "com.example.moneymanager.action.QUICK_ADD") {
+            // The light sheet (also what back-tap / Routines / Tasker should launch).
+            val quickExpense = ShortcutInfoCompat.Builder(this, QuickExpenseActivity.SHORTCUT_ID)
+                .setShortLabel(getString(R.string.quick_expense_title))
+                .setLongLabel(getString(R.string.quick_expense_shortcut_long))
+                .setIcon(IconCompat.createWithResource(this, R.drawable.ic_add))
+                .setIntent(Intent(this, QuickExpenseActivity::class.java).setAction(QuickExpenseActivity.ACTION))
+                .build()
+            ShortcutManagerCompat.setDynamicShortcuts(this, listOf(quickExpense, shortcut))
+            if (intent?.action == ACTION_QUICK_ADD) {
                 binding.root.post {
                     try {
                         findNavController(R.id.nav_host_fragment).navigate(R.id.quickAddFragment)
@@ -196,5 +204,9 @@ class MainActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
+    }
+
+    companion object {
+        const val ACTION_QUICK_ADD = "com.example.moneymanager.action.QUICK_ADD"
     }
 }

@@ -86,6 +86,23 @@
                 android:resource="@xml/summary_widget_info" />
         </receiver>
 
+        <!-- Quick expense sheet. Exported only so Routines/Tasker/back-tap can open it;
+             it never saves without the user tapping Save. Not shown over the lock screen. -->
+        <activity
+            android:name=".quickadd.QuickExpenseActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/quick_expense_title"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Jaruri.QuickExpense"
+            android:windowSoftInputMode="stateAlwaysVisible|adjustResize">
+            <intent-filter>
+                <action android:name="com.kaustubhtripathi.jaruri.action.QUICK_EXPENSE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".quickadd.QuickAddTileService"
             android:exported="true"

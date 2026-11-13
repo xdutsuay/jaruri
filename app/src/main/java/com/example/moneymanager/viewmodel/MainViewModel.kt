@@ -5,7 +5,6 @@ import androidx.lifecycle.*
 import com.example.moneymanager.data.AccountEntity
 import com.example.moneymanager.data.AppDatabase
 import com.example.moneymanager.data.BudgetEntity
-import com.example.moneymanager.data.CategoryLearnEntity
 import com.example.moneymanager.data.CategoryRepository
 import com.example.moneymanager.data.CategoryRuleEntity
 import com.example.moneymanager.data.RecurringEntity
@@ -317,25 +316,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         description: String?,
         category: String,
         type: String
-    ) {
-        if (TransactionAccounting.isTransferType(type)) return
-        val key = CategoryLearning.keyFromDescription(description, memo) ?: return
-        val existing = learnDao.get(key)
-        learnDao.upsert(
-            CategoryLearnEntity(
-                merchantKey = key,
-                category = category,
-                type = type,
-                hitCount = (existing?.hitCount ?: 0) + 1,
-                updatedAt = System.currentTimeMillis()
-            )
-        )
-        // Ensure category exists in the user's list
-        categoryRepository.addCategory(
-            category,
-            if (type == "INCOME") CategoryRepository.TYPE_INCOME else CategoryRepository.TYPE_EXPENSE
-        )
-    }
+    ) = CategoryLearning.remember(learnDao, categoryRepository, memo, description, category, type)
 
     fun addAccount(account: AccountEntity) {
         viewModelScope.launch { accountDao.insert(account) }

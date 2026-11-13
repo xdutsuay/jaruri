@@ -24,6 +24,14 @@
 
     <style name="Theme.MoneyManager" parent="Base.Theme.MoneyManager" />
 
+    <!-- Quick expense sheet: see-through window, the layout draws its own scrim and card. -->
+    <style name="Theme.Jaruri.QuickExpense" parent="Theme.MoneyManager">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Translucent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
+
     <!-- Force a light, high-contrast dialog regardless of system night mode. -->
     <style name="ThemeOverlay.Jaruri.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="colorSurface">@color/surface_white</item>
