@@ -22,6 +22,26 @@ class ChunkPlayer(
     private var player: MediaPlayer? = null
     private var chunk = -1
 
+    /** Playback speed (1.0 = normal). Applied only while playing: setting it on a paused player can start it. */
+    var speed: Float = 1f
+        set(value) {
+            field = value.coerceIn(0.5f, 3f)
+            if (isPlaying) player?.let { applySpeed(it) }
+        }
+
+    private fun applySpeed(p: MediaPlayer) {
+        try {
+            p.playbackParams = p.playbackParams.setSpeed(speed)
+        } catch (_: Exception) {
+            // IllegalStateException/IllegalArgumentException: some decoders refuse; keep normal speed.
+        }
+    }
+
+    private fun play(p: MediaPlayer) {
+        p.start()
+        if (speed != 1f) applySpeed(p)
+    }
+
     val isPlaying: Boolean get() = try { player?.isPlaying == true } catch (_: IllegalStateException) { false }
     val durationMs: Long get() = timeline.totalMs
 
@@ -39,7 +59,7 @@ class ChunkPlayer(
         if (!open(pos.chunk)) return
         try {
             player?.seekTo(pos.offsetMs.toInt())
-            if (play) player?.start()
+            if (play) player?.let { play(it) }
         } catch (_: IllegalStateException) {
             fail(); return
         }
@@ -50,7 +70,7 @@ class ChunkPlayer(
         val p = player
         if (p == null) { seekTo(0, play = true); return }
         try {
-            if (p.isPlaying) p.pause() else p.start()
+            if (p.isPlaying) p.pause() else play(p)
         } catch (_: IllegalStateException) {
             fail(); return
         }
@@ -89,7 +109,7 @@ class ChunkPlayer(
     private fun onChunkDone() {
         val next = chunk + 1
         if (next < files.size && open(next)) {
-            try { player?.start() } catch (_: IllegalStateException) { fail() }
+            try { player?.let { play(it) } } catch (_: IllegalStateException) { fail() }
             listener.onPlayingChanged(isPlaying)
         } else {
             listener.onPlayingChanged(false)

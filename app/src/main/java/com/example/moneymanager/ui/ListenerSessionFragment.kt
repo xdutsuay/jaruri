@@ -1,5 +1,6 @@
 package com.example.moneymanager.ui
 
+import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.Intent
@@ -25,6 +26,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.work.WorkInfo
 import com.example.moneymanager.R
+import com.example.moneymanager.listener.ListenerMarkerEntity
 import com.example.moneymanager.listener.ListenerPolicy
 import com.example.moneymanager.listener.ListenerSessionEntity
 import com.example.moneymanager.listener.transcribe.ChunkPlayer
@@ -57,6 +59,7 @@ class ListenerSessionFragment : Fragment(R.layout.fragment_listener_session) {
     private var playBtn: ImageButton? = null
     private var seekBar: SeekBar? = null
     private var positionText: TextView? = null
+    private var speedIndex = 0
 
     private val tick = object : Runnable {
         override fun run() {
@@ -82,7 +85,12 @@ class ListenerSessionFragment : Fragment(R.layout.fragment_listener_session) {
         val exportBtn = view.findViewById<Button>(R.id.btn_ls_export)
         val empty = view.findViewById<TextView>(R.id.tv_ls_empty)
 
-        adapter = SegmentAdapter { ms -> playFrom(ms) }
+        adapter = SegmentAdapter(
+            onSeek = { ms -> playFrom(ms) },
+            onEditLine = { seg -> editLine(seg) },
+            onEditNotes = { editNotes() },
+            onRemoveMarker = { m -> confirmRemoveMarker(m) }
+        )
         view.findViewById<RecyclerView>(R.id.rv_ls_segments).apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = this@ListenerSessionFragment.adapter
@@ -100,6 +108,14 @@ class ListenerSessionFragment : Fragment(R.layout.fragment_listener_session) {
             }
         })
         exportBtn.setOnClickListener { chooseExport() }
+        val speedBtn = view.findViewById<Button>(R.id.btn_ls_speed)
+        speedIndex = savedInstanceState?.getInt(STATE_SPEED, 0) ?: 0
+        speedBtn.text = speedLabel()
+        speedBtn.setOnClickListener {
+            speedIndex = (speedIndex + 1) % SPEEDS.size
+            player?.speed = SPEEDS[speedIndex]
+            speedBtn.text = speedLabel()
+        }
 
         val df = SimpleDateFormat("d MMM yyyy, HH:mm", Locale.getDefault())
         viewModel.session.observe(viewLifecycleOwner) { s ->
@@ -111,12 +127,25 @@ class ListenerSessionFragment : Fragment(R.layout.fragment_listener_session) {
             val first = current == null
             current = s
             title.text = s.title
-            meta.text = getString(
+            meta.text = if (s.hasAudio) getString(
                 R.string.listener_session_meta,
                 df.format(Date(s.startedAt)),
                 ListenerPolicy.formatElapsed(s.durationMs),
                 ListenerPolicy.formatBytes(s.bytes)
+            ) else getString(
+                R.string.listener_session_meta,
+                df.format(Date(s.startedAt)),
+                ListenerPolicy.formatElapsed(s.durationMs),
+                getString(R.string.listener_state_audio_deleted)
             )
+            adapter.submitUserNotes(s.userNotes)
+            if (!s.hasAudio) {
+                player?.release()
+                player = null
+                playBtn?.isEnabled = false
+                seekBar?.isEnabled = false
+                speedBtn.isEnabled = false
+            }
             if (first) loadAudio(s)
             renderTranscription(trStatus, progress, trButton)
         }
@@ -130,6 +159,62 @@ class ListenerSessionFragment : Fragment(R.layout.fragment_listener_session) {
             exportBtn.isEnabled = segs.isNotEmpty()
         }
         viewModel.notes.observe(viewLifecycleOwner) { adapter.submitNotes(it) }
+        viewModel.markers.observe(viewLifecycleOwner) { adapter.submitMarkers(it) }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(STATE_SPEED, speedIndex)
+    }
+
+    private fun speedLabel(): String {
+        val v = SPEEDS[speedIndex]
+        return (if (v == v.toInt().toFloat()) v.toInt().toString() else v.toString()) + "×"
+    }
+
+    // ---- notes, marks, corrections ----
+
+    private fun editNotes() {
+        val input = android.widget.EditText(requireContext()).apply {
+            setText(current?.userNotes.orEmpty())
+            setHint(R.string.listener_user_notes_hint)
+            minLines = 3
+            gravity = android.view.Gravity.TOP
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or
+                android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.listener_user_notes_title)
+            .setView(input)
+            .setPositiveButton(R.string.save_transaction) { _, _ -> viewModel.saveNotes(input.text.toString()) }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun editLine(seg: TranscriptSegmentEntity) {
+        val input = android.widget.EditText(requireContext()).apply {
+            setText(seg.text)
+            setSelection(text.length)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or
+                android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.listener_seg_edit_title)
+            .setMessage(TranscriptExporter.timestamp(seg.startMs))
+            .setView(input)
+            .setPositiveButton(R.string.save_transaction) { _, _ -> viewModel.editSegment(seg.id, input.text.toString()) }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun confirmRemoveMarker(m: ListenerMarkerEntity) {
+        AlertDialog.Builder(requireContext())
+            .setMessage(getString(R.string.listener_marker_delete, TranscriptExporter.timestamp(m.atMs)))
+            .setPositiveButton(R.string.delete) { _, _ -> viewModel.deleteMarker(m.id) }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     override fun onStart() {
@@ -155,7 +240,7 @@ class ListenerSessionFragment : Fragment(R.layout.fragment_listener_session) {
     // ---- audio ----
 
     private fun loadAudio(s: ListenerSessionEntity) {
-        if (s.state == ListenerSessionEntity.STATE_RECORDING) {
+        if (s.state == ListenerSessionEntity.STATE_RECORDING || !s.hasAudio) {
             playBtn?.isEnabled = false
             return
         }
@@ -175,6 +260,7 @@ class ListenerSessionFragment : Fragment(R.layout.fragment_listener_session) {
                     context?.let { Toast.makeText(it, R.string.listener_player_error, Toast.LENGTH_SHORT).show() }
                 }
             })
+            p.speed = SPEEDS[speedIndex]
             player = p
             seekBar?.max = (p.durationMs / 1000).toInt()
             if (pendingSeekMs >= 0) {
@@ -221,7 +307,8 @@ class ListenerSessionFragment : Fragment(R.layout.fragment_listener_session) {
         val done = s.transcribedChunks
         val total = s.segmentCount
         progress.visibility = View.GONE
-        button.isEnabled = s.state != ListenerSessionEntity.STATE_RECORDING
+        // No audio left: the transcript stays, but nothing can be (re)transcribed.
+        button.isEnabled = s.state != ListenerSessionEntity.STATE_RECORDING && (s.hasAudio || running)
         when {
             running -> {
                 val pct = work!!.progress.getInt("progress", -1)
@@ -280,11 +367,17 @@ class ListenerSessionFragment : Fragment(R.layout.fragment_listener_session) {
             Toast.makeText(requireContext(), R.string.listener_stt_no_model, Toast.LENGTH_LONG).show()
             return
         }
-        AlertDialog.Builder(requireContext())
-            .setMessage(R.string.listener_tr_again_confirm)
-            .setPositiveButton(R.string.listener_tr_again) { _, _ -> viewModel.restart() }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
+        viewLifecycleOwner.lifecycleScope.launch {
+            val edited = viewModel.editedCount()
+            val msg = if (edited > 0) {
+                resources.getQuantityString(R.plurals.listener_tr_again_confirm_edited, edited, edited)
+            } else getString(R.string.listener_tr_again_confirm)
+            AlertDialog.Builder(requireContext())
+                .setMessage(msg)
+                .setPositiveButton(R.string.listener_tr_again) { _, _ -> viewModel.restart() }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+        }
     }
 
     // ---- export ----
@@ -323,46 +416,119 @@ class ListenerSessionFragment : Fragment(R.layout.fragment_listener_session) {
 
     // ---- list ----
 
-    /** Optional notes card (position 0) followed by transcript lines. */
-    private class SegmentAdapter(private val onSeek: (Long) -> Unit) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    /**
+     * Your notes + marks card (always first), then the optional keyword-highlights
+     * card, then transcript lines (tap = play from there, long-press = correct it).
+     */
+    private class SegmentAdapter(
+        private val onSeek: (Long) -> Unit,
+        private val onEditLine: (TranscriptSegmentEntity) -> Unit,
+        private val onEditNotes: () -> Unit,
+        private val onRemoveMarker: (ListenerMarkerEntity) -> Unit
+    ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private var segments: List<TranscriptSegmentEntity> = emptyList()
         private var notes: SessionNotes? = null
+        private var userNotes: String = ""
+        private var markers: List<ListenerMarkerEntity> = emptyList()
         private val hasNotes get() = notes?.isEmpty == false
+        private val headerCount get() = 1 + if (hasNotes) 1 else 0
 
+        @SuppressLint("NotifyDataSetChanged") // small lists; header count changes shift every row
         fun submitSegments(list: List<TranscriptSegmentEntity>) {
             segments = list
             notifyDataSetChanged()
         }
 
+        @SuppressLint("NotifyDataSetChanged")
         fun submitNotes(n: SessionNotes) {
             notes = n
             notifyDataSetChanged()
         }
 
-        fun positionFor(ms: Long): Int {
-            val i = segments.indexOfLast { it.startMs <= ms }.coerceAtLeast(0)
-            return if (segments.isEmpty()) -1 else i + if (hasNotes) 1 else 0
+        fun submitUserNotes(text: String) {
+            if (text == userNotes) return
+            userNotes = text
+            notifyItemChanged(0)
         }
 
-        override fun getItemViewType(position: Int) = if (hasNotes && position == 0) TYPE_NOTES else TYPE_LINE
-        override fun getItemCount() = segments.size + if (hasNotes) 1 else 0
+        fun submitMarkers(list: List<ListenerMarkerEntity>) {
+            markers = list
+            notifyItemChanged(0)
+        }
+
+        fun positionFor(ms: Long): Int {
+            val i = segments.indexOfLast { it.startMs <= ms }.coerceAtLeast(0)
+            return if (segments.isEmpty()) -1 else i + headerCount
+        }
+
+        override fun getItemViewType(position: Int) = when {
+            position == 0 -> TYPE_USER
+            hasNotes && position == 1 -> TYPE_NOTES
+            else -> TYPE_LINE
+        }
+
+        override fun getItemCount() = segments.size + headerCount
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             val inf = LayoutInflater.from(parent.context)
-            val layout = if (viewType == TYPE_NOTES) R.layout.item_transcript_notes else R.layout.item_transcript_segment
+            val layout = when (viewType) {
+                TYPE_USER -> R.layout.item_listener_user_notes
+                TYPE_NOTES -> R.layout.item_transcript_notes
+                else -> R.layout.item_transcript_segment
+            }
             return object : RecyclerView.ViewHolder(inf.inflate(layout, parent, false)) {}
         }
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val v = holder.itemView
-            if (getItemViewType(position) == TYPE_NOTES) {
-                bindNotes(v.findViewById(R.id.ll_notes_lines), notes!!)
-                return
+            when (getItemViewType(position)) {
+                TYPE_USER -> { bindUser(v); return }
+                TYPE_NOTES -> { bindNotes(v.findViewById(R.id.ll_notes_lines), notes!!); return }
             }
-            val seg = segments[position - if (hasNotes) 1 else 0]
-            v.findViewById<TextView>(R.id.tv_seg_time).text = TranscriptExporter.timestamp(seg.startMs)
+            val seg = segments[position - headerCount]
+            val ctx = v.context
+            val time = TranscriptExporter.timestamp(seg.startMs)
+            v.findViewById<TextView>(R.id.tv_seg_time).text =
+                if (seg.edited) "$time · ${ctx.getString(R.string.listener_seg_edited)}" else time
             v.findViewById<TextView>(R.id.tv_seg_text).text = seg.text
             v.setOnClickListener { onSeek(seg.startMs) }
+            v.setOnLongClickListener { onEditLine(seg); true }
+        }
+
+        private fun bindUser(v: View) {
+            val ctx = v.context
+            val notesView = v.findViewById<TextView>(R.id.tv_user_notes)
+            if (userNotes.isBlank()) {
+                notesView.setText(R.string.listener_user_notes_empty)
+                notesView.setTextColor(ctx.getColor(R.color.text_secondary))
+            } else {
+                notesView.text = userNotes
+                notesView.setTextColor(ctx.getColor(R.color.text_primary))
+            }
+            notesView.setOnClickListener { onEditNotes() }
+            val box = v.findViewById<LinearLayout>(R.id.ll_user_marks)
+            box.removeAllViews()
+            if (markers.isEmpty()) return
+            box.addView(TextView(ctx).apply {
+                setText(R.string.listener_marks_title)
+                setTextColor(ctx.getColor(R.color.text_primary))
+                setPadding(0, 16, 0, 0)
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+            })
+            box.addView(TextView(ctx).apply {
+                setText(R.string.listener_marks_explainer)
+                setTextColor(ctx.getColor(R.color.text_secondary))
+                textSize = 12f
+            })
+            markers.forEach { m ->
+                box.addView(TextView(ctx).apply {
+                    text = "⚑  ${TranscriptExporter.timestamp(m.atMs)}" + if (m.label.isNotBlank()) "  ${m.label}" else ""
+                    setTextColor(ctx.getColor(R.color.text_primary))
+                    setPadding(0, 10, 0, 10)
+                    setOnClickListener { onSeek(m.atMs) }
+                    setOnLongClickListener { onRemoveMarker(m); true }
+                })
+            }
         }
 
         private fun bindNotes(container: LinearLayout, n: SessionNotes) {
@@ -390,6 +556,7 @@ class ListenerSessionFragment : Fragment(R.layout.fragment_listener_session) {
         }
 
         companion object {
+            const val TYPE_USER = 2
             const val TYPE_NOTES = 0
             const val TYPE_LINE = 1
         }
@@ -398,5 +565,7 @@ class ListenerSessionFragment : Fragment(R.layout.fragment_listener_session) {
     companion object {
         const val ARG_SESSION_ID = "sessionId"
         const val ARG_START_MS = "startMs"
+        private const val STATE_SPEED = "speed"
+        private val SPEEDS = floatArrayOf(1f, 1.25f, 1.5f, 2f)
     }
 }

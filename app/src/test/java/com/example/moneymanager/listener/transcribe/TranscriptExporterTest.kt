@@ -66,4 +66,17 @@ class TranscriptExporterTest {
         assertEquals("मीटिंग-20260829-1040.md", TranscriptExporter.fileName("मीटिंग", start, Format.MARKDOWN, utc))
         assertEquals(60 + "-20260829-1040.md".length, TranscriptExporter.fileName("x".repeat(200), start, Format.MARKDOWN, utc).length)
     }
+
+    @Test
+    fun extras_notesAndMarksAreExported() {
+        val utc = java.util.TimeZone.getTimeZone("UTC")
+        val segs = listOf(seg(1, 5_000, "hello"))
+        val extras = TranscriptExporter.Extras("Ask *ops*", listOf(90_000L, 30_000L))
+        val md = TranscriptExporter.export(TranscriptExporter.Format.MARKDOWN, "T", 0, 1000, segs, utc, extras)
+        assertTrue(md, md.contains("## Notes\n\nAsk \\*ops\\*\n\n## Marks\n\n- 00:00:30\n- 00:01:30\n\n## Transcript\n\n**[00:00:05]** hello"))
+        val txt = TranscriptExporter.export(TranscriptExporter.Format.PLAIN, "T", 0, 1000, segs, utc, extras)
+        assertTrue(txt, txt.contains("Notes:\nAsk *ops*\n\nMarks: 00:00:30, 00:01:30\n\n[00:00:05] hello"))
+        // No extras: format unchanged (no section headings).
+        assertTrue(!TranscriptExporter.export(TranscriptExporter.Format.MARKDOWN, "T", 0, 1000, segs, utc).contains("## "))
+    }
 }

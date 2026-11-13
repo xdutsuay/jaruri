@@ -7,6 +7,8 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import com.example.moneymanager.data.AppDatabase
+import com.example.moneymanager.listener.ListenerMarkerEntity
+import com.example.moneymanager.listener.ListenerRepository
 import com.example.moneymanager.listener.ListenerSessionEntity
 import com.example.moneymanager.listener.ListenerStorage
 import com.example.moneymanager.listener.transcribe.ChunkDurations
@@ -41,6 +43,9 @@ class ListenerSessionViewModel(application: Application) : AndroidViewModel(appl
         private set
     lateinit var work: LiveData<List<WorkInfo>>
         private set
+    lateinit var markers: LiveData<List<ListenerMarkerEntity>>
+        private set
+    private val repo = ListenerRepository(application)
 
     /** Call once from the fragment; later calls are ignored. */
     fun bind(id: Long) {
@@ -51,6 +56,23 @@ class ListenerSessionViewModel(application: Application) : AndroidViewModel(appl
         segments = segs.asLiveData()
         notes = segs.map { summarizer.summarize(it) }.asLiveData(Dispatchers.Default)
         work = TranscriptionScheduler.observe(getApplication(), id)
+        markers = db.listenerMarkerDao().observeForSession(id).asLiveData()
+    }
+
+    fun saveNotes(text: String) = viewModelScope.launch(Dispatchers.IO) { repo.setNotes(sessionId, text) }
+
+    fun deleteMarker(id: Long) = viewModelScope.launch(Dispatchers.IO) { db.listenerMarkerDao().delete(id) }
+
+    /** Blank text is refused (delete would desync the timeline); the FTS index follows. */
+    fun editSegment(segmentId: Long, text: String) = viewModelScope.launch(Dispatchers.IO) {
+        val t = text.trim()
+        if (t.isNotEmpty()) db.transcriptDao().editText(segmentId, t)
+    }
+
+    suspend fun editedCount(): Int = withContext(Dispatchers.IO) { db.transcriptDao().editedCount(sessionId) }
+
+    suspend fun deleteAudio(): Boolean = withContext(Dispatchers.IO) {
+        repo.deleteAudioKeepTranscript(sessionId, System.currentTimeMillis())
     }
 
     val hasModel: Boolean get() = modelStore.isInstalled
@@ -72,7 +94,13 @@ class ListenerSessionViewModel(application: Application) : AndroidViewModel(appl
         val dir = File(getApplication<Application>().cacheDir, "exports").apply { mkdirs() }
         dir.listFiles()?.forEach { it.delete() } // only the latest export is kept
         val file = File(dir, TranscriptExporter.fileName(s.title, s.startedAt, format))
-        file.writeText(TranscriptExporter.export(format, s.title, s.startedAt, s.durationMs, segs))
+        val marks = db.listenerMarkerDao().forSession(sessionId).map { it.atMs }
+        file.writeText(
+            TranscriptExporter.export(
+                format, s.title, s.startedAt, s.durationMs, segs,
+                extras = TranscriptExporter.Extras(s.userNotes, marks)
+            )
+        )
         file
     }
 }

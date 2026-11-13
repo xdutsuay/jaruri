@@ -117,8 +117,8 @@ class ListenerTranscriptUiTest {
         var view: View? = null
         scenario.onFragment { view = it.requireView() }
         val list = view!!.findViewById<RecyclerView>(R.id.rv_ls_segments)
-        // notes card + 2 lines
-        waitFor { list.adapter!!.itemCount == 3 }
+        // your-notes card + highlights card + 2 lines
+        waitFor { list.adapter!!.itemCount == 4 }
         layOut(list)
         val v = view!!
         assertEquals("Budget sync", v.findViewById<TextView>(R.id.tv_ls_title).text.toString())
@@ -126,11 +126,11 @@ class ListenerTranscriptUiTest {
         assertEquals(ctx.getString(R.string.listener_tr_again), v.findViewById<Button>(R.id.btn_ls_transcribe).text.toString())
         assertTrue(v.findViewById<Button>(R.id.btn_ls_export).isEnabled)
 
-        val notes = list.getChildAt(0)
+        val notes = list.getChildAt(1)
         val notesText = (notes as android.view.ViewGroup).let { collectText(it) }
         assertTrue(notesText, notesText.contains(ctx.getString(R.string.listener_notes_title)))
         assertTrue(notesText, notesText.contains("00:01:05  we need to send the report by friday"))
-        assertEquals("00:00:01", list.getChildAt(1).findViewById<TextView>(R.id.tv_seg_time).text.toString())
+        assertEquals("00:00:01", list.getChildAt(2).findViewById<TextView>(R.id.tv_seg_time).text.toString())
     }
 
     @Test

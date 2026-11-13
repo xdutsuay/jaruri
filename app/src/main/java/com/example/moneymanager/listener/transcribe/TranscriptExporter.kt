@@ -15,26 +15,42 @@ object TranscriptExporter {
 
     const val DISCLAIMER = "Transcribed offline on this phone. Automatic transcripts may contain errors."
 
+    /** v3: the user's own notes and the marks dropped while recording (session time, ms). */
+    data class Extras(val userNotes: String = "", val markers: List<Long> = emptyList()) {
+        val isEmpty: Boolean get() = userNotes.isBlank() && markers.isEmpty()
+    }
+
     fun export(
         format: Format,
         title: String,
         startedAt: Long,
         durationMs: Long,
         segments: List<TranscriptSegmentEntity>,
-        timeZone: TimeZone = TimeZone.getDefault()
+        timeZone: TimeZone = TimeZone.getDefault(),
+        extras: Extras = Extras()
     ): String = when (format) {
-        Format.MARKDOWN -> toMarkdown(title, startedAt, durationMs, segments, timeZone)
-        Format.PLAIN -> toPlain(title, startedAt, durationMs, segments, timeZone)
+        Format.MARKDOWN -> toMarkdown(title, startedAt, durationMs, segments, timeZone, extras)
+        Format.PLAIN -> toPlain(title, startedAt, durationMs, segments, timeZone, extras)
     }
 
     fun toMarkdown(
         title: String, startedAt: Long, durationMs: Long,
-        segments: List<TranscriptSegmentEntity>, timeZone: TimeZone = TimeZone.getDefault()
+        segments: List<TranscriptSegmentEntity>, timeZone: TimeZone = TimeZone.getDefault(),
+        extras: Extras = Extras()
     ): String = buildString {
         append("# ").append(escapeMarkdown(title.ifBlank { "Recording" })).append("\n\n")
         append("- Date: ").append(formatDate(startedAt, timeZone)).append('\n')
         append("- Duration: ").append(timestamp(durationMs)).append('\n')
         append("- ").append(DISCLAIMER).append("\n\n")
+        if (extras.userNotes.isNotBlank()) {
+            append("## Notes\n\n").append(escapeMarkdown(extras.userNotes.trim())).append("\n\n")
+        }
+        if (extras.markers.isNotEmpty()) {
+            append("## Marks\n\n")
+            extras.markers.sorted().forEach { append("- ").append(timestamp(it)).append('\n') }
+            append('\n')
+        }
+        if (!extras.isEmpty) append("## Transcript\n\n")
         for (s in ordered(segments)) {
             append("**[").append(timestamp(s.startMs)).append("]** ")
                 .append(escapeMarkdown(s.text.trim())).append("\n\n")
@@ -43,12 +59,17 @@ object TranscriptExporter {
 
     fun toPlain(
         title: String, startedAt: Long, durationMs: Long,
-        segments: List<TranscriptSegmentEntity>, timeZone: TimeZone = TimeZone.getDefault()
+        segments: List<TranscriptSegmentEntity>, timeZone: TimeZone = TimeZone.getDefault(),
+        extras: Extras = Extras()
     ): String = buildString {
         append(title.ifBlank { "Recording" }).append('\n')
         append("Date: ").append(formatDate(startedAt, timeZone)).append('\n')
         append("Duration: ").append(timestamp(durationMs)).append('\n')
         append(DISCLAIMER).append("\n\n")
+        if (extras.userNotes.isNotBlank()) append("Notes:\n").append(extras.userNotes.trim()).append("\n\n")
+        if (extras.markers.isNotEmpty()) {
+            append("Marks: ").append(extras.markers.sorted().joinToString(", ") { timestamp(it) }).append("\n\n")
+        }
         for (s in ordered(segments)) {
             append('[').append(timestamp(s.startMs)).append("] ").append(s.text.trim()).append('\n')
         }

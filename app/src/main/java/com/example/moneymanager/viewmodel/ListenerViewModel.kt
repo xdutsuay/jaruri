@@ -20,6 +20,7 @@ import com.example.moneymanager.listener.transcribe.TranscriptionScheduler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
@@ -38,22 +39,41 @@ class ListenerViewModel(application: Application) : AndroidViewModel(application
     /** Search results, or null while the query is blank (show sessions instead). */
     data class Search(val query: String, val hits: List<TranscriptHit>)
 
+    /** Search date filter: only sessions started in the last N days (null = any time). */
+    enum class Range(val days: Int?) { ALL(null), WEEK(7), MONTH(30) }
+
     private val query = MutableStateFlow("")
-    val search: LiveData<Search?> = query
-        .debounce(SEARCH_DEBOUNCE_MS)
+    private val range = MutableStateFlow(Range.ALL)
+    val search: LiveData<Search?> = combine(query.debounce(SEARCH_DEBOUNCE_MS), range) { q, r -> q to r }
         .distinctUntilChanged()
-        .mapLatest { q ->
+        .mapLatest { (q, r) ->
             val match = FtsQuery.build(q)
+            val since = r.days?.let { System.currentTimeMillis() - it * 86_400_000L } ?: 0L
             when {
                 q.isBlank() -> null
                 match == null -> Search(q, emptyList())
-                else -> Search(q, withContext(Dispatchers.IO) { transcripts.search(match) })
+                else -> Search(q, withContext(Dispatchers.IO) { transcripts.search(match, sinceMs = since) })
             }
         }
         .asLiveData()
 
     fun setQuery(q: String) {
         query.value = q
+    }
+
+    fun setRange(r: Range) {
+        range.value = r
+    }
+
+    /** Bytes of audio kept by Listener (all sessions). */
+    val totalBytes: LiveData<Long> = repo.totalBytes.asLiveData()
+    val markCount: LiveData<Int> = ListenerState.markCount.asLiveData()
+
+    fun deleteAudio(id: Long, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.IO) { repo.deleteAudioKeepTranscript(id, System.currentTimeMillis()) }
+            onResult(ok)
+        }
     }
 
     /** Installed model name, or null. */

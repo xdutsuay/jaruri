@@ -38,6 +38,7 @@ import com.example.moneymanager.listener.transcribe.TranscriptExporter
 import com.example.moneymanager.listener.transcribe.TranscriptHit
 import com.example.moneymanager.viewmodel.ListenerViewModel
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 import java.io.File
@@ -60,6 +61,8 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
     private var toggle: MaterialButton? = null
     private var titleInput: TextInputEditText? = null
     private var freeText: TextView? = null
+    private var markBtn: MaterialButton? = null
+    private var usedBytes: Long = 0
 
     private val requestMic = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -100,6 +103,25 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
         toggle = view.findViewById(R.id.btn_listener_toggle)
         titleInput = view.findViewById(R.id.et_listener_title)
         freeText = view.findViewById(R.id.tv_listener_free)
+        markBtn = view.findViewById<MaterialButton>(R.id.btn_listener_mark).apply {
+            setOnClickListener { ListenerService.mark(requireContext()) }
+        }
+        viewModel.markCount.observe(viewLifecycleOwner) { n ->
+            markBtn?.text = if (n > 0) getString(R.string.listener_mark_count, n) else getString(R.string.listener_mark)
+        }
+        viewModel.totalBytes.observe(viewLifecycleOwner) {
+            usedBytes = it
+            refreshFreeSpace()
+        }
+        view.findViewById<ChipGroup>(R.id.cg_listener_range).setOnCheckedStateChangeListener { _, ids ->
+            viewModel.setRange(
+                when (ids.firstOrNull()) {
+                    R.id.chip_range_week -> ListenerViewModel.Range.WEEK
+                    R.id.chip_range_month -> ListenerViewModel.Range.MONTH
+                    else -> ListenerViewModel.Range.ALL
+                }
+            )
+        }
         val empty = view.findViewById<TextView>(R.id.tv_listener_empty)
 
         val adapter = Adapter(onClick = { openSession(it.id, -1, it) }, onLongClick = { showActions(it) })
@@ -202,6 +224,7 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
         toggle = null
         titleInput = null
         freeText = null
+        markBtn = null
         super.onDestroyView()
     }
 
@@ -220,6 +243,7 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
                 c.visibility = View.VISIBLE
                 c.start()
                 titleInput?.isEnabled = false
+                markBtn?.visibility = View.VISIBLE
             }
             is ListenerState.Status.Starting -> {
                 btn.setText(R.string.listener_stop)
@@ -235,6 +259,7 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
                 c.stop()
                 c.visibility = View.GONE
                 titleInput?.isEnabled = true
+                markBtn?.visibility = View.GONE
                 refreshFreeSpace()
             }
         }
@@ -244,7 +269,10 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
         viewLifecycleOwner.lifecycleScope.launch {
             val free = viewModel.freeBytes()
             val hours = (free / BYTES_PER_HOUR).toInt()
-            freeText?.text = getString(R.string.listener_free_space, ListenerPolicy.formatBytes(free), hours)
+            val freeLine = getString(R.string.listener_free_space, ListenerPolicy.formatBytes(free), hours)
+            freeText?.text = if (usedBytes > 0) {
+                freeLine + "\n" + getString(R.string.listener_storage_used, ListenerPolicy.formatBytes(usedBytes))
+            } else freeLine
         }
     }
 
@@ -353,22 +381,37 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
     }
 
     private fun showActions(session: ListenerSessionEntity) {
-        val items = arrayOf(
-            getString(R.string.listener_action_play),
-            getString(R.string.listener_action_rename),
-            getString(R.string.listener_action_share),
-            getString(R.string.listener_action_delete)
-        )
+        val actions = buildList<Pair<Int, () -> Unit>> {
+            if (session.hasAudio) add(R.string.listener_action_play to { play(session) })
+            add(R.string.listener_action_rename to { rename(session) })
+            if (session.hasAudio) add(R.string.listener_action_share to { share(session) })
+            if (session.hasAudio && session.state != ListenerSessionEntity.STATE_RECORDING) {
+                add(R.string.listener_action_delete_audio to { confirmDeleteAudio(session) })
+            }
+            add(R.string.listener_action_delete to { confirmDelete(session) })
+        }
         AlertDialog.Builder(requireContext())
             .setTitle(session.title)
-            .setItems(items) { _, which ->
-                when (which) {
-                    0 -> play(session)
-                    1 -> rename(session)
-                    2 -> share(session)
-                    3 -> confirmDelete(session)
+            .setItems(actions.map { getString(it.first) }.toTypedArray()) { _, which -> actions[which].second() }
+            .show()
+    }
+
+    private fun confirmDeleteAudio(session: ListenerSessionEntity) {
+        if (ListenerState.ownsSession(session)) {
+            Toast.makeText(requireContext(), R.string.listener_busy_recording, Toast.LENGTH_SHORT).show()
+            return
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.listener_action_delete_audio)
+            .setMessage(getString(R.string.listener_delete_audio_confirm, session.title, ListenerPolicy.formatBytes(session.bytes)))
+            .setPositiveButton(R.string.delete) { _, _ ->
+                viewModel.deleteAudio(session.id) { ok ->
+                    if (!ok && isAdded) {
+                        Toast.makeText(requireContext(), R.string.listener_delete_audio_refused, Toast.LENGTH_LONG).show()
+                    }
                 }
             }
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
@@ -463,6 +506,7 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
             val stateText = when {
                 item.state == ListenerSessionEntity.STATE_RECORDING -> ctx.getString(R.string.listener_state_recording)
                 item.state == ListenerSessionEntity.STATE_INTERRUPTED -> ctx.getString(R.string.listener_state_interrupted)
+                !item.hasAudio -> ctx.getString(R.string.listener_state_audio_deleted)
                 item.notes == ListenerStopReason.MAX_DURATION.name -> ctx.getString(R.string.listener_state_stopped_max)
                 item.notes == ListenerStopReason.LOW_STORAGE.name -> ctx.getString(R.string.listener_state_stopped_storage)
                 else -> null

@@ -349,6 +349,29 @@
         <item quantity="other">%d marks</item>
     </plurals>
     <string name="listener_mark">Mark</string>
+    <string name="listener_mark_count">Mark (%1$d so far)</string>
+    <string name="listener_range_all">Any time</string>
+    <string name="listener_range_week">Last 7 days</string>
+    <string name="listener_range_month">Last 30 days</string>
+    <string name="listener_storage_used">Recordings use %1$s</string>
+    <string name="listener_action_delete_audio">Delete audio, keep transcript</string>
+    <string name="listener_delete_audio_confirm">Delete the audio of \"%1$s\" to free %2$s? The transcript, your notes and marks stay, but you can\'t play or re-transcribe it.</string>
+    <string name="listener_delete_audio_refused">Can\'t delete the audio while it\'s recording or being transcribed.</string>
+    <string name="listener_state_audio_deleted">Audio deleted · transcript kept</string>
+    <string name="listener_speed_1">1×</string>
+    <string name="listener_speed_desc">Playback speed</string>
+    <string name="listener_user_notes_title">Your notes</string>
+    <string name="listener_user_notes_empty">Tap to add notes</string>
+    <string name="listener_user_notes_hint">Decisions, follow-ups, people…</string>
+    <string name="listener_marks_title">Marks</string>
+    <string name="listener_marks_explainer">Tap to play from a mark. Long-press to remove it.</string>
+    <string name="listener_marker_delete">Remove the mark at %1$s?</string>
+    <string name="listener_seg_edit_title">Correct this line</string>
+    <string name="listener_seg_edited">edited</string>
+    <plurals name="listener_tr_again_confirm_edited">
+        <item quantity="one">Transcribe again? This replaces the transcript, including %1$d line you corrected by hand.</item>
+        <item quantity="other">Transcribe again? This replaces the transcript, including %1$d lines you corrected by hand.</item>
+    </plurals>
     <string name="listener_marked">Marked at %1$s</string>
 </resources>
 
