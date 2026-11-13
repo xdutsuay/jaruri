@@ -13,13 +13,17 @@ import kotlinx.coroutines.flow.Flow
 class ListenerRepository(
     private val dao: ListenerSessionDao,
     val storage: ListenerStorage,
-    private val transcriptDao: TranscriptDao? = null
+    private val transcriptDao: TranscriptDao? = null,
+    private val markerDao: ListenerMarkerDao? = null
 ) {
     constructor(context: Context) : this(
         AppDatabase.getDatabase(context).listenerSessionDao(),
         ListenerStorage(context),
-        AppDatabase.getDatabase(context).transcriptDao()
+        AppDatabase.getDatabase(context).transcriptDao(),
+        AppDatabase.getDatabase(context).listenerMarkerDao()
     )
+
+    val totalBytes: Flow<Long> = dao.observeTotalBytes()
 
     val sessions: Flow<List<ListenerSessionEntity>> = dao.getAll()
 
@@ -107,12 +111,42 @@ class ListenerRepository(
         if (t.isNotEmpty()) dao.rename(id, t)
     }
 
-    /** Deletes audio files, then transcript segments (FTS follows via triggers), then the row. Returns false (row kept) if files remain. */
+    suspend fun setNotes(id: Long, notes: String) = dao.setUserNotes(id, notes.trim().take(MAX_NOTES))
+
+    /** Drops a marker at [atMs] of session [id]; returns how many the session has now. */
+    suspend fun addMarker(id: Long, atMs: Long, now: Long): Int {
+        val markers = markerDao ?: return 0
+        markers.insert(ListenerMarkerEntity(sessionId = id, atMs = atMs.coerceAtLeast(0), createdAt = now))
+        return markers.count(id)
+    }
+
+    /**
+     * Frees the space but keeps the transcript, notes and markers searchable.
+     * Refused while the session is recording or being transcribed. Returns false if files remain.
+     */
+    suspend fun deleteAudioKeepTranscript(id: Long, now: Long): Boolean {
+        val row = dao.getById(id) ?: return false
+        if (row.state == ListenerSessionEntity.STATE_RECORDING) return false
+        if (row.transcriptState == ListenerSessionEntity.TRANSCRIPT_RUNNING ||
+            row.transcriptState == ListenerSessionEntity.TRANSCRIPT_QUEUED
+        ) return false
+        if (!row.hasAudio) return true
+        if (!storage.deleteSession(row.dirName)) return false
+        dao.markAudioDeleted(id, now)
+        return true
+    }
+
+    /** Deletes audio files, then transcript segments (FTS follows via triggers) and markers, then the row. Returns false (row kept) if files remain. */
     suspend fun delete(id: Long): Boolean {
         val row = dao.getById(id) ?: return true
         if (!storage.deleteSession(row.dirName)) return false
         transcriptDao?.deleteForSession(id)
+        markerDao?.deleteForSession(id)
         dao.deleteById(id)
         return true
+    }
+
+    companion object {
+        const val MAX_NOTES = 10_000
     }
 }

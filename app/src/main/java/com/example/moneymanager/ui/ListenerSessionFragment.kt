@@ -248,14 +248,14 @@ class ListenerSessionFragment : Fragment(R.layout.fragment_listener_session) {
                 button.setOnClickListener { startTranscription() }
             }
             s.transcriptState == ListenerSessionEntity.TRANSCRIPT_CANCELLED -> {
-                status.text = getString(R.string.listener_tr_state_cancelled, done, total)
+                status.text = resources.getQuantityString(R.plurals.listener_tr_state_cancelled, total, done, total)
                 button.setText(R.string.listener_tr_resume)
                 button.setOnClickListener { startTranscription() }
             }
             s.transcriptState == ListenerSessionEntity.TRANSCRIPT_QUEUED ||
                 s.transcriptState == ListenerSessionEntity.TRANSCRIPT_RUNNING -> {
-                // State says busy but no job exists (e.g. cancelled from the notification on old Android).
-                status.text = getString(R.string.listener_tr_state_paused, done, total)
+                // State says busy but no job exists (the system dropped it); offer Resume.
+                status.text = resources.getQuantityString(R.plurals.listener_tr_state_paused, total, done, total)
                 button.setText(R.string.listener_tr_resume)
                 button.setOnClickListener { startTranscription() }
             }

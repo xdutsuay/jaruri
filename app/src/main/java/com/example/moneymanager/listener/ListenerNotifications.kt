@@ -51,16 +51,22 @@ object ListenerNotifications {
         )
     }
 
-    fun ongoing(context: Context, title: String, startedAt: Long): android.app.Notification {
+    fun ongoing(context: Context, title: String, startedAt: Long, marks: Int = 0): android.app.Notification {
         ensureChannels(context)
         val stop = PendingIntent.getService(
             context, 2,
             Intent(context, ListenerService::class.java).setAction(ListenerService.ACTION_STOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val mark = PendingIntent.getService(
+            context, 3,
+            Intent(context, ListenerService::class.java).setAction(ListenerService.ACTION_MARK),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         return NotificationCompat.Builder(context, CHANNEL_ONGOING)
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle(context.getString(R.string.listener_notif_recording))
+            .setSubText(if (marks > 0) context.resources.getQuantityString(R.plurals.listener_marks, marks, marks) else null)
             .setContentText(title)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -72,6 +78,7 @@ object ListenerNotifications {
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setContentIntent(openListenerIntent(context))
             .addAction(R.drawable.ic_mic, context.getString(R.string.listener_stop), stop)
+            .addAction(R.drawable.ic_mic, context.getString(R.string.listener_mark), mark)
             .build()
     }
 

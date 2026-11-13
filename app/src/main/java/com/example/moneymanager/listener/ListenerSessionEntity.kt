@@ -31,8 +31,15 @@ data class ListenerSessionEntity(
     @ColumnInfo(defaultValue = "0")
     val transcribedChunks: Int = 0,
     /** v13: last transcription failure, shown to the user. */
-    val transcriptError: String? = null
+    val transcriptError: String? = null,
+    /** v15: the user's own notes (free text). */
+    @ColumnInfo(defaultValue = "''")
+    val userNotes: String = "",
+    /** v15: set when the audio was deleted to free space but the transcript was kept. */
+    val audioDeletedAt: Long? = null
 ) {
+    val hasAudio: Boolean get() = audioDeletedAt == null
+
     companion object {
         const val STATE_RECORDING = "RECORDING"
         const val STATE_DONE = "DONE"

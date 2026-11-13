@@ -40,7 +40,7 @@ class TunnelMigrationTest {
     fun migrate13To14_addsTunnelTables_keepsListenerData() = runBlocking {
         Room.databaseBuilder(context, AppDatabase::class.java, dbName).allowMainThreadQueries().build().apply {
             val sql = openHelper.writableDatabase
-            for (t in listOf("tunnel_app_rules", "tunnel_domain_rules", "tunnel_lists")) sql.execSQL("DROP TABLE $t")
+            for (t in listOf("tunnel_app_rules", "tunnel_domain_rules", "tunnel_lists", "listener_markers")) sql.execSQL("DROP TABLE $t")
             sql.execSQL(
                 "INSERT INTO listener_sessions (title, startedAt, endedAt, durationMs, segmentCount, bytes, state, dirName, notes, " +
                     "transcriptState, transcribedChunks) VALUES ('Kept', 1, 2, 1, 1, 1, 'DONE', 'session-1', 'USER', 'DONE', 1)"
@@ -49,10 +49,10 @@ class TunnelMigrationTest {
             close()
         }
         val db = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(AppDatabase.MIGRATION_13_14)
+            .addMigrations(AppDatabase.MIGRATION_13_14, AppDatabase.MIGRATION_14_15)
             .allowMainThreadQueries()
             .build()
-        assertEquals(14, db.openHelper.writableDatabase.version)
+        assertEquals(15, db.openHelper.writableDatabase.version)
         assertEquals("Kept", db.listenerSessionDao().getAll().first().single().title)
 
         val dao = db.tunnelRuleDao()

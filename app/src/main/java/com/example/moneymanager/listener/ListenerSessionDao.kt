@@ -29,6 +29,15 @@ interface ListenerSessionDao {
     @Query("UPDATE listener_sessions SET title = :title WHERE id = :id")
     suspend fun rename(id: Long, title: String)
 
+    @Query("UPDATE listener_sessions SET userNotes = :notes WHERE id = :id")
+    suspend fun setUserNotes(id: Long, notes: String)
+
+    @Query("UPDATE listener_sessions SET audioDeletedAt = :at, bytes = 0 WHERE id = :id")
+    suspend fun markAudioDeleted(id: Long, at: Long)
+
+    @Query("SELECT COALESCE(SUM(bytes), 0) FROM listener_sessions")
+    fun observeTotalBytes(): Flow<Long>
+
     @Query("DELETE FROM listener_sessions WHERE id = :id")
     suspend fun deleteById(id: Long)
 }

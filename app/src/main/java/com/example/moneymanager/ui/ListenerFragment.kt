@@ -453,8 +453,9 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
             val ctx = holder.itemView.context
             holder.title.text = item.title
             holder.duration.text = ListenerPolicy.formatElapsed(item.durationMs)
-            holder.sub.text = ctx.getString(
-                R.string.listener_item_sub,
+            holder.sub.text = ctx.resources.getQuantityString(
+                R.plurals.listener_item_sub,
+                item.segmentCount,
                 df.format(Date(item.startedAt)),
                 ListenerPolicy.formatBytes(item.bytes),
                 item.segmentCount

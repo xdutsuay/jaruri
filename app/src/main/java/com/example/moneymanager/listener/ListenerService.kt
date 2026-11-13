@@ -47,6 +47,11 @@ class ListenerService : Service() {
     private var segmentMs = ListenerPolicy.DEFAULT_SEGMENT_MS
     private var maxMs = ListenerPolicy.DEFAULT_MAX_SESSION_MS
     private var stopping = false
+    /** A Start that arrived while the previous session was still shutting down; run once it is closed. */
+    private var pendingStart = false
+    private var pendingTitle: String? = null
+    private var title: String = ""
+    private var markCount = 0
 
     private val rollTask = Runnable { rollSegment() }
     private val watchdog = object : Runnable {
@@ -67,6 +72,7 @@ class ListenerService : Service() {
         when (intent?.action) {
             ACTION_START -> startSession(intent.getStringExtra(EXTRA_TITLE))
             ACTION_STOP -> stopSession(ListenerStopReason.USER)
+            ACTION_MARK -> mark()
             else -> if (!ListenerState.isBusy) stopSelf()
         }
         return START_NOT_STICKY
@@ -76,7 +82,11 @@ class ListenerService : Service() {
     // tunnel variant (flavor manifest present), so this is a variant-specific false positive.
     @SuppressLint("ForegroundServiceType")
     private fun startSession(requestedTitle: String?) {
-        if (ListenerState.isBusy || stopping) return
+        if (stopping) {
+            queueStart(requestedTitle)
+            return
+        }
+        if (ListenerState.isBusy) return
         ListenerState.reportError(null)
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
@@ -88,6 +98,8 @@ class ListenerService : Service() {
         val now = System.currentTimeMillis()
         val title = requestedTitle?.trim()?.takeIf { it.isNotEmpty() }
             ?: ListenerPolicy.defaultTitle(now)
+        this.title = title
+        markCount = 0
 
         // Must reach startForeground() within a few seconds of startForegroundService().
         try {
@@ -142,6 +154,72 @@ class ListenerService : Service() {
             handler.postDelayed(rollTask, segmentMs)
             handler.postDelayed(watchdog, WATCHDOG_MS)
             refreshTile()
+        }
+    }
+
+    /**
+     * Start pressed while Stop is still closing the previous row (a few hundred ms of
+     * DB/file work). We came in via startForegroundService, so we must go foreground
+     * now; the new session starts as soon as the old one is closed.
+     */
+    @SuppressLint("ForegroundServiceType")
+    private fun queueStart(requestedTitle: String?) {
+        if (pendingStart) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ListenerState.reportError(getString(R.string.listener_err_mic_permission))
+            return
+        }
+        try {
+            ServiceCompat.startForeground(
+                this,
+                ListenerNotifications.ID_ONGOING,
+                ListenerNotifications.ongoing(this, requestedTitle ?: "", System.currentTimeMillis()),
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else 0
+            )
+        } catch (e: Exception) {
+            ListenerState.reportError(getString(R.string.listener_err_fgs, e.javaClass.simpleName))
+            return
+        }
+        pendingStart = true
+        pendingTitle = requestedTitle
+    }
+
+    /** Called when a stop has fully closed its row: run a queued Start, or end the service. */
+    private fun afterStopped() {
+        stopping = false
+        if (pendingStart) {
+            pendingStart = false
+            val t = pendingTitle
+            pendingTitle = null
+            startSession(t)
+        } else {
+            stopSelf()
+        }
+    }
+
+    /** Bookmark "now" in the live session (notification action or the screen's Mark button). */
+    private fun mark() {
+        if (stopping || !ListenerState.isRecording || sessionId <= 0) {
+            if (!ListenerState.isBusy && !stopping) stopSelf() // nothing to mark; don't linger
+            return
+        }
+        val id = sessionId
+        val at = System.currentTimeMillis() - startedAt
+        scope.launch {
+            val n = withContext(Dispatchers.IO) { repo.addMarker(id, at, System.currentTimeMillis()) }
+            if (id != sessionId || stopping) return@launch
+            markCount = n
+            ListenerState.markAdded(n)
+            try {
+                androidx.core.app.NotificationManagerCompat.from(this@ListenerService).notify(
+                    ListenerNotifications.ID_ONGOING,
+                    ListenerNotifications.ongoing(this@ListenerService, title, startedAt, markCount)
+                )
+            } catch (_: SecurityException) {
+                // POST_NOTIFICATIONS denied: the marker is saved; the screen shows the count.
+            }
         }
     }
 
@@ -205,7 +283,7 @@ class ListenerService : Service() {
         val id = sessionId
         val endedAt = System.currentTimeMillis()
         ListenerState.set(ListenerState.Status.Idle)
-        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        if (!pendingStart) ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         refreshTile()
         when (reason) {
             ListenerStopReason.MAX_DURATION ->
@@ -229,16 +307,16 @@ class ListenerService : Service() {
                 }
             }
             sessionId = -1
-            stopSelf()
+            afterStopped()
         }
     }
 
     private fun endStartedButCancelled() {
         sessionId = -1
         ListenerState.set(ListenerState.Status.Idle)
-        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        if (!pendingStart) ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         refreshTile()
-        stopSelf()
+        afterStopped()
     }
 
     private fun failStart(message: String) {
@@ -301,6 +379,7 @@ class ListenerService : Service() {
     companion object {
         const val ACTION_START = "com.example.moneymanager.listener.START"
         const val ACTION_STOP = "com.example.moneymanager.listener.STOP"
+        const val ACTION_MARK = "com.example.moneymanager.listener.MARK"
         /** Activity actions (tile / notification → app). */
         const val ACTION_OPEN_LISTENER = "com.example.moneymanager.action.OPEN_LISTENER"
         const val ACTION_START_FROM_TILE = "com.example.moneymanager.action.LISTENER_START"
@@ -320,6 +399,11 @@ class ListenerService : Service() {
 
         fun stop(context: Context) {
             context.startService(Intent(context, ListenerService::class.java).setAction(ACTION_STOP))
+        }
+
+        /** Only meaningful while recording; our FGS is running, so a plain startService is allowed. */
+        fun mark(context: Context) {
+            context.startService(Intent(context, ListenerService::class.java).setAction(ACTION_MARK))
         }
     }
 }

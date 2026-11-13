@@ -32,12 +32,19 @@ abstract class TranscriptDao {
         FROM transcript_segments s
         JOIN transcript_fts ON s.id = transcript_fts.rowid
         JOIN listener_sessions ls ON ls.id = s.sessionId
-        WHERE transcript_fts MATCH :match
+        WHERE transcript_fts MATCH :match AND ls.startedAt >= :sinceMs
         ORDER BY ls.startedAt DESC, s.startMs ASC
         LIMIT :limit
         """
     )
-    abstract suspend fun search(match: String, limit: Int = 200): List<TranscriptHit>
+    abstract suspend fun search(match: String, limit: Int = 200, sinceMs: Long = 0): List<TranscriptHit>
+
+    /** Hand correction; the FTS index follows via Room's update triggers. */
+    @Query("UPDATE transcript_segments SET text = :text, edited = 1 WHERE id = :segmentId")
+    abstract suspend fun editText(segmentId: Long, text: String)
+
+    @Query("SELECT COUNT(*) FROM transcript_segments WHERE sessionId = :sessionId AND edited = 1")
+    abstract suspend fun editedCount(sessionId: Long): Int
 
     @Query(
         "UPDATE listener_sessions SET transcriptState = :state, transcriptError = :error WHERE id = :sessionId"

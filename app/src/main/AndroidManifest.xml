@@ -117,6 +117,11 @@
                 android:value="true" />
         </service>
 
+        <!-- "Cancel" on the transcription notification (explicit intent only). -->
+        <receiver
+            android:name=".listener.transcribe.TranscriptionCancelReceiver"
+            android:exported="false" />
+
         <!-- WorkManager's foreground service needs a declared type on Android 14+. -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"

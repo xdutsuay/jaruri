@@ -255,7 +255,6 @@
     <string name="listener_free_space">Free space: %1$s (~%2$d h of audio)</string>
     <string name="listener_sessions_header">Recordings</string>
     <string name="listener_empty">No recordings yet.</string>
-    <string name="listener_item_sub">%1$s · %2$s · %3$d part(s)</string>
     <string name="listener_state_recording">Recording now</string>
     <string name="listener_state_interrupted">Interrupted · audio up to the cut is kept</string>
     <string name="listener_state_stopped_max">Auto-stopped at the time limit</string>
@@ -309,8 +308,6 @@
     <string name="listener_tr_state_running">Transcribing… %1$d%%</string>
     <string name="listener_tr_state_done">Transcript ready</string>
     <string name="listener_tr_state_failed">Transcription failed: %1$s</string>
-    <string name="listener_tr_state_cancelled">Transcription cancelled (%1$d of %2$d parts done)</string>
-    <string name="listener_tr_state_paused">Transcription paused (%1$d of %2$d parts done)</string>
     <string name="listener_tr_transcribe">Transcribe</string>
     <string name="listener_tr_resume">Resume</string>
     <string name="listener_tr_cancel">Cancel</string>
@@ -333,5 +330,25 @@
     <!-- Tunnel hub card (shown only in the tunnel flavor) -->
     <string name="hub_tunnel_title">Tunnel</string>
     <string name="hub_tunnel_body">Local DNS filter: block domains, set apps to bypass or block, see what apps look up</string>
+
+    <!-- Listener v3 -->
+    <plurals name="listener_item_sub">
+        <item quantity="one">%1$s · %2$s · %3$d part</item>
+        <item quantity="other">%1$s · %2$s · %3$d parts</item>
+    </plurals>
+    <plurals name="listener_tr_state_cancelled">
+        <item quantity="one">Transcription cancelled (%1$d of %2$d part done)</item>
+        <item quantity="other">Transcription cancelled (%1$d of %2$d parts done)</item>
+    </plurals>
+    <plurals name="listener_tr_state_paused">
+        <item quantity="one">Transcription paused (%1$d of %2$d part done)</item>
+        <item quantity="other">Transcription paused (%1$d of %2$d parts done)</item>
+    </plurals>
+    <plurals name="listener_marks">
+        <item quantity="one">%d mark</item>
+        <item quantity="other">%d marks</item>
+    </plurals>
+    <string name="listener_mark">Mark</string>
+    <string name="listener_marked">Marked at %1$s</string>
 </resources>
 

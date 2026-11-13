@@ -1,5 +1,6 @@
 package com.example.moneymanager.listener.transcribe
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Fts4
 import androidx.room.Index
@@ -21,7 +22,10 @@ data class TranscriptSegmentEntity(
     val chunkIndex: Int,
     val startMs: Long,
     val endMs: Long,
-    val text: String
+    val text: String,
+    /** v15: true once the user corrected the text by hand. */
+    @ColumnInfo(defaultValue = "0")
+    val edited: Boolean = false
 )
 
 /** Full-text index over [TranscriptSegmentEntity.text]; Room keeps it in sync via triggers. */

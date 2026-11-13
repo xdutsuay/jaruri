@@ -100,8 +100,9 @@ class ListenerServiceTest {
         val n: Notification? = shadowOf(service).lastForegroundNotification
         assertNotNull("must be a foreground service", n)
         assertTrue((n!!.flags and Notification.FLAG_ONGOING_EVENT) != 0)
-        assertEquals(1, n.actions.size)
+        assertEquals(2, n.actions.size)
         assertEquals("Stop", n.actions[0].title.toString())
+        assertEquals("Mark", n.actions[1].title.toString())
 
         val r = row(rec.sessionId)!!
         assertEquals("Design review", r.title)
@@ -173,5 +174,54 @@ class ListenerServiceTest {
         controller = c
         assertTrue(shadowOf(c.get()).isStoppedBySelf)
         assertNull(ListenerState.activeSessionIdForTest())
+    }
+
+    @Test
+    fun startDuringStopWindow_isQueued_andStartsAFreshSession() {
+        shadowOf(app).grantPermissions(Manifest.permission.RECORD_AUDIO)
+        val service = start()
+        val first = (ListenerState.status.value as ListenerState.Status.Recording).sessionId
+        // Stop, then Start before the stop coroutine has closed the row (main looper not idled).
+        sendStop(service)
+        service.onStartCommand(
+            Intent(app, ListenerService::class.java).setAction(ListenerService.ACTION_START)
+                .putExtra(ListenerService.EXTRA_TITLE, "Second"), 0, 3
+        )
+        waitUntil { (ListenerState.status.value as? ListenerState.Status.Recording)?.sessionId?.let { it != first } == true }
+        val second = (ListenerState.status.value as ListenerState.Status.Recording).sessionId
+        assertTrue(second != first)
+        assertEquals(ListenerSessionEntity.STATE_DONE, row(first)!!.state)
+        assertEquals("Second", row(second)!!.title)
+        assertTrue("still foreground for the new session", !shadowOf(service).isStoppedBySelf)
+        sendStop(service)
+        waitUntil { row(second)?.state == ListenerSessionEntity.STATE_DONE }
+        assertTrue(shadowOf(service).isStoppedBySelf)
+    }
+
+    @Test
+    fun markSavesBookmarksAtSessionTime_andCountsThem() {
+        shadowOf(app).grantPermissions(Manifest.permission.RECORD_AUDIO)
+        val service = start()
+        val id = (ListenerState.status.value as ListenerState.Status.Recording).sessionId
+        val mark = Intent(app, ListenerService::class.java).setAction(ListenerService.ACTION_MARK)
+        service.onStartCommand(mark, 0, 4)
+        waitUntil { ListenerState.markCount.value == 1 }
+        service.onStartCommand(mark, 0, 5)
+        waitUntil { ListenerState.markCount.value == 2 }
+        val markers = runBlocking { AppDatabase.getDatabase(app).listenerMarkerDao().forSession(id) }
+        assertEquals(2, markers.size)
+        assertTrue(markers.all { it.atMs in 0..60_000 })
+        sendStop(service)
+        waitUntil { !ListenerState.isBusy && row(id)?.state == ListenerSessionEntity.STATE_DONE }
+    }
+
+    @Test
+    fun markWithNothingRecording_doesNothing_andStops() {
+        val c = Robolectric.buildService(
+            ListenerService::class.java,
+            Intent(app, ListenerService::class.java).setAction(ListenerService.ACTION_MARK)
+        ).create().startCommand(0, 1)
+        controller = c
+        assertTrue(shadowOf(c.get()).isStoppedBySelf)
     }
 }

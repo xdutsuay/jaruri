@@ -125,7 +125,10 @@ class TranscriptionWorker(
     private fun foregroundInfo(title: String, pct: Int): ForegroundInfo {
         val ctx = applicationContext
         ensureChannel(ctx)
-        val cancel = WorkManager.getInstance(ctx).createCancelPendingIntent(id)
+        // Our own receiver (not WorkManager's cancel intent): it records CANCELLED before
+        // cancelling, so a notification Cancel is a user cancel on every Android version
+        // (stopReason only exists on 12+), and the session never sits "paused".
+        val cancel = TranscriptionCancelReceiver.pendingIntent(ctx, inputData.getLong(KEY_SESSION_ID, 0))
         val n: Notification = NotificationCompat.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle(ctx.getString(R.string.listener_stt_notif_title))

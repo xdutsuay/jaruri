@@ -43,8 +43,17 @@ object ListenerState {
 
     internal fun activeSessionIdForTest(): Long? = (_status.value as? Status.Recording)?.sessionId
 
+    /** Markers in the live session (resets on each Start). */
+    private val _markCount = MutableStateFlow(0)
+    val markCount: StateFlow<Int> = _markCount
+
     internal fun set(status: Status) {
+        if (status is Status.Starting) _markCount.value = 0
         _status.value = status
+    }
+
+    internal fun markAdded(total: Int) {
+        _markCount.value = total
     }
 
     internal fun reportError(message: String?) {

@@ -10,6 +10,8 @@ import com.example.moneymanager.listener.ListenerSessionDao
 import com.example.moneymanager.listener.ListenerSessionEntity
 import com.example.moneymanager.listener.transcribe.TranscriptDao
 import com.example.moneymanager.listener.transcribe.TranscriptFtsEntity
+import com.example.moneymanager.listener.ListenerMarkerDao
+import com.example.moneymanager.listener.ListenerMarkerEntity
 import com.example.moneymanager.listener.transcribe.TranscriptSegmentEntity
 import com.example.moneymanager.tunnel.data.TunnelAppRuleEntity
 import com.example.moneymanager.tunnel.data.TunnelDomainRuleEntity
@@ -37,9 +39,10 @@ import com.example.moneymanager.wellbeing.UsageDailyEntity
         TranscriptFtsEntity::class,
         TunnelAppRuleEntity::class,
         TunnelDomainRuleEntity::class,
-        TunnelListEntity::class
+        TunnelListEntity::class,
+        ListenerMarkerEntity::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -57,6 +60,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun listenerSessionDao(): ListenerSessionDao
     abstract fun transcriptDao(): TranscriptDao
     abstract fun tunnelRuleDao(): TunnelRuleDao
+    abstract fun listenerMarkerDao(): ListenerMarkerDao
 
     companion object {
         @Volatile private var instance: AppDatabase? = null
@@ -312,6 +316,29 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** Listener v3 bits: markers, user notes, audio-deleted flag, hand-edited transcript lines. Additive. */
+        internal val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `listener_markers` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`sessionId` INTEGER NOT NULL, `atMs` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `label` TEXT NOT NULL)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_listener_markers_sessionId` ON `listener_markers` (`sessionId`)")
+                addColumnIfMissing(db, "listener_sessions", "userNotes", "TEXT NOT NULL DEFAULT ''")
+                addColumnIfMissing(db, "listener_sessions", "audioDeletedAt", "INTEGER")
+                addColumnIfMissing(db, "transcript_segments", "edited", "INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        private fun addColumnIfMissing(db: SupportSQLiteDatabase, table: String, column: String, decl: String) {
+            var has = false
+            db.query("PRAGMA table_info(`$table`)").use {
+                val nameIdx = it.getColumnIndex("name")
+                while (it.moveToNext()) if (nameIdx >= 0 && it.getString(nameIdx) == column) { has = true; break }
+            }
+            if (!has) db.execSQL("ALTER TABLE `$table` ADD COLUMN `$column` $decl")
+        }
+
         private val TRANSCRIPT_FTS_TRIGGERS = listOf(
             "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_transcript_fts_BEFORE_UPDATE BEFORE UPDATE ON `transcript_segments` BEGIN DELETE FROM `transcript_fts` WHERE `docid`=OLD.`rowid`; END",
             "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_transcript_fts_BEFORE_DELETE BEFORE DELETE ON `transcript_segments` BEGIN DELETE FROM `transcript_fts` WHERE `docid`=OLD.`rowid`; END",
@@ -357,7 +384,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_10_11,
                         MIGRATION_11_12,
                         MIGRATION_12_13,
-                        MIGRATION_13_14
+                        MIGRATION_13_14,
+                        MIGRATION_14_15
                     )
                     .fallbackToDestructiveMigration()
                     .build().also { instance = it }
