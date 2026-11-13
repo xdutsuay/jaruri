@@ -1,5 +1,10 @@
 package com.example.moneymanager.ui
 
+import android.widget.ArrayAdapter
+import android.widget.Spinner
+import com.example.moneymanager.utils.LastAccountPrefs
+import com.example.moneymanager.utils.AccountChoices
+import com.example.moneymanager.data.AccountEntity
 import com.example.moneymanager.utils.CategoryChoices
 import android.os.Bundle
 import android.view.View
@@ -24,6 +29,12 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
     private var editingDate: Long = System.currentTimeMillis()
     private var editingCategory: String? = null
     private var editingType: String? = null
+    private var accounts: List<AccountEntity> = emptyList()
+    /** Account to show selected once the list arrives (edit: the row's; new: last used). */
+    private var wantedAccountId: Long? = null
+    private lateinit var spAccount: Spinner
+    private lateinit var accountAdapter: ArrayAdapter<String>
+    private lateinit var lastAccount: LastAccountPrefs
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -44,6 +55,21 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
             mutableListOf()
         )
         spCategory.adapter = categoryAdapter
+
+        lastAccount = LastAccountPrefs(requireContext())
+        spAccount = view.findViewById(R.id.spAccount)
+        accountAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, mutableListOf())
+        spAccount.adapter = accountAdapter
+        if (editingId <= 0) wantedAccountId = lastAccount.lastAccountId
+        viewModel.allAccounts.observe(viewLifecycleOwner) { list ->
+            val keep = if (accountAdapter.count > 0) selectedAccountId() else wantedAccountId
+            accounts = list
+            accountAdapter.clear()
+            accountAdapter.add(getString(R.string.account_none))
+            accountAdapter.addAll(list.map { AccountChoices.label(it) })
+            accountAdapter.notifyDataSetChanged()
+            selectAccount(keep)
+        }
 
         btnSave.setText(
             if (editingId > 0) R.string.update_transaction else R.string.save_transaction
@@ -75,6 +101,8 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
                 editingDate = tx.dateTimestamp
                 editingCategory = tx.category
                 editingType = tx.type
+                wantedAccountId = tx.accountId
+                selectAccount(tx.accountId)
                 etAmount.setText(tx.amount.toString())
                 etMemo.setText(tx.memo)
                 if (tx.type == "INCOME") {
@@ -132,32 +160,47 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
             if (editingId > 0) {
                 viewLifecycleOwner.lifecycleScope.launch {
                     val previous = viewModel.getTransaction(editingId)
+                    // Copy the stored row so payee, UPI ref, refund links etc. survive an edit.
+                    val base = previous ?: TransactionEntity(
+                        id = editingId, type = type, category = category, amount = amount,
+                        dateTimestamp = editingDate, memo = memo
+                    )
                     viewModel.updateTransaction(
-                        TransactionEntity(
-                            id = editingId,
+                        base.copy(
                             type = type,
                             category = category,
                             amount = amount,
                             dateTimestamp = editingDate,
                             memo = memo,
-                            accountId = previous?.accountId,
-                            deletedAt = previous?.deletedAt
+                            accountId = selectedAccountId()
                         ),
                         previousCategory = previous?.category
                     )
                     findNavController().popBackStack()
                 }
             } else {
+                val accountId = selectedAccountId()
+                lastAccount.lastAccountId = accountId
                 viewModel.addTransaction(
                     type = type,
                     category = category,
                     amount = amount,
                     date = System.currentTimeMillis(),
-                    memo = memo
+                    memo = memo,
+                    accountId = accountId
                 )
                 findNavController().popBackStack()
             }
         }
+    }
+
+    /** Position 0 is "No account". */
+    private fun selectedAccountId(): Long? =
+        spAccount.selectedItemPosition.takeIf { it > 0 }?.let { accounts.getOrNull(it - 1)?.id }
+
+    private fun selectAccount(id: Long?) {
+        val idx = accounts.indexOfFirst { it.id == id }
+        spAccount.setSelection(if (idx >= 0) idx + 1 else 0)
     }
 
     private fun isIncomeSelected(radioGroup: RadioGroup): Boolean {

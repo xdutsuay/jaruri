@@ -1,5 +1,6 @@
 package com.example.moneymanager.ui
 
+import com.example.moneymanager.utils.AccountChoices
 import android.os.Bundle
 import android.text.InputFilter
 import android.text.InputType
@@ -152,8 +153,8 @@ class AccountsFragment : Fragment(R.layout.fragment_accounts) {
             setText(account.name)
         }
         val etBalance = EditText(requireContext()).apply {
-            hint = "Balance / outstanding"
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            hint = if (account.isCreditCard) "Amount owed now" else "Current balance (minus if overdrawn)"
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
             setText(if (account.balance == 0.0) "" else account.balance.toString())
         }
         val etLimit = EditText(requireContext()).apply {
@@ -199,19 +200,15 @@ class AccountsFragment : Fragment(R.layout.fragment_accounts) {
         }
         val etName = EditText(requireContext()).apply { hint = "Name" }
         val spType = Spinner(requireContext())
-        val types = listOf(
-            AccountEntity.TYPE_CASH,
-            AccountEntity.TYPE_BANK,
-            AccountEntity.TYPE_CREDIT_CARD
-        )
+        val types = AccountEntity.USER_TYPES
         spType.adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_dropdown_item,
-            types
+            types.map { getString(typeLabel(it)) }
         )
         val etBalance = EditText(requireContext()).apply {
-            hint = "Balance / outstanding"
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            hint = getString(R.string.account_opening_balance_hint)
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
         }
         val etLimit = EditText(requireContext()).apply {
             hint = "Credit limit (cards only)"
@@ -291,7 +288,7 @@ class AccountsFragment : Fragment(R.layout.fragment_accounts) {
             val symbol = symbolProvider()
             holder.name.text = a.name
             holder.meta.text = buildString {
-                append(a.type.replace('_', ' '))
+                append(holder.itemView.context.getString(typeLabel(a.type)))
                 if (a.bankHint.isNotBlank()) append(" · ").append(a.bankHint)
                 if (a.last4.isNotBlank()) append(" · XX").append(a.last4)
                 if (a.isCreditCard && a.creditLimit > 0) {
@@ -300,11 +297,10 @@ class AccountsFragment : Fragment(R.layout.fragment_accounts) {
                 if (a.seenCount > 0) append(" · seen ").append(a.seenCount)
             }
             holder.balance.text = buildString {
+                append(formatSigned(symbol, AccountChoices.signedBalance(a)))
                 if (a.isCreditCard) {
-                    append("Outstanding $symbol${"%.0f".format(a.balance)}")
-                    append(" · Available $symbol${"%.0f".format(a.availableCredit)}")
-                } else {
-                    append("$symbol${"%.0f".format(a.balance)}")
+                    append(if (a.balance > 0) " owed" else if (a.balance < 0) " credit" else "")
+                    if (a.creditLimit > 0) append(" · Available $symbol${"%.0f".format(a.availableCredit)}")
                 }
                 val reported = a.lastReportedBalance
                 if (reported != null) {
@@ -327,5 +323,18 @@ class AccountsFragment : Fragment(R.layout.fragment_accounts) {
         }
 
         override fun getItemCount() = items.size
+    }
+
+    companion object {
+        fun typeLabel(type: String): Int = when (type) {
+            AccountEntity.TYPE_BANK -> R.string.account_type_bank
+            AccountEntity.TYPE_CREDIT_CARD -> R.string.account_type_card
+            AccountEntity.TYPE_WALLET -> R.string.account_type_wallet
+            else -> R.string.account_type_cash
+        }
+
+        /** "₹1,200" or "−₹350": the sign says whether you have it or owe it. */
+        fun formatSigned(symbol: String, v: Double): String =
+            (if (v < 0) "−" else "") + symbol + "%,.0f".format(kotlin.math.abs(v))
     }
 }

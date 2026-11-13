@@ -34,7 +34,7 @@
     <string name="needs_category_hint">%1$d transaction(s) need a category — tap a row to set one. Choices improve future auto-import.</string>
     <string name="account_sms_balance">SMS %1$s%2$s</string>
     <string name="account_running_diff">Diff %1$s%2$s</string>
-    <string name="accounts_hint">Cash, bank, and credit cards. Long-press to delete. Card balance is outstanding debt. SMS balances are tallied against the ledger as a running difference.</string>
+    <string name="accounts_hint">Bank accounts, cards, cash and UPI wallets. Balances are signed: minus means you owe it (card dues, overdraft). Tap to edit, long-press to delete. SMS balances are tallied against the ledger as a running difference.</string>
     <string name="pick_month_title">Select month</string>
     <string name="pick_month_column">Month</string>
     <string name="pick_year_column">Year</string>
@@ -388,5 +388,13 @@
     <string name="quick_expense_err_large">That amount is too large</string>
     <string name="quick_expense_err_category">Add an expense category in Jaruri first</string>
     <string name="quick_expense_shortcut_long">Quick expense (amount, category, note)</string>
+    <!-- Accounts -->
+    <string name="account_type_bank">Bank account</string>
+    <string name="account_type_card">Credit card</string>
+    <string name="account_type_cash">Cash</string>
+    <string name="account_type_wallet">UPI wallet / prepaid</string>
+    <string name="account_opening_balance_hint">Opening balance (card: amount owed now)</string>
+    <string name="account_label">Account</string>
+    <string name="account_none">No account</string>
 </resources>
 

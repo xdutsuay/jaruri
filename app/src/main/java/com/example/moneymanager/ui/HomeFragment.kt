@@ -1,5 +1,6 @@
 package com.example.moneymanager.ui
 
+import com.example.moneymanager.utils.AccountChoices
 import com.example.moneymanager.utils.CategoryChoices
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
@@ -62,7 +63,8 @@ class HomeFragment : Fragment() {
             onClick = { tx -> openTransaction(tx) },
             onLongClick = { tx -> showTransactionActions(tx) },
             onCategorize = { tx -> showCategorizeDialog(tx) },
-            currencySymbol = { viewModel.currencySymbol.value ?: "₹" }
+            currencySymbol = { viewModel.currencySymbol.value ?: "₹" },
+            accountName = { id -> id?.let { i -> accounts.firstOrNull { it.id == i }?.let(AccountChoices::label) } }
         )
 
         binding.rvTransactions.layoutManager = LinearLayoutManager(requireContext())
@@ -403,7 +405,7 @@ class HomeFragment : Fragment() {
 
     private fun updateCashHero(symbol: String) {
         val banks = accounts.filter {
-            it.type == AccountEntity.TYPE_BANK || it.type == AccountEntity.TYPE_CASH
+            it.type == AccountEntity.TYPE_BANK || it.type == AccountEntity.TYPE_CASH || it.type == AccountEntity.TYPE_WALLET
         }
         // One SMS can mention someone else's account. Only accounts we keep
         // seeing belong in the home total.

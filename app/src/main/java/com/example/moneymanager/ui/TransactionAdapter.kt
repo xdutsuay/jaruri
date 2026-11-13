@@ -28,7 +28,9 @@ class TransactionAdapter(
     private val onClick: (TransactionEntity) -> Unit,
     private val onLongClick: (TransactionEntity) -> Unit = {},
     private val onCategorize: (TransactionEntity) -> Unit = {},
-    private val currencySymbol: () -> String = { "₹" }
+    private val currencySymbol: () -> String = { "₹" },
+    /** Name of the account a row was paid from / into, if any. */
+    private val accountName: (Long?) -> String? = { null }
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var rows: List<LedgerRow> = emptyList()
@@ -53,7 +55,8 @@ class TransactionAdapter(
                 onClick,
                 onLongClick,
                 onCategorize,
-                currencySymbol
+                currencySymbol,
+                accountName
             )
         }
     }
@@ -86,16 +89,19 @@ class TransactionAdapter(
         val onClick: (TransactionEntity) -> Unit,
         val onLongClick: (TransactionEntity) -> Unit,
         val onCategorize: (TransactionEntity) -> Unit,
-        val currencySymbol: () -> String
+        val currencySymbol: () -> String,
+        val accountName: (Long?) -> String? = { null }
     ) : RecyclerView.ViewHolder(itemView) {
         fun bind(item: TransactionEntity) {
             itemView.findViewById<TextView>(R.id.tvCategory).text = item.category
             val memoView = itemView.findViewById<TextView>(R.id.tvMemo)
-            if (item.memo.isBlank()) {
+            val sub = listOfNotNull(item.memo.takeIf { it.isNotBlank() }, accountName(item.accountId))
+                .joinToString(" · ")
+            if (sub.isBlank()) {
                 memoView.visibility = View.GONE
             } else {
                 memoView.visibility = View.VISIBLE
-                memoView.text = item.memo
+                memoView.text = sub
             }
             val badge = itemView.findViewById<TextView>(R.id.tvReviewBadge)
             badge.visibility = if (item.needsCategoryReview) View.VISIBLE else View.GONE
