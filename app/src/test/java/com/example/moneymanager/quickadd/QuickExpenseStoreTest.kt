@@ -53,4 +53,22 @@ class QuickExpenseStoreTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun refusesNonPositiveAmounts(): Unit = runBlocking { QuickExpenseStore(ctx, db).save(0.0, "Food", "") }
+
+    @Test
+    fun saveOnAnAccountMovesItsBalance_andUndoRestoresIt() = runBlocking {
+        val accounts = db.accountDao()
+        val bank = accounts.insert(com.example.moneymanager.data.AccountEntity(name = "B-${System.nanoTime()}", type = "BANK", balance = 1000.0))
+        val card = accounts.insert(com.example.moneymanager.data.AccountEntity(name = "C-${System.nanoTime()}", type = "CREDIT_CARD", balance = 0.0))
+        val store = QuickExpenseStore(ctx, db)
+        val id = store.save(50.0, "Transportation", "", bank)
+        assertEquals(bank, db.transactionDao().getById(id)!!.accountId)
+        assertEquals(950.0, accounts.getById(bank)!!.balance, 0.0)
+        assertEquals(bank, com.example.moneymanager.utils.LastAccountPrefs(ctx).lastAccountId)
+        val onCard = store.save(200.0, "Food", "", card)
+        assertEquals(200.0, accounts.getById(card)!!.balance, 0.0) // owed
+        assertTrue(store.undo(onCard))
+        assertTrue(store.undo(id))
+        assertEquals(1000.0, accounts.getById(bank)!!.balance, 0.0)
+        assertEquals(0.0, accounts.getById(card)!!.balance, 0.0)
+    }
 }

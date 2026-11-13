@@ -152,4 +152,24 @@ class QuickExpenseActivityTest {
         assertNotNull(resolved)
         assertEquals(QuickExpenseActivity::class.java.name, resolved!!.activityInfo.name)
     }
+
+    @Test
+    fun accountChipsPreselectTheLastUsed_andTheExpenseLandsOnIt() {
+        val accounts = AppDatabase.getDatabase(ctx).accountDao()
+        val name = "Wallet-" + (1..6).map { ('a'..'z').random() }.joinToString("")
+        val id = runBlocking { accounts.insert(com.example.moneymanager.data.AccountEntity(name = name, type = "WALLET", balance = 300.0)) }
+        com.example.moneymanager.utils.LastAccountPrefs(ctx).lastAccountId = id
+        val a = open().get()
+        waitFor { a.findViewById<ChipGroup>(R.id.qe_accounts).childCount > 1 && a.findViewById<ChipGroup>(R.id.qe_categories).childCount > 0 }
+        assertEquals(View.VISIBLE, a.findViewById<View>(R.id.qe_accounts_scroll).visibility)
+        val g = a.findViewById<ChipGroup>(R.id.qe_accounts)
+        val checked = (0 until g.childCount).map { g.getChildAt(it) as Chip }.single { it.isChecked }
+        assertEquals(name, checked.text.toString())
+        a.findViewById<TextInputEditText>(R.id.qe_amount).setText("120")
+        a.findViewById<TextInputEditText>(R.id.qe_note).setText(note)
+        a.findViewById<Button>(R.id.qe_save).performClick()
+        waitFor { rowsWithNote().size == 1 }
+        assertEquals(id, rowsWithNote().single().accountId)
+        waitFor { runBlocking { accounts.getById(id)!!.balance } == 180.0 }
+    }
 }

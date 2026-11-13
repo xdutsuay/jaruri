@@ -14,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.moneymanager.MainActivity
 import com.example.moneymanager.R
+import com.example.moneymanager.data.AccountEntity
+import com.example.moneymanager.utils.AccountChoices
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.snackbar.BaseTransientBottomBar
@@ -37,12 +39,18 @@ class QuickExpenseActivity : AppCompatActivity() {
     private lateinit var chips: ChipGroup
     private lateinit var save: Button
     private var selected: String? = null
+    private var accountId: Long? = null
+    private var accountChosen = false
     private val money = DecimalFormat("#,##0.##")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_quick_expense)
         selected = savedInstanceState?.getString(STATE_CATEGORY)
+        if (savedInstanceState?.containsKey(STATE_ACCOUNT) == true) {
+            accountChosen = true
+            accountId = savedInstanceState.getLong(STATE_ACCOUNT).takeIf { it > 0 }
+        }
 
         amountLayout = findViewById(R.id.qe_amount_layout)
         amount = findViewById(R.id.qe_amount)
@@ -67,12 +75,14 @@ class QuickExpenseActivity : AppCompatActivity() {
 
         vm.currencySymbol.observe(this) { amountLayout.prefixText = it }
         vm.categories.observe(this) { names -> showCategories(names) }
+        vm.accounts.observe(this) { list -> showAccounts(list) }
         amount.requestFocus()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putString(STATE_CATEGORY, selected)
+        if (accountChosen) outState.putLong(STATE_ACCOUNT, accountId ?: -1L)
     }
 
     private fun showCategories(names: List<String>) {
@@ -104,8 +114,34 @@ class QuickExpenseActivity : AppCompatActivity() {
         }
     }
 
+    private fun showAccounts(list: List<AccountEntity>) {
+        val group = findViewById<ChipGroup>(R.id.qe_accounts)
+        findViewById<View>(R.id.qe_accounts_scroll).visibility = if (list.isEmpty()) View.GONE else View.VISIBLE
+        if (!accountChosen) { accountId = vm.initialAccount(list); accountChosen = true }
+        if (list.none { it.id == accountId }) accountId = null
+        group.setOnCheckedStateChangeListener(null)
+        group.removeAllViews()
+        var checkId = View.NO_ID
+        (listOf<AccountEntity?>(null) + list).forEach { a ->
+            val chip = Chip(this).apply {
+                id = View.generateViewId()
+                text = a?.let { AccountChoices.label(it) } ?: getString(R.string.account_none)
+                isCheckable = true
+                tag = a?.id ?: -1L
+            }
+            group.addView(chip)
+            if ((a?.id) == accountId) checkId = chip.id
+        }
+        if (checkId != View.NO_ID) group.check(checkId)
+        group.setOnCheckedStateChangeListener { g, ids ->
+            val id = ids.firstOrNull()
+            val tag = (0 until g.childCount).map { g.getChildAt(it) }.firstOrNull { it.id == id }?.tag as? Long
+            accountId = tag?.takeIf { it > 0 }
+        }
+    }
+
     private fun submit() {
-        vm.save(amount.text?.toString(), selected, note.text?.toString()) { r ->
+        vm.save(amount.text?.toString(), selected, note.text?.toString(), accountId) { r ->
             when (r) {
                 is QuickExpenseViewModel.Result.Invalid -> {
                     amountLayout.error = getString(
@@ -156,6 +192,7 @@ class QuickExpenseActivity : AppCompatActivity() {
         const val ACTION = "com.kaustubhtripathi.jaruri.action.QUICK_EXPENSE"
         const val SHORTCUT_ID = "quick_expense"
         private const val STATE_CATEGORY = "category"
+        private const val STATE_ACCOUNT = "account"
         internal const val UNDO_MS = 4_000
 
         fun intent(ctx: Context): Intent = Intent(ctx, QuickExpenseActivity::class.java)

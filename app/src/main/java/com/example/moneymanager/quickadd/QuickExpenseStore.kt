@@ -6,6 +6,7 @@ import com.example.moneymanager.data.CategoryRepository
 import com.example.moneymanager.data.TransactionEntity
 import com.example.moneymanager.utils.CategoryLearning
 import com.example.moneymanager.utils.InstrumentLedger
+import com.example.moneymanager.utils.LastAccountPrefs
 
 /**
  * Saves quick expenses into the normal `transactions` table, the same way the in-app
@@ -26,8 +27,10 @@ class QuickExpenseStore(
         get() = prefs.getString(KEY_LAST_CATEGORY, null)
         private set(v) { prefs.edit().putString(KEY_LAST_CATEGORY, v).apply() }
 
-    /** Inserts an EXPENSE dated now and returns its row id. */
-    suspend fun save(amount: Double, category: String, note: String): Long {
+    private val lastAccount = LastAccountPrefs(app)
+
+    /** Inserts an EXPENSE dated now (on [accountId], if any) and returns its row id. */
+    suspend fun save(amount: Double, category: String, note: String, accountId: Long? = null): Long {
         require(amount > 0) { "amount must be positive" }
         val entity = TransactionEntity(
             type = TYPE,
@@ -35,12 +38,14 @@ class QuickExpenseStore(
             amount = amount,
             dateTimestamp = clock(),
             memo = note,
+            accountId = accountId,
             needsCategoryReview = false
         )
         val id = dao.insertTransaction(entity)
         InstrumentLedger.applyEntityDelta(accountDao, entity)
         CategoryLearning.remember(learnDao, CategoryRepository(app), note, null, category, TYPE, clock())
         lastCategory = category
+        lastAccount.lastAccountId = accountId
         return id
     }
 
