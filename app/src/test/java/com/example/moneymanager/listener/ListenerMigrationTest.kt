@@ -56,7 +56,12 @@ class ListenerMigrationTest {
         db.close()
     }
 
+    private fun dropV14Additions(sql: SupportSQLiteDatabase) {
+        for (t in listOf("tunnel_app_rules", "tunnel_domain_rules", "tunnel_lists")) sql.execSQL("DROP TABLE IF EXISTS $t")
+    }
+
     private fun dropV13Additions(sql: SupportSQLiteDatabase) {
+        dropV14Additions(sql)
         for (t in listOf("BEFORE_UPDATE", "BEFORE_DELETE", "AFTER_UPDATE", "AFTER_INSERT")) {
             sql.execSQL("DROP TRIGGER IF EXISTS room_fts_content_sync_transcript_fts_$t")
         }
@@ -94,10 +99,10 @@ class ListenerMigrationTest {
     fun migrate12To13_addsTranscriptTables_keepsSessions_andFtsWorks() = runBlocking {
         createV12WithExistingSession()
         val db = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(AppDatabase.MIGRATION_12_13)
+            .addMigrations(AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14)
             .allowMainThreadQueries()
             .build()
-        assertEquals(13, db.openHelper.writableDatabase.version)
+        assertEquals(14, db.openHelper.writableDatabase.version)
 
         val old = db.listenerSessionDao().getAll().first().single()
         assertEquals("Old meeting", old.title)
@@ -124,11 +129,11 @@ class ListenerMigrationTest {
         createV11WithExistingData()
 
         val db = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13)
+            .addMigrations(AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14)
             .allowMainThreadQueries()
             .build()
         val sql = db.openHelper.writableDatabase // triggers migrate + validation
-        assertEquals(13, sql.version)
+        assertEquals(14, sql.version)
 
         val entries = db.timeEntryDao().getAll().first()
         assertEquals(1, entries.size)
@@ -156,7 +161,7 @@ class ListenerMigrationTest {
             }
         }
         val db = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(broken, AppDatabase.MIGRATION_12_13)
+            .addMigrations(broken, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14)
             .allowMainThreadQueries()
             .build()
         var failed = false

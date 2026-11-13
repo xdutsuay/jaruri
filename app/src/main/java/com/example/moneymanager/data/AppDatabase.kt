@@ -11,6 +11,10 @@ import com.example.moneymanager.listener.ListenerSessionEntity
 import com.example.moneymanager.listener.transcribe.TranscriptDao
 import com.example.moneymanager.listener.transcribe.TranscriptFtsEntity
 import com.example.moneymanager.listener.transcribe.TranscriptSegmentEntity
+import com.example.moneymanager.tunnel.data.TunnelAppRuleEntity
+import com.example.moneymanager.tunnel.data.TunnelDomainRuleEntity
+import com.example.moneymanager.tunnel.data.TunnelListEntity
+import com.example.moneymanager.tunnel.data.TunnelRuleDao
 import com.example.moneymanager.wellbeing.UsageDailyDao
 import com.example.moneymanager.wellbeing.UsageDailyEntity
 
@@ -30,9 +34,12 @@ import com.example.moneymanager.wellbeing.UsageDailyEntity
         QuickAddTemplateEntity::class,
         ListenerSessionEntity::class,
         TranscriptSegmentEntity::class,
-        TranscriptFtsEntity::class
+        TranscriptFtsEntity::class,
+        TunnelAppRuleEntity::class,
+        TunnelDomainRuleEntity::class,
+        TunnelListEntity::class
     ],
-    version = 13,
+    version = 14,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -49,6 +56,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun quickAddTemplateDao(): QuickAddTemplateDao
     abstract fun listenerSessionDao(): ListenerSessionDao
     abstract fun transcriptDao(): TranscriptDao
+    abstract fun tunnelRuleDao(): TunnelRuleDao
 
     companion object {
         @Volatile private var instance: AppDatabase? = null
@@ -282,6 +290,28 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** Tunnel v1: per-app and domain rules + imported list registry. Additive. */
+        internal val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `tunnel_app_rules` (`packageName` TEXT NOT NULL, " +
+                        "`mode` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`packageName`))"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `tunnel_domain_rules` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`pattern` TEXT NOT NULL, `action` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_tunnel_domain_rules_pattern` ON `tunnel_domain_rules` (`pattern`)"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `tunnel_lists` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`name` TEXT NOT NULL, `fileName` TEXT NOT NULL, `entryCount` INTEGER NOT NULL, " +
+                        "`enabled` INTEGER NOT NULL, `importedAt` INTEGER NOT NULL)"
+                )
+            }
+        }
+
         private val TRANSCRIPT_FTS_TRIGGERS = listOf(
             "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_transcript_fts_BEFORE_UPDATE BEFORE UPDATE ON `transcript_segments` BEGIN DELETE FROM `transcript_fts` WHERE `docid`=OLD.`rowid`; END",
             "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_transcript_fts_BEFORE_DELETE BEFORE DELETE ON `transcript_segments` BEGIN DELETE FROM `transcript_fts` WHERE `docid`=OLD.`rowid`; END",
@@ -326,7 +356,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_9_10,
                         MIGRATION_10_11,
                         MIGRATION_11_12,
-                        MIGRATION_12_13
+                        MIGRATION_12_13,
+                        MIGRATION_13_14
                     )
                     .fallbackToDestructiveMigration()
                     .build().also { instance = it }

@@ -7,10 +7,19 @@
         <include domain="file" path="." />
         <!-- Listener audio never leaves the phone. -->
         <exclude domain="file" path="listener/" />
+        <!-- Tunnel DNS log (a browsing history) never leaves the phone. -->
+        <include domain="database" path="." />
+        <exclude domain="database" path="tunnel_log.db" />
+        <exclude domain="database" path="tunnel_log.db-wal" />
+        <exclude domain="database" path="tunnel_log.db-shm" />
     </cloud-backup>
     <device-transfer>
         <include domain="root" />
         <include domain="file" path="." />
         <exclude domain="file" path="listener/" />
+        <include domain="database" path="." />
+        <exclude domain="database" path="tunnel_log.db" />
+        <exclude domain="database" path="tunnel_log.db-wal" />
+        <exclude domain="database" path="tunnel_log.db-shm" />
     </device-transfer>
 </data-extraction-rules>

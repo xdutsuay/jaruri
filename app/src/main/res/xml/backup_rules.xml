@@ -4,4 +4,8 @@
          already excluded on Android 11 and below. Keep it that way. -->
     <include domain="sharedpref" path="."/>
     <include domain="database" path="."/>
+    <!-- Tunnel DNS log is a browsing history: never backed up. -->
+    <exclude domain="database" path="tunnel_log.db"/>
+    <exclude domain="database" path="tunnel_log.db-wal"/>
+    <exclude domain="database" path="tunnel_log.db-shm"/>
 </full-backup-content>
