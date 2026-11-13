@@ -5,6 +5,8 @@
     <!-- Needed to forward allowed DNS lookups to the current network's resolvers.
          Nothing else in the app opens sockets (enforced by NoNetworkOutsideTunnelTest). -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Find the current non-VPN network and its DNS servers (normal permission, no prompt). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- App list for per-app rules: launcher apps only (no QUERY_ALL_PACKAGES). -->
     <queries>

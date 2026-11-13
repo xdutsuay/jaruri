@@ -1,6 +1,7 @@
 package com.example.moneymanager.listener
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Service
 import android.content.ComponentName
 import android.content.Context
@@ -71,6 +72,9 @@ class ListenerService : Service() {
         return START_NOT_STICKY
     }
 
+    // The merged manifest declares foregroundServiceType="microphone"; lint misreads it in the
+    // tunnel variant (flavor manifest present), so this is a variant-specific false positive.
+    @SuppressLint("ForegroundServiceType")
     private fun startSession(requestedTitle: String?) {
         if (ListenerState.isBusy || stopping) return
         ListenerState.reportError(null)

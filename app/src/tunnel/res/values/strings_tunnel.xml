@@ -55,8 +55,6 @@
     <string name="tunnel_rules_header">Your rules</string>
     <string name="tunnel_lists_header">Imported lists</string>
     <string name="tunnel_rules_empty">No rules yet. Long-press a log entry to block or allow it.</string>
-    <string name="tunnel_rule_item_block">Block · %1$s</string>
-    <string name="tunnel_rule_item_allow">Allow · %1$s</string>
     <string name="tunnel_list_item">%1$s · %2$d domains</string>
     <string name="tunnel_delete_q">Delete \"%1$s\"?</string>
     <string name="tunnel_imported">Imported %1$d domains</string>
