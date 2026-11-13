@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 data class AccountEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    /** CASH, BANK, CREDIT_CARD */
+    /** CASH, BANK, CREDIT_CARD, WALLET (UPI wallet / prepaid; behaves like cash). */
     val type: String,
     /** For CREDIT_CARD: current outstanding / owed. For others: running ledger balance. */
     val balance: Double = 0.0,
@@ -37,5 +37,7 @@ data class AccountEntity(
         const val TYPE_CASH = "CASH"
         const val TYPE_BANK = "BANK"
         const val TYPE_CREDIT_CARD = "CREDIT_CARD"
+        const val TYPE_WALLET = "WALLET"
+        val USER_TYPES = listOf(TYPE_BANK, TYPE_CREDIT_CARD, TYPE_CASH, TYPE_WALLET)
     }
 }

@@ -52,15 +52,16 @@ object TransactionAccounting {
     }
 
     /**
-     * Liquid runway: cash + bank balances minus credit-card outstanding.
+     * Liquid runway: cash + bank + wallet balances minus credit-card outstanding. An overpaid
+     * card (negative outstanding) counts as a credit.
      */
     fun netLiquid(accounts: List<AccountEntity>): Double {
         var cashBank = 0.0
         var ccOutstanding = 0.0
         for (a in accounts) {
             when (a.type) {
-                AccountEntity.TYPE_CREDIT_CARD -> ccOutstanding += a.balance.coerceAtLeast(0.0)
-                AccountEntity.TYPE_CASH, AccountEntity.TYPE_BANK -> cashBank += a.balance
+                AccountEntity.TYPE_CREDIT_CARD -> ccOutstanding += a.balance
+                AccountEntity.TYPE_CASH, AccountEntity.TYPE_BANK, AccountEntity.TYPE_WALLET -> cashBank += a.balance
             }
         }
         return cashBank - ccOutstanding
@@ -68,7 +69,7 @@ object TransactionAccounting {
 
     fun cashAndBankTotal(accounts: List<AccountEntity>): Double =
         accounts.filter {
-            it.type == AccountEntity.TYPE_CASH || it.type == AccountEntity.TYPE_BANK
+            it.type == AccountEntity.TYPE_CASH || it.type == AccountEntity.TYPE_BANK || it.type == AccountEntity.TYPE_WALLET
         }.sumOf { it.balance }
 
     fun creditCardOutstanding(accounts: List<AccountEntity>): Double =

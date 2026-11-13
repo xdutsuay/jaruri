@@ -27,7 +27,21 @@ object InstrumentLedger {
         if (ac.length == 4 && ac.all { it.isDigit() }) {
             return resolveBank(accountDao, ac, parsed.bankHint)
         }
-        return null
+        return matchByBankName(accountDao.getAllList(), parsed.bankHint)
+    }
+
+    /**
+     * No card/account digits in the SMS: use the bank name only when exactly one account
+     * matches it (name or learned hint). Never guess between two, never create one.
+     */
+    fun matchByBankName(accounts: List<AccountEntity>, bankHint: String?): Long? {
+        val hint = bankHint?.trim()?.lowercase().orEmpty()
+        if (hint.length < 3) return null
+        val hits = accounts.filter {
+            it.bankHint.trim().lowercase() == hint ||
+                Regex("""\b${Regex.escape(hint)}\b""").containsMatchIn(it.name.lowercase())
+        }
+        return hits.singleOrNull()?.id
     }
 
     /** @deprecated Prefer [resolveOrCreate]; kept for call-site compatibility. */
@@ -188,11 +202,8 @@ object InstrumentLedger {
         val acc = accountDao.getById(accountId) ?: return
         val delta = txnBalanceDelta(acc.isCreditCard, type, category, amount, reverse)
         if (delta == 0.0) return
-        val next = if (acc.isCreditCard) {
-            (acc.balance + delta).coerceAtLeast(0.0)
-        } else {
-            acc.balance + delta
-        }
+        // No clamp: an overpaid card goes below zero (a credit), and undo must be exact.
+        val next = acc.balance + delta
         accountDao.update(acc.copy(balance = next))
     }
 
@@ -228,11 +239,8 @@ object InstrumentLedger {
         val acc = accountDao.getById(accountId) ?: return
         val delta = transferSideDelta(acc.isCreditCard, isFrom, amount, reverse)
         if (delta == 0.0) return
-        val next = if (acc.isCreditCard) {
-            (acc.balance + delta).coerceAtLeast(0.0)
-        } else {
-            acc.balance + delta
-        }
+        // No clamp: an overpaid card goes below zero (a credit), and undo must be exact.
+        val next = acc.balance + delta
         accountDao.update(acc.copy(balance = next))
     }
 
