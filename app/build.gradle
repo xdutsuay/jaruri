@@ -18,6 +18,22 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Two distributions of the same app (same applicationId, so one replaces the other):
+    //  - offline (default, F-Droid/main line): no INTERNET permission, no tunnel code.
+    //  - tunnel: adds the local DNS-filter VPN ("Tunnel"), which needs INTERNET to
+    //    forward allowed DNS lookups. Its manifest and code live in src/tunnel/.
+    flavorDimensions = ["distribution"]
+    productFlavors {
+        offline {
+            dimension "distribution"
+            isDefault = true
+        }
+        tunnel {
+            dimension "distribution"
+            versionNameSuffix "-tunnel"
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
@@ -34,6 +50,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
     dependenciesInfo {
         includeInApk = false
@@ -116,4 +133,12 @@ dependencies {
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+
+// Keep the familiar commands working across both flavors:
+// `./gradlew :app:testDebugUnitTest` runs the unit tests of every flavor.
+tasks.register("testDebugUnitTest") {
+    group = "verification"
+    description = "Runs debug unit tests for all distribution flavors."
+    dependsOn "testOfflineDebugUnitTest", "testTunnelDebugUnitTest"
 }
