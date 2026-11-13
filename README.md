@@ -24,7 +24,8 @@ Local Android money and time tracker (Kotlin). Tracks income/expenses and manual
 - SMS import: inbox, paste, sample SMS, editable preview
 - **Time**: manual time entries with category, duration, date, and monthly totals
 - **Listener** (unreleased, on `feature/listener`): manual meeting recorder: start it, and it records until you stop it (4 h safety stop). Microphone foreground service with a Stop notification, Quick Settings tile, 15-min local audio chunks, sessions list. Audio stays on the phone and is excluded from backups. v2 adds offline transcription (Vosk, with a model you import), transcript search that jumps to the moment, Markdown/text export, and keyword highlights (not AI). See [docs/listener.md](docs/listener.md)
-- **No Google account, Play Services, or network permission** on `main`
+- **Tunnel** (unreleased, on `feature/listener`, `tunnel` flavor only): local DNS-filter VPN with per-app Bypass / best-effort Block, a domain blocklist (StevenBlack bundled), and a 7-day lookup log. See [docs/tunnel.md](docs/tunnel.md)
+- **No Google account, Play Services, or network permission** on `main` and in the default `offline` flavor
 
 ## Branches
 
@@ -36,8 +37,15 @@ Local Android money and time tracker (Kotlin). Tracks income/expenses and manual
 
 ## Run
 
+Two build flavors (see [docs/tunnel.md](docs/tunnel.md)):
+
+- `offline` (default): no INTERNET permission, no Tunnel. This is the one to ship and the one F-Droid builds.
+- `tunnel`: adds the Tunnel feature and the INTERNET permission it needs to forward allowed DNS lookups.
+
 ```bash
-./gradlew :app:installDebug
+./gradlew :app:installOfflineDebug     # everyday build
+./gradlew :app:installTunnelDebug      # with Tunnel
+./gradlew :app:testDebugUnitTest       # unit tests for both flavors
 ```
 
 ## F-Droid notes
@@ -46,6 +54,7 @@ Local Android money and time tracker (Kotlin). Tracks income/expenses and manual
 - Store listing text under `fastlane/metadata/android/`
 - Tag releases (`v1.6.2`) before submitting to [fdroiddata](https://gitlab.com/fdroid/fdroiddata)
 - Repo must be **public** for F-Droid builders to clone
+- Since flavors were added, build entries must use `gradle: [offline]` (not `yes`); the `tunnel` flavor is not for F-Droid (INTERNET + a bundled list with non-free sources)
 
 ## Test SMS without bank messages
 
