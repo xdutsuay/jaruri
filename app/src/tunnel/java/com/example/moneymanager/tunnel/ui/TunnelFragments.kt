@@ -31,6 +31,7 @@ import com.example.moneymanager.tunnel.TunnelVpnService
 import com.example.moneymanager.tunnel.data.TunnelAppRuleEntity
 import com.example.moneymanager.tunnel.data.TunnelDomainRuleEntity
 import com.example.moneymanager.tunnel.data.TunnelListEntity
+import com.example.moneymanager.tunnel.BundledList
 import com.example.moneymanager.tunnel.dns.BlockMode
 import com.example.moneymanager.tunnel.log.DnsLogEntity
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -75,7 +76,14 @@ class TunnelStatusFragment : Fragment(R.layout.fragment_tunnel_status) {
         }
 
         toggle.setOnClickListener {
-            if (TunnelState.isOn) TunnelVpnService.stop(requireContext()) else (requireActivity() as TunnelActivity).requestStart()
+            if (!TunnelState.isOn) { (requireActivity() as TunnelActivity).requestStart(); return@setOnClickListener }
+            val q = vm.stopWarning()
+            if (q == null) TunnelVpnService.stop(requireContext())
+            else AlertDialog.Builder(requireContext())
+                .setMessage(q)
+                .setPositiveButton(R.string.tunnel_turn_off_anyway) { _, _ -> TunnelVpnService.stop(requireContext()) }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
         }
         vm.status.observe(viewLifecycleOwner) { render() }
         vm.prefsChanged.observe(viewLifecycleOwner) { render() }
@@ -185,6 +193,43 @@ class TunnelRulesFragment : Fragment(R.layout.fragment_tunnel_rules) {
         }
     }
 
+    private fun listLabel(l: BundledList): String = getString(
+        when (l) {
+            BundledList.PERMISSIVE -> R.string.tunnel_list_permissive
+            BundledList.STEVENBLACK -> R.string.tunnel_list_stevenblack
+        }
+    )
+
+    private fun chooseBundledList() {
+        val choices = BundledList.choices
+        val current = choices.indexOf(vm.prefs.bundledChoice)
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.tunnel_list_choose)
+            .setSingleChoiceItems(choices.map { listLabel(it) }.toTypedArray(), current) { d, which ->
+                vm.chooseBundled(choices[which])
+                view?.findViewById<SwitchMaterial>(R.id.sw_tunnel_bundled)?.isChecked = true
+                d.dismiss()
+            }
+            .setNeutralButton(R.string.tunnel_licences) { _, _ -> showLicences() }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showLicences() {
+        val pad = (16 * resources.displayMetrics.density).toInt()
+        val text = TextView(requireContext()).apply {
+            text = vm.licences()
+            textSize = 12f
+            setTextIsSelectable(true)
+            setPadding(pad, pad, pad, pad)
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.tunnel_licences)
+            .setView(android.widget.ScrollView(requireContext()).apply { addView(text) })
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val bundledTitle = view.findViewById<TextView>(R.id.tv_tunnel_bundled_title)
         val bundledSw = view.findViewById<SwitchMaterial>(R.id.sw_tunnel_bundled)
@@ -193,13 +238,16 @@ class TunnelRulesFragment : Fragment(R.layout.fragment_tunnel_rules) {
         bundledSw.setOnCheckedChangeListener { _, on -> vm.setBundled(on) }
         zero.isChecked = vm.prefs.blockMode == BlockMode.ZERO_IP
         zero.setOnCheckedChangeListener { _, on -> vm.setZeroIp(on) }
-        view.findViewById<View>(R.id.row_tunnel_bundled).setOnClickListener {
-            AlertDialog.Builder(requireContext()).setMessage(vm.bundledNotice()).setPositiveButton(android.R.string.ok, null).show()
-        }
+        view.findViewById<View>(R.id.row_tunnel_bundled).setOnClickListener { chooseBundledList() }
         vm.bundledCount.observe(viewLifecycleOwner) { n ->
-            bundledTitle.text = getString(R.string.tunnel_bundled_title, n?.let { NumberFormat.getIntegerInstance().format(it) } ?: "…")
+            val list = vm.prefs.bundledChoice
+            bundledTitle.text = getString(
+                R.string.tunnel_bundled_title_named, listLabel(list),
+                n?.let { NumberFormat.getIntegerInstance().format(it) } ?: "…"
+            )
         }
         if (vm.bundledCount.value == null) vm.loadBundledCount()
+        view.findViewById<Button>(R.id.btn_tunnel_licences).setOnClickListener { showLicences() }
 
         view.findViewById<Button>(R.id.btn_tunnel_add_rule).setOnClickListener { addRuleDialog(this, vm, "") }
         view.findViewById<Button>(R.id.btn_tunnel_import).setOnClickListener {

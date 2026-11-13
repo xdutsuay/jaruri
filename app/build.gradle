@@ -4,6 +4,10 @@ plugins {
     id 'com.google.devtools.ksp' // Using KSP for Room
 }
 
+// Bundle StevenBlack's unified list (personal use) in the tunnel flavor? Default yes.
+// The permissive list is always bundled. See docs/tunnel.md "Licences".
+def tunnelUnifiedList = (project.findProperty("jaruri.tunnel.unifiedList") ?: "true").toString().toBoolean()
+
 android {
     namespace 'com.example.moneymanager'
     compileSdk 34
@@ -31,6 +35,16 @@ android {
         tunnel {
             dimension "distribution"
             versionNameSuffix "-tunnel"
+            // StevenBlack's unified list includes non-commercial / share-alike sources.
+            // Publishable builds: ./gradlew -Pjaruri.tunnel.unifiedList=false ...
+            buildConfigField "boolean", "TUNNEL_UNIFIED_LIST", tunnelUnifiedList.toString()
+        }
+    }
+
+    sourceSets {
+        // Only the tunnel flavor, and only when the unified list is wanted.
+        if (tunnelUnifiedList) {
+            tunnel.assets.srcDirs += "src/tunnelUnified/assets"
         }
     }
 

@@ -23,6 +23,9 @@
     <string name="tunnel_scope_note">DNS only. Jaruri sees which domain names are looked up, not URLs, page contents or how much data moves. Nothing is decrypted, and everything stays on this phone.</string>
     <string name="tunnel_warn_private_dns">Private DNS is set to \"%1$s\". In that mode Android may send lookups straight to that provider, which bypasses Tunnel. Set Private DNS to Automatic or Off to filter.</string>
     <string name="tunnel_warn_other_vpn">Another VPN is active. Turning Tunnel on will disconnect it (Android allows one VPN at a time).</string>
+    <string name="tunnel_stop_alwayson_q">Tunnel is your always-on VPN. Android may start it again on its own after you turn it off. Turn off anyway?</string>
+    <string name="tunnel_stop_lockdown_q">Tunnel is your always-on VPN with \"Block connections without VPN\". Turning it off cuts every app off the internet until you turn it back on or change that in Settings › Network › VPN. Turn off anyway?</string>
+    <string name="tunnel_turn_off_anyway">Turn off</string>
     <string name="tunnel_warn_lockdown">Always-on with \"Block connections without VPN\" is set for Tunnel: if you turn it off, apps lose internet until it is back on.</string>
     <string name="tunnel_warn_old_android">On Android 9 and below, Android doesn\'t say which app made a lookup, so per-app Block can\'t work (Bypass still does).</string>
     <string name="tunnel_vpn_denied">VPN permission not granted.</string>
@@ -43,8 +46,12 @@
     <string name="tunnel_app_lookups">%1$d lookups (7 days)</string>
     <string name="tunnel_apps_loading">Loading apps…</string>
 
-    <string name="tunnel_bundled_title">StevenBlack default list (%1$s domains)</string>
-    <string name="tunnel_bundled_body">Ads and malware hosts, bundled with the app (snapshot 8 Nov 2026). Tap for licence and sources.</string>
+    <string name="tunnel_bundled_title_named">Default list: %1$s (%2$s domains)</string>
+    <string name="tunnel_bundled_body">Ads and malware hosts bundled with the app (snapshot 8 Nov 2026). Tap to choose a list.</string>
+    <string name="tunnel_list_permissive">Permissive (MIT / CC0 / CC BY sources only)</string>
+    <string name="tunnel_list_stevenblack">StevenBlack unified (bigger; some sources are non-commercial: personal use)</string>
+    <string name="tunnel_list_choose">Bundled list</string>
+    <string name="tunnel_licences">Licences and sources</string>
     <string name="tunnel_zero_ip">Answer blocked names with 0.0.0.0 instead of \"not found\"</string>
     <string name="tunnel_add_rule">Add rule</string>
     <string name="tunnel_import_list">Import list</string>

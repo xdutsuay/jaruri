@@ -60,7 +60,7 @@ class DomainRulesTest {
     /** The real bundled asset parses to the advertised size, off the main thread budget. */
     @Test
     fun bundledStevenBlackListParses() {
-        val f = File("src/tunnel/assets/blocklists/stevenblack-hosts.gzip")
+        val f = File("src/tunnelUnified/assets/blocklists/stevenblack-hosts.gzip")
         assertTrue("asset present at ${f.absolutePath}", f.exists())
         val t0 = System.nanoTime()
         val domains = GZIPInputStream(f.inputStream()).bufferedReader().let { HostsParser.parse(it) }
@@ -69,6 +69,24 @@ class DomainRulesTest {
         assertFalse(domains.contains("localhost"))
         assertFalse(domains.contains("0.0.0.0"))
         assertTrue("parse took ${ms} ms", ms < 10_000)
+    }
+
+    /** The permissive list: exact size, provenance header, and a subset of the unified list it was cut from. */
+    @Test
+    fun bundledPermissiveListParses_andIsASubsetOfUnified() {
+        val f = File("src/tunnel/assets/blocklists/permissive-hosts.gzip")
+        val text = GZIPInputStream(f.inputStream()).bufferedReader().readText()
+        assertTrue(text.contains("6866cc66859a4ba99d945f076a09bca74a496d4c"))
+        assertTrue(text.contains("Excluded on purpose: MVPS"))
+        val permissive = HostsParser.parse(text.reader().buffered())
+        assertEquals(18_902, permissive.size)
+        val unified = GZIPInputStream(File("src/tunnelUnified/assets/blocklists/stevenblack-hosts.gzip").inputStream())
+            .bufferedReader().let { HostsParser.parse(it) }
+        val outside = permissive.count { it !in unified }
+        // StevenBlack applies a whitelist when unifying, so a few may differ; the bulk must overlap.
+        assertTrue("$outside of ${permissive.size} not in unified", outside < permissive.size / 20)
+        val notice = File("src/tunnel/assets/blocklists/PERMISSIVE-NOTICE.txt").readText()
+        for (src in listOf("AdAway", "CC BY 3.0", "Tiuxo", "CC BY 4.0", "MIT License")) assertTrue(src, notice.contains(src))
     }
 
     @Test

@@ -94,6 +94,16 @@ class TunnelAndroidTest {
         prefs.bundledListEnabled = false
         assertEquals(1, b.snapshot(prefs) { null }.policy.lists.size)
         prefs.bundledListEnabled = true
+
+        // Default build bundles both; StevenBlack is the default, Permissive is selectable.
+        assertEquals(BundledList.STEVENBLACK, prefs.bundledChoice)
+        assertEquals(listOf(BundledList.PERMISSIVE, BundledList.STEVENBLACK), BundledList.choices)
+        prefs.bundledChoice = BundledList.PERMISSIVE
+        assertEquals(18_902, b.bundled(BundledList.PERMISSIVE).size)
+        val snapP = b.snapshot(prefs) { null }
+        assertEquals("Permissive", snapP.policy.lists.first().name)
+        assertTrue(b.notice(BundledList.PERMISSIVE).contains("CC BY 3.0"))
+        prefs.bundledChoice = BundledList.STEVENBLACK
         dao.lists().forEach { b.delete(it) }
         assertTrue(dao.lists().isEmpty())
     }
@@ -144,5 +154,15 @@ class TunnelAndroidTest {
         TunnelVpnService.stop(ctx)
         controller.destroy()
         assertTrue(!TunnelState.isOn)
+    }
+
+    @Test
+    fun stopAsks_onlyWhenTunnelIsTheAlwaysOnVpn() {
+        val vm = com.example.moneymanager.tunnel.ui.TunnelViewModel(ctx as android.app.Application)
+        assertEquals(null, vm.stopWarningFor(alwaysOn = false, lockdown = false))
+        assertEquals(ctx.getString(R.string.tunnel_stop_alwayson_q), vm.stopWarningFor(alwaysOn = true, lockdown = false))
+        assertEquals(ctx.getString(R.string.tunnel_stop_lockdown_q), vm.stopWarningFor(alwaysOn = true, lockdown = true))
+        // Nothing running: no question, Stop just stops.
+        assertEquals(null, vm.stopWarning())
     }
 }

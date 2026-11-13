@@ -17,6 +17,19 @@ class TunnelPrefs(context: Context) {
         get() = p.getBoolean(KEY_BUNDLED, true)
         set(v) = edit { putBoolean(KEY_BUNDLED, v) }
 
+    /**
+     * Which bundled list to use. Defaults to the unified StevenBlack list when this
+     * build has it, else the permissive one; a saved choice the build lacks falls back too.
+     */
+    var bundledChoice: BundledList
+        get() = p.getString(KEY_BUNDLED_CHOICE, null)
+            ?.let { n -> BundledList.entries.firstOrNull { it.name == n } }
+            ?.takeIf { it.available } ?: BundledList.default
+        set(v) = edit { putString(KEY_BUNDLED_CHOICE, v.name) }
+
+    /** The list the filter uses, or null when the bundled list is switched off. */
+    val bundledList: BundledList? get() = if (bundledListEnabled) bundledChoice else null
+
     var blockMode: BlockMode
         get() = if (p.getString(KEY_MODE, null) == BlockMode.ZERO_IP.name) BlockMode.ZERO_IP else BlockMode.NXDOMAIN
         set(v) = edit { putString(KEY_MODE, v.name) }
@@ -36,6 +49,7 @@ class TunnelPrefs(context: Context) {
     companion object {
         private const val KEY_CONSENT = "consent"
         private const val KEY_BUNDLED = "bundled_list"
+        private const val KEY_BUNDLED_CHOICE = "bundled_list_choice"
         private const val KEY_MODE = "block_mode"
         private const val KEY_PAUSED = "paused_until"
         private val tick = MutableStateFlow(0L)

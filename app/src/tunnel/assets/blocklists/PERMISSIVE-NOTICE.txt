@@ -1,0 +1,49 @@
+Bundled list: Jaruri permissive blocklist (ads + malware hosts)
+18,902 unique domains, stored gzip-compressed.
+
+Built from the permissively licensed sources that StevenBlack/hosts unifies,
+taken from https://github.com/StevenBlack/hosts at commit
+6866cc66859a4ba99d945f076a09bca74a496d4c (8 November 2026), merged and
+de-duplicated without other changes. Licences as declared in each source's
+update.json in that repository:
+
+- Steven Black's ad-hoc list (StevenBlack/hosts): MIT
+- AdAway (adaway.org, AdAway/adaway.github.io): CC BY 3.0
+  https://creativecommons.org/licenses/by/3.0/
+- add.2o7Net, add.Dead, add.Risk, add.Spam (FadeMind/hosts.extras, based on hostsfile.org): MIT
+- UncheckyAds (FadeMind/hosts.extras): MIT
+- Badd Boyz Hosts (Mitchell Krog, mitchellkrogza/Badd-Boyz-Hosts): MIT
+- hostsVN (bigdargon/hostsVN): MIT
+- minecraft-hosts (jamiemansfield/minecraft-hosts): CC0-1.0
+- Tiuxo hostlist, ads (tiuxo/hosts): CC BY 4.0
+  https://creativecommons.org/licenses/by/4.0/
+
+Left out on purpose (not permissive): MVPS hosts (CC BY-NC-SA 4.0),
+Dan Pollock / someonewhocares.org (non-commercial), KADhosts (CC BY-SA 4.0),
+yoyo.org / Peter Lowe (no licence stated). This is why the list is smaller
+than StevenBlack's unified list.
+
+Changes made by Jaruri: entries were merged, lower-cased, de-duplicated, and
+localhost-style entries were dropped. CC BY works are used under their
+licences; no endorsement by their authors is implied.
+
+MIT License (applies to the MIT-licensed sources above; copyright remains
+with each source's authors as named above)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

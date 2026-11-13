@@ -20,12 +20,15 @@ class Blocklists(private val context: Context) {
     private val dir = File(context.filesDir, "tunnel/lists")
     private val dao = AppDatabase.getDatabase(context).tunnelRuleDao()
 
-    /** Must not be called on the main thread (about 0.2-1 s on a phone). */
-    fun bundled(): DomainSet = synchronized(Companion) {
-        bundledCache ?: context.assets.open(BUNDLED_ASSET).use { raw ->
+    /** Must not be called on the main thread (about 0.2-1 s on a phone). Cached per list. */
+    fun bundled(list: BundledList = BundledList.default): DomainSet = synchronized(Companion) {
+        bundledCache[list] ?: context.assets.open(list.asset).use { raw ->
             DomainSet(HostsParser.parse(GZIPInputStream(raw).bufferedReader()))
-        }.also { bundledCache = it }
+        }.also { bundledCache[list] = it }
     }
+
+    fun notice(list: BundledList): String =
+        context.assets.open(list.notice).bufferedReader().use { it.readText() }
 
     /** Imports a hosts/plain list; returns the entry count. Throws IOException on empty/unreadable input. */
     suspend fun import(input: InputStream, name: String): Int {
@@ -58,7 +61,7 @@ class Blocklists(private val context: Context) {
         val allow = DomainSet.ofPatterns(rules.filter { it.action == TunnelDomainRuleEntity.ACTION_ALLOW }.map { it.pattern })
         val block = DomainSet.ofPatterns(rules.filter { it.action == TunnelDomainRuleEntity.ACTION_BLOCK }.map { it.pattern })
         val lists = ArrayList<NamedList>()
-        if (prefs.bundledListEnabled) lists += NamedList(BUNDLED_NAME, bundled())
+        prefs.bundledList?.let { lists += NamedList(it.displayName, bundled(it)) }
         for (l in dao.lists().filter { it.enabled }) {
             val f = File(dir, l.fileName)
             if (!f.exists()) continue
@@ -68,11 +71,7 @@ class Blocklists(private val context: Context) {
     }
 
     companion object {
-        // Not ".gz": AGP inflates .gz assets at merge time and drops the extension.
-        const val BUNDLED_ASSET = "blocklists/stevenblack-hosts.gzip"
-        const val BUNDLED_NOTICE = "blocklists/STEVENBLACK-NOTICE.txt"
-        const val BUNDLED_NAME = "StevenBlack"
         private const val MAX_IMPORT = 1_000_000
-        @Volatile private var bundledCache: DomainSet? = null
+        private val bundledCache = HashMap<BundledList, DomainSet>()
     }
 }

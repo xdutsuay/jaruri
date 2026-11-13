@@ -17,6 +17,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.moneymanager.R
 import com.example.moneymanager.data.AppDatabase
 import com.example.moneymanager.tunnel.Blocklists
+import com.example.moneymanager.tunnel.BundledList
 import com.example.moneymanager.tunnel.DomainSet
 import com.example.moneymanager.tunnel.TunnelPrefs
 import com.example.moneymanager.tunnel.TunnelState
@@ -96,12 +97,21 @@ class TunnelViewModel(application: Application) : AndroidViewModel(application) 
     val bundledCount = MutableLiveData<Int?>(null)
 
     fun loadBundledCount() = viewModelScope.launch {
-        bundledCount.value = withContext(Dispatchers.Default) { blocklists.bundled().size }
+        val list = prefs.bundledChoice
+        bundledCount.value = null
+        bundledCount.value = withContext(Dispatchers.Default) { blocklists.bundled(list).size }
     }
 
-    fun bundledNotice(): String = app.assets.open(Blocklists.BUNDLED_NOTICE).bufferedReader().use { it.readText() }
+    /** Every bundled list's sources and licences (the in-app licence screen). */
+    fun licences(): String = BundledList.choices.joinToString("\n\n────────\n\n") { blocklists.notice(it) }
 
     fun setBundled(on: Boolean) { prefs.bundledListEnabled = on }
+
+    fun chooseBundled(list: BundledList) {
+        prefs.bundledChoice = list
+        prefs.bundledListEnabled = true
+        loadBundledCount()
+    }
     fun setZeroIp(on: Boolean) { prefs.blockMode = if (on) BlockMode.ZERO_IP else BlockMode.NXDOMAIN }
 
     /** Returns false if [raw] isn't a usable pattern. */
@@ -175,5 +185,21 @@ class TunnelViewModel(application: Application) : AndroidViewModel(application) 
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) out += app.getString(R.string.tunnel_warn_old_android)
         return out
+    }
+
+    /**
+     * A confirmation to show before Stop when Android treats Tunnel as the always-on VPN
+     * (API 29+ exposes this on the running service), or null when stopping is harmless.
+     */
+    fun stopWarning(): String? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
+        val svc = TunnelVpnService.instance ?: return null
+        return stopWarningFor(svc.isAlwaysOn, svc.isLockdownEnabled)
+    }
+
+    internal fun stopWarningFor(alwaysOn: Boolean, lockdown: Boolean): String? = when {
+        lockdown -> app.getString(R.string.tunnel_stop_lockdown_q)
+        alwaysOn -> app.getString(R.string.tunnel_stop_alwayson_q)
+        else -> null
     }
 }
