@@ -96,6 +96,16 @@ android {
     testOptions {
         unitTests {
             includeAndroidResources = true
+            all {
+                // Real SQLite on every host; the legacy shim breaks Room's IO threads on Windows.
+                systemProperty 'robolectric.sqliteMode', 'NATIVE'
+                // A stuck test should fail the build, not hang it.
+                timeout = java.time.Duration.ofMinutes(15)
+                // The app keeps process-wide singletons (Room, DataStore, main dispatcher);
+                // a fresh JVM per test class stops one class's state leaking into the next.
+                forkEvery = 1
+                maxParallelForks = Math.max(1, (int) (Runtime.runtime.availableProcessors() / 2))
+            }
         }
     }
 }
@@ -128,7 +138,7 @@ dependencies {
     implementation "com.github.PhilJay:MPAndroidChart:v3.1.0"
     
     // DataStore
-    implementation "androidx.datastore:datastore-preferences:1.0.0"
+    implementation "androidx.datastore:datastore-preferences:1.1.1"
 
     // Listener: offline speech-to-text (Apache-2.0; native libs from Maven, model imported by the user)
     implementation "com.alphacephei:vosk-android:0.3.75"
@@ -139,7 +149,7 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:4.5.1'
     testImplementation 'androidx.test:core:1.5.0'
     testImplementation 'androidx.test.ext:junit:1.1.5'
-    testImplementation 'org.robolectric:robolectric:4.10.3'
+    testImplementation 'org.robolectric:robolectric:4.14.1'
     testImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     testImplementation "androidx.navigation:navigation-testing:$nav_version"
     testImplementation "androidx.work:work-testing:2.9.1"

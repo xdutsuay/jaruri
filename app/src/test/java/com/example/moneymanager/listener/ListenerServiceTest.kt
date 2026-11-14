@@ -13,6 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -68,13 +69,14 @@ class ListenerServiceTest {
     }
 
     /** Coroutines hop to Dispatchers.IO (real threads) and back to the paused main looper. */
-    private fun waitUntil(timeoutMs: Long = 5_000, cond: () -> Boolean) {
+    private fun waitUntil(timeoutMs: Long = 20_000, cond: () -> Boolean) {
         val deadline = System.currentTimeMillis() + timeoutMs
         while (!cond() && System.currentTimeMillis() < deadline) {
             shadowOf(Looper.getMainLooper()).idle()
             Thread.sleep(10)
         }
         shadowOf(Looper.getMainLooper()).idle()
+        if (!cond()) fail("Timed out after ${timeoutMs} ms; status=${ListenerState.status.value}")
     }
 
     private fun row(id: Long) = runBlocking {
@@ -109,11 +111,13 @@ class ListenerServiceTest {
         assertEquals(ListenerSessionEntity.STATE_RECORDING, r.state)
 
         sendStop(service)
-        waitUntil { row(rec.sessionId)?.state == ListenerSessionEntity.STATE_DONE }
-        assertTrue(!ListenerState.isBusy)
+        // stopSelf runs after the row is written, so wait for that too.
+        waitUntil {
+            !ListenerState.isBusy && shadowOf(service).isStoppedBySelf &&
+                row(rec.sessionId)?.state == ListenerSessionEntity.STATE_DONE
+        }
         assertTrue(shadowOf(service).isForegroundStopped)
         assertEquals("USER", row(rec.sessionId)!!.notes)
-        assertTrue(shadowOf(service).isStoppedBySelf)
     }
 
     @Test
@@ -160,8 +164,7 @@ class ListenerServiceTest {
         // The watchdog compares wall-clock time, so let real time pass, then tick the looper.
         Thread.sleep(20_500)
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(16))
-        waitUntil { row(id)?.state == ListenerSessionEntity.STATE_DONE }
-        assertTrue(!ListenerState.isBusy)
+        waitUntil { !ListenerState.isBusy && row(id)?.state == ListenerSessionEntity.STATE_DONE }
         assertEquals("MAX_DURATION", row(id)!!.notes)
     }
 
@@ -194,8 +197,7 @@ class ListenerServiceTest {
         assertEquals("Second", row(second)!!.title)
         assertTrue("still foreground for the new session", !shadowOf(service).isStoppedBySelf)
         sendStop(service)
-        waitUntil { row(second)?.state == ListenerSessionEntity.STATE_DONE }
-        assertTrue(shadowOf(service).isStoppedBySelf)
+        waitUntil { shadowOf(service).isStoppedBySelf && row(second)?.state == ListenerSessionEntity.STATE_DONE }
     }
 
     @Test
