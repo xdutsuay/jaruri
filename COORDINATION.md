@@ -46,7 +46,7 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Baton
 
-- Previous agent: Gangadhar (Grok Bot) Listener v3 + Tunnel v1.1 (branch `feature/listener`, pushed to origin)
+- Previous agent: Auto (Cursor) security gap fixes + merge of `main` (branch `feature/listener`, pushed to origin)
 - Baton state: HANDOFF
 - Next agent: Kaustubh review → realme run (evidence README: "Listener v3" and "Tunnel v1.1" checklists)
 - Next step: AppDatabase is now **v15** (`listener_markers`; `listener_sessions.userNotes`, `audioDeletedAt`; `transcript_segments.edited`). Tunnel lists: StevenBlack lives in `src/tunnelUnified` and is included only when `-Pjaruri.tunnel.unifiedList=true` (default); publishable builds pass `false` and ship the permissive list only. Do not add network code outside `src/tunnel`.
@@ -62,15 +62,36 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
   - FileProvider exposed all of external storage (`external-path path="."`); only Downloads is used (CSV export, API ≤ 28)
   - `.gitignore` had no rule for CSV exports / DB pulls, which is how a personal ledger reached the public repo
 - Action taken:
-  - Deep link: not BROWSABLE, no silent mode (toast + Home every time), amount must be finite and ≤ 1 crore, text capped at 120 chars, intent data cleared after use
+  - Deep link: not BROWSABLE, no `silent`; it only prefills AddTransactionFragment (`ARG_PREFILL_*`), nothing saved until Save; amount finite and ≤ 1 crore, text capped at 120 chars. `MainViewModel.addFromDeepLink` removed
   - FileProvider: external path narrowed to `Download/`
   - `.gitignore`: CSV, DB/SQLite, ADB backups, keystores, `_db_compare/`, `.temp/`
+  - Merged `main` (SMS backfill paging, parser fixes, screen-time 1y/All + no pruning). The branch had predated these, which is why the phone lost the 1y/All screen-time ranges after the listener install
 - Validation:
   - `testOfflineDebugUnitTest`: 235 run, 41 failed both with and without this change (Windows Robolectric SQLite/DataStore + ListenerState cast; pre-existing on this machine)
   - `assembleOfflineDebug` + `compileTunnelDebugKotlin` ok; installed as in-place update on SM-M346B, DB kept, filter shows no BROWSABLE
-- Not done (needs a decision):
-  - Cloud backup / device transfer still include the ledger DB and prefs (Google Drive)
-  - Other installed apps can still add a visible row via `jaruri://add`; a confirm step would close that
+- Decided by Kaustubh: cloud backup / device transfer keep including the ledger DB and prefs
+
+### 2026-11-14 - Auto (Cursor) fresh-device install + deep SMS backfill fix
+
+- Bug: Deep SMS history scan stopped after ~1000 financial SMS (fetched newest window, then filtered by cursor)
+- Fix: SmsInboxReader.readFinancialSms(beforeMillis) pages via `date < cursor` query
+- Validation: on a fresh device, repeated scans walked back to inbox start (last run imported 0)
+
+### 2026-10-26 - Auto (Cursor) phone expense audit + wellbeing forever history
+
+- Scope:
+  - Pull live phone DB; October money/SMS issue report
+  - Stop pruning usage_daily (keep multi-year history); expand range UI
+  - Reject IDFC "To block your card…" as payee; reject statement/mandate/IPO/premium/NPS false incomes
+- Observations:
+  - Many IDFC CC rows had "CCBLOCK" footer as payee; several statement/mandate/IPO/NPS notices parsed as income
+  - usage_daily was pruned at 90 days
+- Action taken:
+  - UsageRepository: never prune; refresh 14 OS days; 7d/30d/1y/All UI + monthly bars
+  - SmsParser: at-merchant before to-; reject CCBLOCK footers; non-ledger for statement/mandate/IPO/premium/NPS
+  - Unit tests SmsParserTest + UsageAggregatorTest (JDK 17) exit 0
+- Validation:
+  - `testDebugUnitTest` focused suites exit 0
 
 ### 2026-11-13 - Gangadhar (Grok Bot) Quick expense sheet
 

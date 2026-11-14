@@ -231,6 +231,77 @@ You have received Rs 200 from ALICE via UPI.
         assertNull(SmsParser.parse(sms, fixedNow))
     }
 
+    @Test
+    fun idfcCreditCardFooterIsNotPayee() {
+        val sms =
+            "Happy Shopping! INR 44.00 spent on your IDFC FIRST Bank Credit Card ending XX1234 at BIGBASKET on 01-10-26. Avbl Limit: INR 1,00,000.00. To block your card SMS CCBLOCK 1234 to 56767. - IDFC FIRST Bank"
+        val p = SmsParser.parse(sms, fixedNow)!!
+        assertEquals(44.0, p.amount!!, 0.001)
+        assertEquals(false, p.isIncome)
+        assertTrue(p.description!!.uppercase().contains("BIGBASKET"))
+        assertFalse(p.description!!.contains("block", ignoreCase = true))
+        assertFalse(p.description!!.contains("CCBLOCK", ignoreCase = true))
+    }
+
+    @Test
+    fun idfcCreditCardWithoutMerchantSkipsBlockFooter() {
+        val sms =
+            "Transaction Successful! INR 399.00 spent on your IDFC FIRST Bank Credit Card ending XX1234 on 01-10-26. Avbl Limit: INR 90,000.00. To block your card SMS CCBLOCK 1234 to 56767."
+        val p = SmsParser.parse(sms, fixedNow)!!
+        assertEquals(399.0, p.amount!!, 0.001)
+        assertFalse(p.description!!.contains("block", ignoreCase = true))
+        assertFalse(p.description!!.contains("CCBLOCK", ignoreCase = true))
+    }
+
+    @Test
+    fun statementMailAndMandateRequestAreRejected() {
+        assertTrue(
+            SmsParser.isNonLedgerNotice(
+                "E-statement of SBI Credit Card ending XX99 dated 08/10/2026 has been mailed. Total Amt Due Rs 179; Min Amt Due Rs 179."
+            )
+        )
+        assertNull(
+            SmsParser.parse(
+                "E-statement of SBI Credit Card ending XX99 dated 08/10/2026 has been mailed. Total Amt Due Rs 179; Min Amt Due Rs 179.",
+                fixedNow
+            )
+        )
+        assertTrue(
+            SmsParser.isNonLedgerNotice(
+                "Dear Customer, You have received a UPI-Mandate collect request from Jio Platforms Limited for Rs.13428.00. Login into Google Pay application to authorize."
+            )
+        )
+        assertNull(
+            SmsParser.parse(
+                "Dear Customer, You have received a UPI-Mandate collect request from Jio Platforms Limited for Rs.13428.00. Login into Google Pay application to authorize.",
+                fixedNow
+            )
+        )
+    }
+
+    @Test
+    fun premiumAckAndNpsUnitsAreRejected() {
+        assertTrue(
+            SmsParser.isNonLedgerNotice(
+                "Dear Mr. Customer, we have received the premium of Rs. 1,279.23 for your Axis Max Life policy 100000001."
+            )
+        )
+        assertTrue(
+            SmsParser.isNonLedgerNotice(
+                "PRAN XX0000: Units for (SEP-2026) contribution of Rs.13938.00 credited with NAV of 09/10/26 -Protean"
+            )
+        )
+    }
+
+    @Test
+    fun ipoApplicationAckIsRejected() {
+        assertTrue(
+            SmsParser.isNonLedgerNotice(
+                "Dear ABCXXXXX1Z IPO Jio Platforms Limited : App no APP0000000001 UPI ID user@okbank for Rs 13428.00 received."
+            )
+        )
+    }
+
     private fun calendarMillis(year: Int, month: Int, day: Int): Long {
         val cal = Calendar.getInstance()
         cal.clear()

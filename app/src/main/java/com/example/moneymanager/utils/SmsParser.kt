@@ -211,6 +211,45 @@ object SmsParser {
         )
         if (mandatePhrases.any { t.contains(it) }) return true
 
+        // UPI Autopay / mandate collect *requests* (not yet executed).
+        if (t.contains("mandate collect") ||
+            t.contains("upi-mandate") ||
+            t.contains("upi mandate") ||
+            (t.contains("collect request") && t.contains("mandate"))
+        ) {
+            return true
+        }
+
+        // Card e-statement / due notices that mention an amount but are not ledger events.
+        if (t.contains("e-statement") ||
+            t.contains("e statement") ||
+            (t.contains("has been mailed") && (t.contains("statement") || t.contains("card"))) ||
+            (t.contains("total amt due") || t.contains("total amount due") || t.contains("min amt due"))
+        ) {
+            return true
+        }
+
+        // Insurance premium *acknowledgement* (money already left elsewhere / not a credit).
+        if (t.contains("received the premium") ||
+            (t.contains("premium of") && t.contains("policy") && t.contains("received"))
+        ) {
+            return true
+        }
+
+        // IPO application acknowledgement (not a bank credit).
+        if (t.contains("ipo") &&
+            (t.contains("app no") || t.contains("application") || t.contains("allotment"))
+        ) {
+            return true
+        }
+
+        // NPS / mutual-fund unit allotment confirmations (not a bank credit to spend).
+        if ((t.contains("units for") && t.contains("contribution") && t.contains("nav")) ||
+            (t.contains("pran") && t.contains("credited with nav"))
+        ) {
+            return true
+        }
+
         // Future-tense debit/credit notices without a completed txn marker.
         val futureDebit = Regex(
             """\bwill\s+be\s+(debited|credited|charged)\b""",
@@ -477,17 +516,8 @@ object SmsParser {
     }
 
     private fun extractDescription(text: String, mode: String): String {
-        val toMatch = Pattern.compile(
-            """\b(?:to|towards|paid to|sent to)\s+([A-Za-z0-9 &._@-]{2,40})""",
-            Pattern.CASE_INSENSITIVE
-        ).matcher(text)
-        if (toMatch.find()) {
-            val candidate = cleanMerchant(toMatch.group(1)!!)
-            if (isUsefulMerchant(candidate)) {
-                return candidate
-            }
-        }
-
+        // Prefer "at MERCHANT" before generic "to …" — IDFC CC footers say
+        // "To block your card SMS CCBLOCK …" which otherwise wins as payee.
         val atMatcher = Pattern.compile(
             """(?i)(?:\s|^)(?:at)\s+([A-Za-z][A-Za-z0-9 &._-]{1,48}?)(?=\s+on\s+\d|\s+at\s+\d|,|\.|$)"""
         ).matcher(text)
@@ -511,6 +541,17 @@ object SmsParser {
         if (idfcMerchant.find()) {
             val candidate = cleanMerchant(idfcMerchant.group(1)!!)
             if (isUsefulMerchant(candidate) && !looksLikeAccountRef(candidate)) {
+                return candidate
+            }
+        }
+
+        val toMatch = Pattern.compile(
+            """\b(?:to|towards|paid to|sent to)\s+([A-Za-z0-9 &._@-]{2,40})""",
+            Pattern.CASE_INSENSITIVE
+        ).matcher(text)
+        while (toMatch.find()) {
+            val candidate = cleanMerchant(toMatch.group(1)!!)
+            if (isUsefulMerchant(candidate)) {
                 return candidate
             }
         }
@@ -548,6 +589,14 @@ object SmsParser {
         if (c == "your" || c.startsWith("hdfc") || c.startsWith("credit")) return false
         if (c == "rs" || c == "rs." || c == "inr" || c.startsWith("rs.") || c.startsWith("₹")) return false
         if (c.all { it.isDigit() || it == '.' || it == ',' }) return false
+        // Card security footers / support CTAs mistaken as payees.
+        if (c.startsWith("block") || c.contains("ccblock") ||
+            c.contains("block your card") || c.startsWith("sms ") ||
+            c.contains(" authorize") || c == "authorize" ||
+            c.startsWith("view the") || c.startsWith("your registered")
+        ) {
+            return false
+        }
         return true
     }
 

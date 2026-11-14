@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.moneymanager.R
 import com.example.moneymanager.viewmodel.TimeViewModel
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -30,6 +31,8 @@ class UsageWellbeingFragment : Fragment(R.layout.fragment_usage_wellbeing) {
     private lateinit var adapter: AppAdapter
     private val dayLabelFmt = SimpleDateFormat("EEE", Locale.getDefault())
     private val dayKeyFmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    private val monthLabelFmt = SimpleDateFormat("MMM", Locale.getDefault())
+    private val monthParseFmt = SimpleDateFormat("yyyy-MM", Locale.US)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -41,10 +44,14 @@ class UsageWellbeingFragment : Fragment(R.layout.fragment_usage_wellbeing) {
         val tvWeek = view.findViewById<TextView>(R.id.tv_usage_week)
         val tvAvg = view.findViewById<TextView>(R.id.tv_usage_avg)
         val tvStatus = view.findViewById<TextView>(R.id.tv_usage_status)
+        val tvRangeLabel = view.findViewById<TextView>(R.id.tv_usage_range_label)
+        val tvHistorySpan = view.findViewById<TextView>(R.id.tv_usage_history_span)
+        val tvBarsTitle = view.findViewById<TextView>(R.id.tv_usage_bars_title)
         val weekBars = view.findViewById<LinearLayout>(R.id.usage_week_bars)
         val categoryList = view.findViewById<LinearLayout>(R.id.usage_category_list)
         val categoriesEmpty = view.findViewById<TextView>(R.id.tv_usage_categories_empty)
         val rv = view.findViewById<RecyclerView>(R.id.rv_usage_apps)
+        val rangeToggle = view.findViewById<MaterialButtonToggleGroup>(R.id.usage_range_toggle)
 
         adapter = AppAdapter(
             labelOf = { pkg -> appLabel(pkg) },
@@ -52,6 +59,18 @@ class UsageWellbeingFragment : Fragment(R.layout.fragment_usage_wellbeing) {
         )
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = adapter
+
+        rangeToggle.check(R.id.btn_usage_range_week)
+        rangeToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            val range = when (checkedId) {
+                R.id.btn_usage_range_month -> UsageWellbeingViewModel.HistoryRange.MONTH
+                R.id.btn_usage_range_year -> UsageWellbeingViewModel.HistoryRange.YEAR
+                R.id.btn_usage_range_all -> UsageWellbeingViewModel.HistoryRange.ALL
+                else -> UsageWellbeingViewModel.HistoryRange.WEEK
+            }
+            viewModel.setHistoryRange(range)
+        }
 
         view.findViewById<MaterialButton>(R.id.btn_usage_grant).setOnClickListener {
             startActivity(UsagePermission.usageAccessSettingsIntent())
@@ -74,9 +93,30 @@ class UsageWellbeingFragment : Fragment(R.layout.fragment_usage_wellbeing) {
         viewModel.todaySummary.observe(viewLifecycleOwner) { summary ->
             if (!summary.enabled) return@observe
             tvToday.text = TimeViewModel.formatDuration(summary.todayMinutes)
-            tvWeek.text = TimeViewModel.formatDuration(summary.weekMinutes)
+            tvWeek.text = TimeViewModel.formatDuration(summary.rangeMinutes)
             tvAvg.text = TimeViewModel.formatDuration(summary.avgDayMinutes)
-            bindWeekBars(weekBars, summary.dayTotals)
+            tvRangeLabel.setText(
+                when (summary.historyRange) {
+                    UsageWellbeingViewModel.HistoryRange.WEEK -> R.string.usage_week
+                    UsageWellbeingViewModel.HistoryRange.MONTH -> R.string.usage_range_month_label
+                    UsageWellbeingViewModel.HistoryRange.YEAR -> R.string.usage_range_year_label
+                    UsageWellbeingViewModel.HistoryRange.ALL -> R.string.usage_range_all_label
+                }
+            )
+            tvBarsTitle.setText(
+                when (summary.historyRange) {
+                    UsageWellbeingViewModel.HistoryRange.WEEK -> R.string.usage_week_bars
+                    UsageWellbeingViewModel.HistoryRange.MONTH -> R.string.usage_month_bars
+                    UsageWellbeingViewModel.HistoryRange.YEAR -> R.string.usage_year_bars
+                    UsageWellbeingViewModel.HistoryRange.ALL -> R.string.usage_all_bars
+                }
+            )
+            tvHistorySpan.text = if (!summary.earliestDay.isNullOrBlank()) {
+                getString(R.string.usage_history_span, summary.earliestDay)
+            } else {
+                getString(R.string.usage_history_span_empty)
+            }
+            bindHistoryBars(weekBars, summary.dayTotals, summary.historyRange, summary.barsAreMonths)
             bindCategories(categoryList, categoriesEmpty, summary.categories)
             val appMax = summary.topApps.maxOfOrNull { it.minutes }?.coerceAtLeast(1) ?: 1
             adapter.submit(summary.topApps, appMax)
@@ -115,21 +155,49 @@ class UsageWellbeingFragment : Fragment(R.layout.fragment_usage_wellbeing) {
         banner.visibility = if (granted) View.GONE else View.VISIBLE
     }
 
-    private fun bindWeekBars(container: LinearLayout, dayTotals: List<Pair<String, Int>>) {
+    private fun bindHistoryBars(
+        container: LinearLayout,
+        dayTotals: List<Pair<String, Int>>,
+        range: UsageWellbeingViewModel.HistoryRange,
+        barsAreMonths: Boolean
+    ) {
         container.removeAllViews()
-        val byDay = dayTotals.toMap()
-        val days = (6 downTo 0).map { offset ->
-            Calendar.getInstance().apply { add(Calendar.DAY_OF_MONTH, -offset) }
-        }
-        val max = days.maxOfOrNull { byDay[dayKeyFmt.format(it.time)] ?: 0 }?.coerceAtLeast(1) ?: 1
         val density = resources.displayMetrics.density
         val accent = ContextCompat.getColor(requireContext(), R.color.accent_blue)
         val muted = ContextCompat.getColor(requireContext(), R.color.outline_soft)
         val ink = ContextCompat.getColor(requireContext(), R.color.text_secondary)
 
-        for (cal in days) {
-            val key = dayKeyFmt.format(cal.time)
-            val mins = byDay[key] ?: 0
+        val series: List<Pair<String, Int>> = when {
+            barsAreMonths -> dayTotals
+            range == UsageWellbeingViewModel.HistoryRange.MONTH -> {
+                val byDay = dayTotals.toMap()
+                (29 downTo 0).map { offset ->
+                    val key = dayKeyFmt.format(
+                        Calendar.getInstance().apply { add(Calendar.DAY_OF_MONTH, -offset) }.time
+                    )
+                    key to (byDay[key] ?: 0)
+                }
+            }
+            else -> {
+                val byDay = dayTotals.toMap()
+                (6 downTo 0).map { offset ->
+                    val key = dayKeyFmt.format(
+                        Calendar.getInstance().apply { add(Calendar.DAY_OF_MONTH, -offset) }.time
+                    )
+                    key to (byDay[key] ?: 0)
+                }
+            }
+        }
+
+        if (series.isEmpty()) return
+        val max = series.maxOf { it.second }.coerceAtLeast(1)
+        val barWidthDp = when {
+            barsAreMonths -> 14f
+            range == UsageWellbeingViewModel.HistoryRange.MONTH -> 6f
+            else -> 10f
+        }
+
+        for ((key, mins) in series) {
             val col = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
@@ -139,12 +207,37 @@ class UsageWellbeingFragment : Fragment(R.layout.fragment_usage_wellbeing) {
                 if (mins > 0) (4 * density).toInt() else (2 * density).toInt()
             )
             val bar = View(requireContext()).apply {
-                layoutParams = LinearLayout.LayoutParams((10 * density).toInt(), barHeight)
+                layoutParams = LinearLayout.LayoutParams((barWidthDp * density).toInt(), barHeight)
                 setBackgroundColor(if (mins > 0) accent else muted)
             }
             val label = TextView(requireContext()).apply {
-                text = dayLabelFmt.format(cal.time).take(1)
-                textSize = 11f
+                text = when {
+                    barsAreMonths -> {
+                        try {
+                            monthLabelFmt.format(monthParseFmt.parse(key)!!).take(1)
+                        } catch (_: Exception) {
+                            key.takeLast(2)
+                        }
+                    }
+                    range == UsageWellbeingViewModel.HistoryRange.MONTH -> {
+                        try {
+                            dayKeyFmt.parse(key)?.let {
+                                Calendar.getInstance().apply { time = it }.get(Calendar.DAY_OF_MONTH)
+                                    .toString()
+                            } ?: ""
+                        } catch (_: Exception) {
+                            ""
+                        }
+                    }
+                    else -> {
+                        try {
+                            dayLabelFmt.format(dayKeyFmt.parse(key)!!).take(1)
+                        } catch (_: Exception) {
+                            ""
+                        }
+                    }
+                }
+                textSize = if (range == UsageWellbeingViewModel.HistoryRange.MONTH) 8f else 11f
                 setTextColor(ink)
                 gravity = Gravity.CENTER
                 layoutParams = LinearLayout.LayoutParams(

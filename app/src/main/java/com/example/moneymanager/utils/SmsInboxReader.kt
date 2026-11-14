@@ -24,12 +24,18 @@ object SmsInboxReader {
      *
      * Scans at most [maxScan] newest inbox rows so large inboxes (thousands of
      * SMS) still return a useful list quickly.
+     *
+     * When [beforeMillis] > 0, only messages strictly older than it are considered,
+     * so callers can page backwards through the whole inbox.
      */
     fun readFinancialSms(
         context: Context,
         limit: Int = 200,
-        maxScan: Int = 1500
+        maxScan: Int = 1500,
+        beforeMillis: Long = 0L
     ): List<InboxSms> {
+        val selection = if (beforeMillis > 0L) "date < ?" else null
+        val selectionArgs = if (beforeMillis > 0L) arrayOf(beforeMillis.toString()) else null
         val uri: Uri = try {
             Telephony.Sms.Inbox.CONTENT_URI
         } catch (_: Throwable) {
@@ -45,8 +51,8 @@ object SmsInboxReader {
             cursor = context.contentResolver.query(
                 uri,
                 projection,
-                null,
-                null,
+                selection,
+                selectionArgs,
                 "date DESC LIMIT $maxScan"
             ) ?: return emptyList()
 
@@ -73,7 +79,9 @@ object SmsInboxReader {
             return emptyList()
         } catch (_: Exception) {
             // Some providers reject LIMIT in ORDER BY — retry without it.
-            return readFinancialSmsFallback(context, uri, projection, limit, maxScan)
+            return readFinancialSmsFallback(
+                context, uri, projection, limit, maxScan, selection, selectionArgs
+            )
         } finally {
             cursor?.close()
         }
@@ -85,7 +93,9 @@ object SmsInboxReader {
         uri: Uri,
         projection: Array<String>,
         limit: Int,
-        maxScan: Int
+        maxScan: Int,
+        selection: String?,
+        selectionArgs: Array<String>?
     ): List<InboxSms> {
         val results = mutableListOf<InboxSms>()
         var cursor: Cursor? = null
@@ -93,8 +103,8 @@ object SmsInboxReader {
             cursor = context.contentResolver.query(
                 uri,
                 projection,
-                null,
-                null,
+                selection,
+                selectionArgs,
                 "date DESC"
             ) ?: return emptyList()
 

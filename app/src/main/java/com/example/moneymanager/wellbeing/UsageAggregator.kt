@@ -68,4 +68,14 @@ object UsageAggregator {
             .map { (day, list) -> day to list.sumOf { it.minutes.coerceAtLeast(0) } }
             .sortedBy { it.first }
     }
+
+    /** Minutes per calendar month (`yyyy-MM`), oldest → newest. */
+    fun monthlyTotals(rows: List<UsageDailyEntity>): List<Pair<String, Int>> {
+        if (rows.isEmpty()) return emptyList()
+        return rows
+            .groupBy { it.day.take(7) }
+            .map { (month, list) -> month to list.sumOf { it.minutes.coerceAtLeast(0) } }
+            .filter { it.first.length == 7 }
+            .sortedBy { it.first }
+    }
 }

@@ -40,13 +40,13 @@ object SmsHistoryBackfill {
 
         onProgress(Progress(0, 0, 0, 0, false, "Scanning inbox…"))
 
-        // Prefer messages older than cursor when resuming; first run takes newest batch.
-        val all = SmsInboxReader.readFinancialSms(app, limit = limit * 2, maxScan = scanCap)
-        val toProcess = if (cursorDate > 0L) {
-            all.filter { it.dateMillis < cursorDate }.take(limit)
-        } else {
-            all.take(limit)
-        }.sortedByDescending { it.dateMillis }
+        // Resume strictly older than cursor; first run takes newest batch.
+        val toProcess = SmsInboxReader.readFinancialSms(
+            app,
+            limit = limit,
+            maxScan = scanCap,
+            beforeMillis = cursorDate
+        ).sortedByDescending { it.dateMillis }
 
         val db = AppDatabase.getDatabase(app)
         val dao = db.transactionDao()
