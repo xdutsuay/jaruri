@@ -4,5 +4,6 @@
     <files-path name="listener" path="listener/" />
     <!-- Listener v2: transcript exports handed to the share sheet. -->
     <cache-path name="exports" path="exports/" />
-    <external-path name="external_files" path="." />
+    <!-- CSV export on Android 9 and below writes to public Downloads only. -->
+    <external-path name="downloads" path="Download/" />
 </paths>

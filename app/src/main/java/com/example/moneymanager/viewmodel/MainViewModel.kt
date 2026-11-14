@@ -280,16 +280,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    /** Deep-link / Tasker silent add. */
+    /** Deep-link / Tasker add; the caller always shows the result to the user. */
     fun addFromDeepLink(
         amount: Double,
         category: String?,
         note: String?,
         type: String = "EXPENSE",
-        silent: Boolean = false,
         onDone: (Long) -> Unit = {}
     ) {
-        if (amount <= 0) {
+        if (!amount.isFinite() || amount <= 0) {
             onDone(-1L)
             return
         }
@@ -308,7 +307,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             InstrumentLedger.applyEntityDelta(accountDao, entity)
             rememberCategory(entity.memo, null, entity.category, entity.type)
             onDone(id)
-            android.util.Log.d("MainViewModel", "Deep link add id=$id silent=$silent")
+            android.util.Log.d("MainViewModel", "Deep link add id=$id")
         }
     }
 

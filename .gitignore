@@ -18,3 +18,19 @@ local.properties
 # Log files
 *.log
 *.apk
+
+# Personal data: ledger exports, DB pulls, phone dumps. This repo is public.
+*.csv
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*_db
+*_db-wal
+*_db-shm
+_db_compare/
+.temp/
+*.ab
+*.keystore
+*.jks

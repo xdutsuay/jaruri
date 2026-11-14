@@ -136,26 +136,25 @@ class MainActivity : AppCompatActivity() {
             // jaruri://add?... → host=add
             if (data.host != "add") return
         }
-        val amount = data.getQueryParameter("amount")?.toDoubleOrNull() ?: return
-        val category = data.getQueryParameter("category")
-        val note = data.getQueryParameter("note")
-        val silent = data.getQueryParameter("silent") == "1" ||
-            data.getQueryParameter("silent").equals("true", ignoreCase = true)
+        intent?.data = null // don't replay on recreation
+        val amount = data.getQueryParameter("amount")?.toDoubleOrNull()
+            ?.takeIf { it.isFinite() && it > 0 && it <= MAX_DEEP_LINK_AMOUNT } ?: return
+        val category = data.getQueryParameter("category")?.take(MAX_DEEP_LINK_TEXT)
+        val note = data.getQueryParameter("note")?.take(MAX_DEEP_LINK_TEXT)
         val type = data.getQueryParameter("type") ?: "EXPENSE"
 
+        // Any installed app can fire this link, so the save is never silent.
         val vm = ViewModelProvider(this)[MainViewModel::class.java]
-        vm.addFromDeepLink(amount, category, note, type, silent) { id ->
+        vm.addFromDeepLink(amount, category, note, type) { id ->
             if (id > 0) {
-                if (!silent) {
-                    Toast.makeText(
-                        this,
-                        getString(R.string.money_quick_add_done, amount),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    try {
-                        findNavController(R.id.nav_host_fragment).navigate(R.id.nav_home)
-                    } catch (_: Exception) {
-                    }
+                Toast.makeText(
+                    this,
+                    getString(R.string.money_quick_add_done, amount),
+                    Toast.LENGTH_SHORT
+                ).show()
+                try {
+                    findNavController(R.id.nav_host_fragment).navigate(R.id.nav_home)
+                } catch (_: Exception) {
                 }
             }
         }
@@ -208,5 +207,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val ACTION_QUICK_ADD = "com.example.moneymanager.action.QUICK_ADD"
+        private const val MAX_DEEP_LINK_AMOUNT = 1_00_00_000.0
+        private const val MAX_DEEP_LINK_TEXT = 120
     }
 }

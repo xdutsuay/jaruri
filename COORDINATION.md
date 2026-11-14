@@ -42,7 +42,7 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 - Status: RELEASED
 - Active agent: none
-- Released at: 2026-11-13 23:13 IST by Gangadhar (Grok Bot)
+- Released at: 2026-11-14 14:50 IST by Auto (Cursor) security gap fixes
 
 ## Baton
 
@@ -52,6 +52,25 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 - Next step: AppDatabase is now **v15** (`listener_markers`; `listener_sessions.userNotes`, `audioDeletedAt`; `transcript_segments.edited`). Tunnel lists: StevenBlack lives in `src/tunnelUnified` and is included only when `-Pjaruri.tunnel.unifiedList=true` (default); publishable builds pass `false` and ship the permissive list only. Do not add network code outside `src/tunnel`.
 
 ## Work Log
+
+### 2026-11-14 - Auto (Cursor) security gap fixes
+
+- Scope:
+  - App attack surface (manifest, deep link, FileProvider) and repo hygiene after the personal-CSV leak
+- Observations:
+  - `jaruri://add` was BROWSABLE and honoured `silent=1`: any web page or app could write hidden ledger rows
+  - FileProvider exposed all of external storage (`external-path path="."`); only Downloads is used (CSV export, API ≤ 28)
+  - `.gitignore` had no rule for CSV exports / DB pulls, which is how a personal ledger reached the public repo
+- Action taken:
+  - Deep link: not BROWSABLE, no silent mode (toast + Home every time), amount must be finite and ≤ 1 crore, text capped at 120 chars, intent data cleared after use
+  - FileProvider: external path narrowed to `Download/`
+  - `.gitignore`: CSV, DB/SQLite, ADB backups, keystores, `_db_compare/`, `.temp/`
+- Validation:
+  - `testOfflineDebugUnitTest`: 235 run, 41 failed both with and without this change (Windows Robolectric SQLite/DataStore + ListenerState cast; pre-existing on this machine)
+  - `assembleOfflineDebug` + `compileTunnelDebugKotlin` ok; installed as in-place update on SM-M346B, DB kept, filter shows no BROWSABLE
+- Not done (needs a decision):
+  - Cloud backup / device transfer still include the ledger DB and prefs (Google Drive)
+  - Other installed apps can still add a visible row via `jaruri://add`; a confirm step would close that
 
 ### 2026-11-13 - Gangadhar (Grok Bot) Quick expense sheet
 
