@@ -7,9 +7,10 @@ import java.io.InputStream
 import java.util.zip.ZipInputStream
 
 /**
- * Holds the one imported speech model under `filesDir/stt-model/current/`.
- * Models are Vosk `.zip` files the user downloads elsewhere and imports through
- * the system file picker; the app itself never downloads anything.
+ * Holds the one active speech model under `filesDir/stt-model/current/`.
+ * Models are Vosk `.zip` files: one bundled in the APK (see [BundledSttModels])
+ * or one the user imports through the system file picker. The app never
+ * downloads anything.
  *
  * Import is safe against zip-slip and oversized archives, validates the model
  * layout, and swaps it in only after it unpacked cleanly, so a failed import

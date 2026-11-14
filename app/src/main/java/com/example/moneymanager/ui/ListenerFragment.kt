@@ -34,6 +34,7 @@ import com.example.moneymanager.listener.ListenerService
 import com.example.moneymanager.listener.ListenerSessionEntity
 import com.example.moneymanager.listener.ListenerState
 import com.example.moneymanager.listener.ListenerStopReason
+import com.example.moneymanager.listener.transcribe.BundledSttModels
 import com.example.moneymanager.listener.transcribe.TranscriptExporter
 import com.example.moneymanager.listener.transcribe.TranscriptHit
 import com.example.moneymanager.viewmodel.ListenerViewModel
@@ -162,12 +163,34 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
         val modelText = view.findViewById<TextView>(R.id.tv_listener_model)
         val importBtn = view.findViewById<MaterialButton>(R.id.btn_listener_model_import)
         val removeBtn = view.findViewById<MaterialButton>(R.id.btn_listener_model_remove)
-        importBtn.setOnClickListener {
+        fun launchPicker() {
             try {
                 pickModel.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream"))
             } catch (_: ActivityNotFoundException) {
                 Toast.makeText(requireContext(), R.string.listener_stt_no_picker, Toast.LENGTH_SHORT).show()
             }
+        }
+        val bundled = viewModel.bundledModels
+        if (bundled.isNotEmpty()) importBtn.setText(R.string.listener_stt_language)
+        importBtn.setOnClickListener {
+            if (bundled.isEmpty()) return@setOnClickListener launchPicker()
+            val labels = bundled.map { getString(it.label) } + getString(R.string.listener_stt_import_other)
+            val current = bundled.indexOf(BundledSttModels.byName(viewModel.modelName.value))
+            AlertDialog.Builder(requireContext())
+                .setTitle(R.string.listener_stt_language)
+                .setSingleChoiceItems(labels.toTypedArray(), current) { dialog, which ->
+                    dialog.dismiss()
+                    if (which == bundled.size) return@setSingleChoiceItems launchPicker()
+                    if (which == current) return@setSingleChoiceItems
+                    viewModel.useBundled(bundled[which]) { result ->
+                        val ctx = context ?: return@useBundled
+                        result.exceptionOrNull()?.let {
+                            Toast.makeText(ctx, ctx.getString(R.string.listener_stt_import_failed, it.message ?: it.javaClass.simpleName), Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
         }
         removeBtn.setOnClickListener {
             AlertDialog.Builder(requireContext())
@@ -181,12 +204,16 @@ class ListenerFragment : Fragment(R.layout.fragment_listener) {
             val name = viewModel.modelName.value
             modelText.text = when {
                 busy -> getString(R.string.listener_stt_importing)
-                name != null -> getString(R.string.listener_stt_model_installed, name)
+                name != null -> getString(
+                    R.string.listener_stt_model_installed,
+                    BundledSttModels.byName(name)?.let { getString(it.label) } ?: name
+                )
                 else -> getString(R.string.listener_stt_model_none)
             }
             importBtn.isEnabled = !busy
             removeBtn.isEnabled = !busy
-            removeBtn.visibility = if (name != null) View.VISIBLE else View.GONE
+            // With bundled models the default would just be reinstalled; switch language instead.
+            removeBtn.visibility = if (name != null && bundled.isEmpty()) View.VISIBLE else View.GONE
         }
         viewModel.modelName.observe(viewLifecycleOwner) { renderModel() }
         viewModel.modelBusy.observe(viewLifecycleOwner) { renderModel() }

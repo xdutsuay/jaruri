@@ -15,6 +15,7 @@ import com.example.moneymanager.listener.transcribe.ChunkDurations
 import com.example.moneymanager.listener.transcribe.HeuristicSummarizer
 import com.example.moneymanager.listener.transcribe.SessionNotes
 import com.example.moneymanager.listener.transcribe.SessionSummarizer
+import com.example.moneymanager.listener.transcribe.BundledSttModels
 import com.example.moneymanager.listener.transcribe.SttModelStore
 import com.example.moneymanager.listener.transcribe.TranscriptExporter
 import com.example.moneymanager.listener.transcribe.TranscriptSegmentEntity
@@ -75,7 +76,7 @@ class ListenerSessionViewModel(application: Application) : AndroidViewModel(appl
         repo.deleteAudioKeepTranscript(sessionId, System.currentTimeMillis())
     }
 
-    val hasModel: Boolean get() = modelStore.isInstalled
+    val hasModel: Boolean get() = BundledSttModels.canTranscribe(getApplication(), modelStore)
 
     fun transcribe() = viewModelScope.launch { TranscriptionScheduler.enqueue(getApplication(), sessionId) }
     fun cancel() = viewModelScope.launch { TranscriptionScheduler.cancel(getApplication(), sessionId) }

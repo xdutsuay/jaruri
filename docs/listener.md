@@ -66,7 +66,9 @@ Vosk was picked because it was the least risky way to get working, timestamped, 
 
 **APK size:** the debug APK grows from 7.62 MB (v1) to **15.48 MB** (+7.86 MB). About 7.1 MB of that is `libvosk.so` for arm64-v8a and armeabi-v7a, stored compressed (`useLegacyPackaging = true`, about 19 MB once installed). The rest is dex for JNA and WorkManager, unminified in debug. x86/x86_64 Vosk and JNA's mips/armeabi/x86 libraries are left out, so **emulators report "transcription unavailable"**. Shipping an AAB or using ABI splits would make each install about 3.5 MB smaller.
 
-**The model is not in the APK.** The user downloads a Vosk model .zip themselves, for example `vosk-model-small-en-in-0.4` (Indian English, about 36 MB) or `vosk-model-small-hi-0.22` (Hindi), from alphacephei.com/vosk/models, then picks it with **Listener → Import model**. The app itself never downloads anything. Import unzips to `filesDir/stt-model/current` with these checks:
+**Two models ship in the APK** (Vosk small, Apache-2.0): `vosk-model-small-en-in-0.4` (Indian English, 37.6 MB zip) and `vosk-model-small-hi-0.22` (Hindi, 44.5 MB zip), stored uncompressed under `assets/stt/`. This makes the debug APK about 98.6 MB. The Gradle task `fetchSttModels` downloads them once from alphacephei.com into `<repo>/.cache/stt-models/` (gitignored) and fails the build unless each zip matches the SHA-256 pinned in `app/build.gradle`. Vosk publishes no checksums, so the pins are from the 2026-11-14 download. The app itself never downloads anything.
+
+The first time the Listener screen opens or a transcription runs, English (India) is unpacked automatically; nothing needs importing. **Listener → Language** switches to Hindi, which unpacks that model in place of the current one, so only one is ever extracted (about 54 MB for English, 78 MB for Hindi). The same menu still offers **Import another Vosk model (.zip)**. Builds made with `-Pjaruri.stt.bundleModels=false` (F-Droid, which can't download during a build) ship no models and show the old **Import model** button. Every install, bundled or imported, unzips to `filesDir/stt-model/current` with these checks:
 - zip-slip guard;
 - 3 GB size cap;
 - the model must contain `am/final.mdl` and `conf/mfcc.conf`;
@@ -143,7 +145,7 @@ Deferred, and why:
 - A real AI summary (see above).
 - Live transcription while recording.
 - Speaker labels.
-- Bundling or downloading a model.
+- Models for languages other than Indian English and Hindi (import one by hand).
 - Anything in the cloud.
 - Always-on or wake-word recording.
 - Capturing phone or VoIP call audio (Android doesn't allow third-party apps to do this).

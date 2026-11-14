@@ -47,16 +47,23 @@ class TranscriptionWorkerTest {
     }
 
     @Test
-    fun withoutModel_workerFailsCleanly_withAReason() = runBlocking {
+    fun withoutModel_workerInstallsBundledOne_thenFailsCleanlyOnJvm() = runBlocking {
         val s = finishedSession()
         val worker = TestListenableWorkerBuilder<TranscriptionWorker>(ctx)
             .setInputData(workDataOf(TranscriptionWorker.KEY_SESSION_ID to s.id))
             .build()
         val result = worker.doWork()
+        // No libvosk on the JVM, so the run fails either way, with a reason.
         assertEquals(ListenableWorker.Result.failure(), result)
         val row = repo.get(s.id)!!
         assertEquals(ListenerSessionEntity.TRANSCRIPT_FAILED, row.transcriptState)
-        assertEquals(ctx.getString(R.string.listener_stt_no_model), row.transcriptError)
+        val bundled = BundledSttModels.available(ctx)
+        if (bundled.isEmpty()) {
+            assertEquals(ctx.getString(R.string.listener_stt_no_model), row.transcriptError)
+        } else {
+            assertEquals(bundled.first().dirName, SttModelStore(ctx).installedName)
+            assertTrue(row.transcriptError != ctx.getString(R.string.listener_stt_no_model))
+        }
     }
 
     @Test

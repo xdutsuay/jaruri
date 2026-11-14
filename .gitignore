@@ -34,3 +34,6 @@ _db_compare/
 *.ab
 *.keystore
 *.jks
+
+# Speech models downloaded at build time (app/build.gradle fetchSttModels)
+.cache/

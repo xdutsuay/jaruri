@@ -307,7 +307,11 @@
     <string name="listener_stt_import">Import model</string>
     <string name="listener_stt_no_picker">No file picker available on this phone.</string>
     <string name="listener_stt_remove">Remove</string>
-    <string name="listener_stt_importing">Importing model…</string>
+    <string name="listener_stt_importing">Setting up speech model…</string>
+    <string name="listener_stt_language">Language</string>
+    <string name="listener_stt_import_other">Import another Vosk model (.zip)…</string>
+    <string name="listener_stt_lang_en_in">English (India)</string>
+    <string name="listener_stt_lang_hi">Hindi</string>
     <string name="listener_stt_imported">Model ready: %1$s</string>
     <string name="listener_stt_import_failed">Import failed: %1$s</string>
     <string name="listener_stt_remove_confirm">Remove the speech model? Existing transcripts stay.</string>

@@ -51,7 +51,7 @@ class TranscriptionWorker(
             transcripts = db.transcriptDao(),
             storage = ListenerStorage(applicationContext),
             engineFactory = {
-                val name = store.installedName
+                val name = BundledSttModels.ensureInstalled(applicationContext, store)
                     ?: throw EngineUnavailableException(applicationContext.getString(R.string.listener_stt_no_model))
                 VoskSpeechEngine.load(store.currentDir, name)
             },

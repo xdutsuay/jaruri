@@ -14,6 +14,7 @@ import com.example.moneymanager.listener.ListenerSessionEntity
 import com.example.moneymanager.listener.ListenerState
 import com.example.moneymanager.data.AppDatabase
 import com.example.moneymanager.listener.transcribe.FtsQuery
+import com.example.moneymanager.listener.transcribe.BundledSttModels
 import com.example.moneymanager.listener.transcribe.SttModelStore
 import com.example.moneymanager.listener.transcribe.TranscriptHit
 import com.example.moneymanager.listener.transcribe.TranscriptionScheduler
@@ -81,19 +82,34 @@ class ListenerViewModel(application: Application) : AndroidViewModel(application
     val modelBusy = MutableLiveData(false)
 
     fun importModel(uri: Uri, onResult: (Result<String>) -> Unit) {
+        runModelJob({
+            val resolver = getApplication<Application>().contentResolver
+            val name = resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                if (c.moveToFirst()) c.getString(0) else null
+            }?.removeSuffix(".zip") ?: "speech-model"
+            val input = resolver.openInputStream(uri) ?: throw java.io.IOException("Can't open file")
+            input.use { modelStore.import(it, name) }
+        }, onResult)
+    }
+
+    /** Bundled languages in this build (empty if built without models). */
+    val bundledModels: List<BundledSttModels.Model> = BundledSttModels.available(application)
+
+    init {
+        if (modelName.value == null && bundledModels.isNotEmpty()) {
+            runModelJob({ BundledSttModels.ensureInstalled(getApplication(), modelStore) ?: "" }) {}
+        }
+    }
+
+    fun useBundled(model: BundledSttModels.Model, onResult: (Result<String>) -> Unit) {
+        runModelJob({ BundledSttModels.install(getApplication(), modelStore, model) }, onResult)
+    }
+
+    private fun runModelJob(job: () -> String, onResult: (Result<String>) -> Unit) {
         if (modelBusy.value == true) return
         modelBusy.value = true
         viewModelScope.launch {
-            val result = withContext(Dispatchers.IO) {
-                runCatching {
-                    val resolver = getApplication<Application>().contentResolver
-                    val name = resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
-                        if (c.moveToFirst()) c.getString(0) else null
-                    }?.removeSuffix(".zip") ?: "speech-model"
-                    val input = resolver.openInputStream(uri) ?: throw java.io.IOException("Can't open file")
-                    input.use { modelStore.import(it, name) }
-                }
-            }
+            val result = withContext(Dispatchers.IO) { runCatching(job) }
             modelBusy.value = false
             modelName.value = modelStore.installedName
             onResult(result)

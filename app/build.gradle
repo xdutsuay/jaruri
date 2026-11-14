@@ -9,6 +9,73 @@ plugins {
 // -Pjaruri.tunnel.unifiedList=false. See docs/tunnel.md "Licences".
 def tunnelUnifiedList = (project.findProperty("jaruri.tunnel.unifiedList") ?: "true").toString().toBoolean()
 
+// Bundle the Listener speech models (Vosk small, Apache-2.0) as assets? Default yes.
+// They are downloaded once at build time into <repo>/.cache/stt-models (not in git)
+// and must match the pinned SHA-256. F-Droid can't download during a build, so it
+// passes -Pjaruri.stt.bundleModels=false; users then import a model by hand.
+def sttBundleModels = (project.findProperty("jaruri.stt.bundleModels") ?: "true").toString().toBoolean()
+def sttModels = [
+    "vosk-model-small-en-in-0.4": "20663dcac4d5cb783a579c54d98339344a688e4ec6e1b4a4b059fd1235454cc7",
+    "vosk-model-small-hi-0.22"  : "7c50a10866889f0ac21d912c20537a055a597ed09fc1d3e5bcd798f9f0017e48",
+]
+
+abstract class FetchSttModels extends DefaultTask {
+    @Input abstract MapProperty<String, String> getModels()
+    @Internal abstract DirectoryProperty getCacheDir()
+    @OutputDirectory abstract DirectoryProperty getOutputDir()
+
+    @TaskAction
+    void fetch() {
+        def cache = cacheDir.get().asFile
+        def out = new File(outputDir.get().asFile, "stt")
+        outputDir.get().asFile.deleteDir()
+        out.mkdirs()
+        models.get().each { name, sha ->
+            def zip = new File(cache, "${name}.zip")
+            if (!zip.isFile() || sha256(zip) != sha) {
+                cache.mkdirs()
+                def tmp = new File(cache, "${name}.zip.part")
+                logger.lifecycle("Downloading speech model $name")
+                new URL("https://alphacephei.com/vosk/models/${name}.zip").withInputStream { i ->
+                    tmp.withOutputStream { it << i }
+                }
+                def got = sha256(tmp)
+                if (got != sha) {
+                    tmp.delete()
+                    throw new GradleException("$name: SHA-256 mismatch (got $got, want $sha)")
+                }
+                zip.delete()
+                tmp.renameTo(zip)
+            }
+            java.nio.file.Files.copy(zip.toPath(), new File(out, "${name}.zip").toPath())
+        }
+    }
+
+    static String sha256(File f) {
+        def md = java.security.MessageDigest.getInstance("SHA-256")
+        f.withInputStream { i ->
+            byte[] buf = new byte[1 << 16]
+            int n
+            while ((n = i.read(buf)) > 0) md.update(buf, 0, n)
+        }
+        md.digest().encodeHex().toString()
+    }
+}
+
+def fetchSttModels = tasks.register("fetchSttModels", FetchSttModels) {
+    models.set(sttModels)
+    cacheDir.set(rootProject.layout.projectDirectory.dir(".cache/stt-models"))
+    outputDir.set(layout.buildDirectory.dir("generated/sttModels"))
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        if (sttBundleModels) {
+            variant.sources.assets?.addGeneratedSourceDirectory(fetchSttModels) { it.outputDir }
+        }
+    }
+}
+
 android {
     namespace 'com.example.moneymanager'
     compileSdk 34
@@ -45,6 +112,10 @@ android {
     }
     kotlinOptions {
         jvmTarget = '17'
+    }
+    androidResources {
+        // Bundled speech models are read as zip streams; recompressing gains nothing.
+        noCompress += 'zip'
     }
     buildFeatures {
         viewBinding true
@@ -124,7 +195,7 @@ dependencies {
     // DataStore
     implementation "androidx.datastore:datastore-preferences:1.1.1"
 
-    // Listener: offline speech-to-text (Apache-2.0; native libs from Maven, model imported by the user)
+    // Listener: offline speech-to-text (Apache-2.0; native libs from Maven, models bundled as assets)
     implementation "com.alphacephei:vosk-android:0.3.75"
     // Listener: resumable background transcription
     implementation "androidx.work:work-runtime-ktx:2.9.1"

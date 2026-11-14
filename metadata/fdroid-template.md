@@ -9,6 +9,9 @@ The app has a single build (Tunnel is part of it). For releases that include Tun
 
     gradleprops:
       - jaruri.tunnel.unifiedList=false
+      - jaruri.stt.bundleModels=false
 
-That leaves out the StevenBlack list, which bundles non-commercial sources (see `docs/tunnel.md`).
+The first leaves out the StevenBlack list, which bundles non-commercial sources (see `docs/tunnel.md`).
+The second skips the build-time download of the Listener speech models (F-Droid builds are offline);
+users of that build import a model by hand (see `docs/listener.md`).
 The app then holds INTERNET (Tunnel's DNS forwarding only); no anti-feature applies to that.
