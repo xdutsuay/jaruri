@@ -232,7 +232,6 @@
     <string name="money_shortcut_quick_add">Quick add</string>
     <string name="money_shortcut_quick_add_long">Add expense quickly</string>
     <string name="money_tile_quick_add">Jaruri add</string>
-    <string name="money_quick_add_done">Added ₹%1$.0f</string>
     <string name="settings_fiscal_year_label">Year mode</string>
     <string name="settings_fiscal_year_hint">Calendar year (Jan–Dec) or Indian financial year (Apr–Mar). Charts and home month picker follow this.</string>
     <string name="settings_fiscal_calendar">Calendar year (Jan–Dec)</string>

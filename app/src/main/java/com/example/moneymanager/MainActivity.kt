@@ -3,14 +3,13 @@ package com.example.moneymanager
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.os.bundleOf
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
@@ -19,8 +18,8 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import com.example.moneymanager.quickadd.QuickExpenseActivity
 import com.example.moneymanager.databinding.ActivityMainBinding
 import com.example.moneymanager.listener.ListenerService
+import com.example.moneymanager.ui.AddTransactionFragment
 import com.example.moneymanager.ui.ListenerFragment
-import com.example.moneymanager.viewmodel.MainViewModel
 import com.google.android.material.navigation.NavigationView
 
 class MainActivity : AppCompatActivity() {
@@ -143,19 +142,18 @@ class MainActivity : AppCompatActivity() {
         val note = data.getQueryParameter("note")?.take(MAX_DEEP_LINK_TEXT)
         val type = data.getQueryParameter("type") ?: "EXPENSE"
 
-        // Any installed app can fire this link, so the save is never silent.
-        val vm = ViewModelProvider(this)[MainViewModel::class.java]
-        vm.addFromDeepLink(amount, category, note, type) { id ->
-            if (id > 0) {
-                Toast.makeText(
-                    this,
-                    getString(R.string.money_quick_add_done, amount),
-                    Toast.LENGTH_SHORT
-                ).show()
-                try {
-                    findNavController(R.id.nav_host_fragment).navigate(R.id.nav_home)
-                } catch (_: Exception) {
-                }
+        // Any installed app can fire this link, so it only prefills the form; the user taps Save.
+        val args = bundleOf(
+            AddTransactionFragment.ARG_PREFILL_AMOUNT to
+                amount.toBigDecimal().stripTrailingZeros().toPlainString(),
+            AddTransactionFragment.ARG_PREFILL_TYPE to type,
+            AddTransactionFragment.ARG_PREFILL_CATEGORY to category,
+            AddTransactionFragment.ARG_PREFILL_NOTE to note
+        )
+        binding.root.post {
+            try {
+                findNavController(R.id.nav_host_fragment).navigate(R.id.addTransactionFragment, args)
+            } catch (_: Exception) {
             }
         }
     }

@@ -29,6 +29,7 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
     private var editingDate: Long = System.currentTimeMillis()
     private var editingCategory: String? = null
     private var editingType: String? = null
+    private var prefillCategory: String? = null
     private var accounts: List<AccountEntity> = emptyList()
     /** Account to show selected once the list arrives (edit: the row's; new: last used). */
     private var wantedAccountId: Long? = null
@@ -93,6 +94,17 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
 
         rgType.setOnCheckedChangeListener { _, _ ->
             updateCategorySpinner(spCategory, rgType)
+        }
+
+        if (editingId <= 0 && savedInstanceState == null) {
+            arguments?.let { args ->
+                args.getString(ARG_PREFILL_AMOUNT)?.let { etAmount.setText(it) }
+                args.getString(ARG_PREFILL_NOTE)?.let { etMemo.setText(it) }
+                prefillCategory = args.getString(ARG_PREFILL_CATEGORY)
+                if (args.getString(ARG_PREFILL_TYPE).equals("INCOME", ignoreCase = true)) {
+                    rgType.check(R.id.rbIncome)
+                }
+            }
         }
 
         if (editingId > 0) {
@@ -226,7 +238,16 @@ class AddTransactionFragment : Fragment(R.layout.fragment_add_transaction) {
         val selectedIndex = CategoryChoices.indexOf(currentCategories, previousSelection)
             .takeIf { it >= 0 }
             ?: CategoryChoices.indexOf(currentCategories, editingCategory).takeIf { it >= 0 }
+            ?: CategoryChoices.indexOf(currentCategories, prefillCategory).takeIf { it >= 0 }
             ?: 0
         spinner.setSelection(selectedIndex)
+    }
+
+    companion object {
+        /** Optional prefill for a new transaction (e.g. from `jaruri://add`); nothing is saved until Save. */
+        const val ARG_PREFILL_AMOUNT = "prefillAmount"
+        const val ARG_PREFILL_TYPE = "prefillType"
+        const val ARG_PREFILL_CATEGORY = "prefillCategory"
+        const val ARG_PREFILL_NOTE = "prefillNote"
     }
 }

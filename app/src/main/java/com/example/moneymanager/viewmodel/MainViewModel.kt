@@ -280,37 +280,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    /** Deep-link / Tasker add; the caller always shows the result to the user. */
-    fun addFromDeepLink(
-        amount: Double,
-        category: String?,
-        note: String?,
-        type: String = "EXPENSE",
-        onDone: (Long) -> Unit = {}
-    ) {
-        if (!amount.isFinite() || amount <= 0) {
-            onDone(-1L)
-            return
-        }
-        viewModelScope.launch {
-            val cat = category?.trim()?.takeIf { it.isNotBlank() }
-                ?: if (type.equals("INCOME", true)) "Salary" else "Others"
-            val entity = TransactionEntity(
-                type = if (type.equals("INCOME", true)) "INCOME" else "EXPENSE",
-                category = cat,
-                amount = amount,
-                dateTimestamp = System.currentTimeMillis(),
-                memo = note?.trim().orEmpty(),
-                needsCategoryReview = false
-            )
-            val id = dao.insertTransaction(entity)
-            InstrumentLedger.applyEntityDelta(accountDao, entity)
-            rememberCategory(entity.memo, null, entity.category, entity.type)
-            onDone(id)
-            android.util.Log.d("MainViewModel", "Deep link add id=$id")
-        }
-    }
-
     suspend fun getTransaction(id: Long): TransactionEntity? = dao.getById(id)
 
     suspend fun learnedCategoryFor(description: String?, memo: String, type: String): String? {
