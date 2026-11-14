@@ -40,18 +40,25 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Active Lock
 
-- Status: RELEASED
-- Active agent: none
-- Released at: 2026-11-14 14:50 IST by Auto (Cursor) security gap fixes
+- Status: UNLOCKED
+- Last released by: Auto (Cursor) bundled STT models + Windows test fixes + Tunnel fold + merge to main
+- Released at: 2026-11-14 IST
 
 ## Baton
 
-- Previous agent: Auto (Cursor) security gap fixes + merge of `main` (branch `feature/listener`, pushed to origin)
+- Previous agent: Auto (Cursor) — `feature/listener` fast-forwarded into `main`, both pushed
 - Baton state: HANDOFF
 - Next agent: Kaustubh review → realme run (evidence README: "Listener v3" and "Tunnel v1.1" checklists)
-- Next step: AppDatabase is now **v15** (`listener_markers`; `listener_sessions.userNotes`, `audioDeletedAt`; `transcript_segments.edited`). Tunnel lists: StevenBlack lives in `src/tunnelUnified` and is included only when `-Pjaruri.tunnel.unifiedList=true` (default); publishable builds pass `false` and ship the permissive list only. Do not add network code outside `src/tunnel`.
+- Next step: **One build now** (no `offline`/`tunnel` flavors; `installDebug`, `testDebugUnitTest`). AppDatabase is **v15**. Tunnel is in `src/main` and the app holds INTERNET for it; do not add network code outside the `com.example.moneymanager.tunnel` package (`NoNetworkOutsideTunnelTest`). StevenBlack stays behind `-Pjaruri.tunnel.unifiedList` (default true). Speech models are bundled via `fetchSttModels` (`-Pjaruri.stt.bundleModels`, default true); F-Droid passes `false` for both. Tests run one JVM per class (`forkEvery = 1`).
 
 ## Work Log
+
+### 2026-11-14 - Auto (Cursor) Windows tests, Tunnel in the standard app, bundled speech models, merge to main
+
+- Tests (`23b1fd1`): Robolectric 4.14.1 with native SQLite, DataStore 1.1.1, `forkEvery = 1`, test timeout, ListenerServiceTest waits. 41 Windows failures → 0.
+- Tunnel fold (`643dfed`): flavors removed; tunnel code/res/assets/tests moved into `main`/`test`; manifest gains INTERNET, ACCESS_NETWORK_STATE and the tunnel components; `OfflineFlavorTest` dropped; docs + F-Droid template updated.
+- Speech models (`b0be081`): `fetchSttModels` (pinned SHA-256, cache in `.cache/stt-models`), `BundledSttModels` (auto-install English on first use, Language picker for Hindi / import other), worker/service/session use it. Debug APK 98.6 MB.
+- Verification: `testDebugUnitTest` 269/269 on Windows; `assembleDebug`; `bundleModels=false` merges no model assets.
 
 ### 2026-11-14 - Auto (Cursor) security gap fixes
 
