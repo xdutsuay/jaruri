@@ -7,7 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import java.util.Calendar
 
 class UsageRepository(context: Context) {
     private val appContext = context.applicationContext
@@ -17,6 +16,8 @@ class UsageRepository(context: Context) {
 
     fun observeRange(startDay: String, endDay: String): Flow<List<UsageDailyEntity>> =
         dao.observeRange(startDay, endDay)
+
+    fun observeEarliestDay(): Flow<String?> = dao.observeEarliestDay()
 
     suspend fun categoryOverrides(): Map<String, String> =
         UsageCategoryMapper.decodeOverrides(settings.usageCategoryOverrides.first())
@@ -28,11 +29,13 @@ class UsageRepository(context: Context) {
     }
 
     /**
-     * Refresh last [days] of daily aggregates from the system and prune older rows.
+     * Refresh the last [days] of daily aggregates from the system UsageStats API.
+     * Rows are upserted into [usage_daily] and **never pruned** — historical days stay
+     * forever so multi-year trends remain available after the OS drops old stats.
      * No-op when feature disabled or usage access missing.
      * @return rows written (0 if empty / skipped)
      */
-    suspend fun refreshLastDays(days: Int = 7): Int = withContext(Dispatchers.IO) {
+    suspend fun refreshLastDays(days: Int = 14): Int = withContext(Dispatchers.IO) {
         if (!settings.usageWellbeingEnabled.first()) return@withContext 0
         if (!UsagePermission.hasUsageAccess(appContext)) return@withContext 0
 
@@ -43,16 +46,11 @@ class UsageRepository(context: Context) {
         if (aggregates.isNotEmpty()) {
             dao.upsertAll(aggregates)
         }
-        val pruneBefore = UsageStatsReader.formatDay(
-            Calendar.getInstance().apply {
-                add(Calendar.DAY_OF_MONTH, -RETENTION_DAYS)
-            }.timeInMillis
-        )
-        dao.deleteBefore(pruneBefore)
         aggregates.size
     }
 
     companion object {
-        const val RETENTION_DAYS = 90
+        /** OS UsageStats windows are short; we only re-query this many recent days. */
+        const val SYSTEM_REFRESH_DAYS = 14
     }
 }

@@ -57,6 +57,19 @@ class UsageAggregatorTest {
     }
 
     @Test
+    fun monthlyTotals_groupsByYearMonth() {
+        val rows = listOf(
+            UsageDailyEntity("2026-09-30", "com.a", 10),
+            UsageDailyEntity("2026-10-01", "com.a", 5),
+            UsageDailyEntity("2026-10-06", "com.b", 20)
+        )
+        assertEquals(
+            listOf("2026-09" to 10, "2026-10" to 25),
+            UsageAggregator.monthlyTotals(rows)
+        )
+    }
+
+    @Test
     fun categoryTotals_groupsByMapper() {
         val rows = listOf(
             UsageDailyEntity("2026-10-06", "com.instagram.android", 30),

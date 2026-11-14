@@ -34,4 +34,13 @@ interface UsageDailyDao {
 
     @Query("SELECT COUNT(*) FROM usage_daily")
     suspend fun count(): Int
+
+    @Query("SELECT MIN(day) FROM usage_daily")
+    fun observeEarliestDay(): Flow<String?>
+
+    @Query("SELECT MIN(day) FROM usage_daily")
+    suspend fun earliestDay(): String?
+
+    @Query("SELECT MAX(day) FROM usage_daily")
+    suspend fun latestDay(): String?
 }

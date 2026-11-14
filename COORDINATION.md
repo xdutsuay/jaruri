@@ -49,12 +49,28 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Baton
 
-- Previous agent: EM (Cursor) money polish 1–6
+- Previous agent: Auto (Cursor) phone audit + wellbeing forever
 - Baton state: HANDOFF
 - Next agent: peers / user validation
-- Next step: AppDatabase now v11; do not bump without reading current version; validate payee/refund/FY/quick-add on device
+- Next step: Install build to clear existing bad Oct rows (parser only affects new SMS); AppDatabase still v11
 
 ## Work Log
+
+### 2026-10-26 - Auto (Cursor) phone expense audit + wellbeing forever history
+
+- Scope:
+  - Pull live phone DB; October money/SMS issue report
+  - Stop pruning usage_daily (keep multi-year history); expand range UI
+  - Reject IDFC "To block your card…" as payee; reject statement/mandate/IPO/premium/NPS false incomes
+- Observations:
+  - Many IDFC CC rows had "CCBLOCK" footer as payee; several statement/mandate/IPO/NPS notices parsed as income
+  - usage_daily was pruned at 90 days
+- Action taken:
+  - UsageRepository: never prune; refresh 14 OS days; 7d/30d/1y/All UI + monthly bars
+  - SmsParser: at-merchant before to-; reject CCBLOCK footers; non-ledger for statement/mandate/IPO/premium/NPS
+  - Unit tests SmsParserTest + UsageAggregatorTest (JDK 17) exit 0
+- Validation:
+  - `testDebugUnitTest` focused suites exit 0
 
 ### 2026-10-06 - EM (Cursor) money polish 1–6
 

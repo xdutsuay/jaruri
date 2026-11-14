@@ -8,6 +8,7 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.moneymanager.data.SettingsRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -33,43 +34,85 @@ class UsageWellbeingViewModel(application: Application) : AndroidViewModel(appli
         timeZone = TimeZone.getDefault()
     }
 
+    enum class HistoryRange(val daySpan: Int?) {
+        WEEK(7),
+        MONTH(30),
+        YEAR(365),
+        ALL(null)
+    }
+
+    private val selectedRange = MutableStateFlow(HistoryRange.WEEK)
+
+    fun setHistoryRange(range: HistoryRange) {
+        selectedRange.value = range
+    }
+
     val todaySummary: LiveData<UiSummary> = combine(
         settings.usageWellbeingEnabled,
-        settings.usageCategoryOverrides
-    ) { enabled, overridesRaw ->
-        enabled to UsageCategoryMapper.decodeOverrides(overridesRaw)
-    }.flatMapLatest { (enabled, overrides) ->
-        if (!enabled) {
+        settings.usageCategoryOverrides,
+        selectedRange,
+        repo.observeEarliestDay()
+    ) { enabled, overridesRaw, range, earliest ->
+        SummaryParams(
+            enabled = enabled,
+            overrides = UsageCategoryMapper.decodeOverrides(overridesRaw),
+            range = range,
+            earliest = earliest
+        )
+    }.flatMapLatest { params ->
+        if (!params.enabled) {
             flowOf(UiSummary.empty(enabled = false))
         } else {
             val today = dayFmt.format(System.currentTimeMillis())
-            val weekStart = dayFmt.format(
-                Calendar.getInstance().apply {
-                    add(Calendar.DAY_OF_MONTH, -6)
-                }.time
-            )
-            repo.observeRange(weekStart, today).map { weekRows ->
-                val todayRows = weekRows.filter { it.day == today }
-                val categoryOf: (String) -> String = { pkg ->
-                    UsageCategoryMapper.categoryFor(pkg, overrides)
+            val startDay = when (val span = params.range.daySpan) {
+                null -> params.earliest?.takeIf { it.isNotBlank() } ?: today
+                else -> dayFmt.format(
+                    Calendar.getInstance().apply {
+                        add(Calendar.DAY_OF_MONTH, -(span - 1))
+                    }.time
+                )
+            }
+            val observeStart =
+                if (params.range == HistoryRange.ALL &&
+                    params.earliest != null &&
+                    params.earliest < startDay
+                ) {
+                    params.earliest
+                } else {
+                    startDay
                 }
-                val appsSource = todayRows.ifEmpty { weekRows }
+            repo.observeRange(observeStart, today).map { rangeRows ->
+                val todayRows = rangeRows.filter { it.day == today }
+                val categoryOf: (String) -> String = { pkg ->
+                    UsageCategoryMapper.categoryFor(pkg, params.overrides)
+                }
+                val appsSource = todayRows.ifEmpty { rangeRows }
                 val todayMins = UsageAggregator.totalMinutes(todayRows)
-                val weekMins = UsageAggregator.totalMinutes(weekRows)
-                val daysPresent = weekRows.map { it.day }.toSet().size.coerceAtLeast(1)
+                val rangeMins = UsageAggregator.totalMinutes(rangeRows)
+                val daysPresent = rangeRows.map { it.day }.toSet().size.coerceAtLeast(1)
                 val top = UsageAggregator.topApps(appsSource, limit = 10).map { (pkg, mins) ->
                     AppMinutes(pkg, mins, categoryOf(pkg))
+                }
+                val dayTotals = when (params.range) {
+                    HistoryRange.YEAR, HistoryRange.ALL ->
+                        UsageAggregator.monthlyTotals(rangeRows)
+                    else -> UsageAggregator.dailyTotals(rangeRows)
                 }
                 UiSummary(
                     enabled = true,
                     todayMinutes = todayMins,
-                    weekMinutes = weekMins,
-                    avgDayMinutes = weekMins / daysPresent,
-                    dayTotals = UsageAggregator.dailyTotals(weekRows),
+                    rangeMinutes = rangeMins,
+                    avgDayMinutes = rangeMins / daysPresent,
+                    dayTotals = dayTotals,
                     topApps = top,
                     categories = UsageAggregator.categoryTotals(appsSource, categoryOf),
-                    usingWeekFallback = todayRows.isEmpty() && weekRows.isNotEmpty(),
-                    rowCount = weekRows.size
+                    usingWeekFallback = todayRows.isEmpty() && rangeRows.isNotEmpty(),
+                    rowCount = rangeRows.size,
+                    historyRange = params.range,
+                    earliestDay = params.earliest,
+                    daysStored = daysPresent,
+                    barsAreMonths = params.range == HistoryRange.YEAR ||
+                        params.range == HistoryRange.ALL
                 )
             }
         }
@@ -87,7 +130,7 @@ class UsageWellbeingViewModel(application: Application) : AndroidViewModel(appli
             }
             _refreshState.value = RefreshState.Refreshing
             val written = try {
-                repo.refreshLastDays(7)
+                repo.refreshLastDays(UsageRepository.SYSTEM_REFRESH_DAYS)
             } catch (_: Exception) {
                 0
             }
@@ -112,6 +155,13 @@ class UsageWellbeingViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    private data class SummaryParams(
+        val enabled: Boolean,
+        val overrides: Map<String, String>,
+        val range: HistoryRange,
+        val earliest: String?
+    )
+
     data class AppMinutes(
         val packageName: String,
         val minutes: Int,
@@ -121,19 +171,23 @@ class UsageWellbeingViewModel(application: Application) : AndroidViewModel(appli
     data class UiSummary(
         val enabled: Boolean,
         val todayMinutes: Int,
-        val weekMinutes: Int,
+        val rangeMinutes: Int,
         val avgDayMinutes: Int,
         val dayTotals: List<Pair<String, Int>>,
         val topApps: List<AppMinutes>,
         val categories: List<Pair<String, Int>>,
         val usingWeekFallback: Boolean,
-        val rowCount: Int
+        val rowCount: Int,
+        val historyRange: HistoryRange = HistoryRange.WEEK,
+        val earliestDay: String? = null,
+        val daysStored: Int = 0,
+        val barsAreMonths: Boolean = false
     ) {
         companion object {
             fun empty(enabled: Boolean) = UiSummary(
                 enabled = enabled,
                 todayMinutes = 0,
-                weekMinutes = 0,
+                rangeMinutes = 0,
                 avgDayMinutes = 0,
                 dayTotals = emptyList(),
                 topApps = emptyList(),
