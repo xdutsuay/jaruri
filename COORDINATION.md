@@ -56,6 +56,12 @@ If you are about to inspect, edit, test, or review code in this repo, update thi
 
 ## Work Log
 
+### 2026-11-14 - Auto (Cursor) fresh-device install + deep SMS backfill fix
+
+- Bug: Deep SMS history scan stopped after ~1000 financial SMS (fetched newest window, then filtered by cursor)
+- Fix: SmsInboxReader.readFinancialSms(beforeMillis) pages via `date < cursor` query
+- Validation: on a fresh device, repeated scans walked back to inbox start (last run imported 0)
+
 ### 2026-10-26 - Auto (Cursor) phone expense audit + wellbeing forever history
 
 - Scope:
