@@ -4,8 +4,9 @@ plugins {
     id 'com.google.devtools.ksp' // Using KSP for Room
 }
 
-// Bundle StevenBlack's unified list (personal use) in the tunnel flavor? Default yes.
-// The permissive list is always bundled. See docs/tunnel.md "Licences".
+// Bundle StevenBlack's unified list (personal use) for Tunnel? Default yes.
+// The permissive list is always bundled. Publishable builds (F-Droid) pass
+// -Pjaruri.tunnel.unifiedList=false. See docs/tunnel.md "Licences".
 def tunnelUnifiedList = (project.findProperty("jaruri.tunnel.unifiedList") ?: "true").toString().toBoolean()
 
 android {
@@ -20,31 +21,14 @@ android {
         versionName "1.7.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
 
-    // Two distributions of the same app (same applicationId, so one replaces the other):
-    //  - offline (default, F-Droid/main line): no INTERNET permission, no tunnel code.
-    //  - tunnel: adds the local DNS-filter VPN ("Tunnel"), which needs INTERNET to
-    //    forward allowed DNS lookups. Its manifest and code live in src/tunnel/.
-    flavorDimensions = ["distribution"]
-    productFlavors {
-        offline {
-            dimension "distribution"
-            isDefault = true
-        }
-        tunnel {
-            dimension "distribution"
-            versionNameSuffix "-tunnel"
-            // StevenBlack's unified list includes non-commercial / share-alike sources.
-            // Publishable builds: ./gradlew -Pjaruri.tunnel.unifiedList=false ...
-            buildConfigField "boolean", "TUNNEL_UNIFIED_LIST", tunnelUnifiedList.toString()
-        }
+        // StevenBlack's unified list includes non-commercial / share-alike sources.
+        buildConfigField "boolean", "TUNNEL_UNIFIED_LIST", tunnelUnifiedList.toString()
     }
 
     sourceSets {
-        // Only the tunnel flavor, and only when the unified list is wanted.
         if (tunnelUnifiedList) {
-            tunnel.assets.srcDirs += "src/tunnelUnified/assets"
+            main.assets.srcDirs += "src/tunnelUnified/assets"
         }
     }
 
@@ -157,12 +141,4 @@ dependencies {
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-}
-
-// Keep the familiar commands working across both flavors:
-// `./gradlew :app:testDebugUnitTest` runs the unit tests of every flavor.
-tasks.register("testDebugUnitTest") {
-    group = "verification"
-    description = "Runs debug unit tests for all distribution flavors."
-    dependsOn "testOfflineDebugUnitTest", "testTunnelDebugUnitTest"
 }

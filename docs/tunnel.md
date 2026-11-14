@@ -1,25 +1,19 @@
-# Tunnel (v1): local DNS filter — `tunnel` flavor only
+# Tunnel (v1): local DNS filter
 
 Tunnel lets Jaruri see and filter the **DNS lookups** apps make, through a local
 `VpnService`. It runs entirely on the phone: there is no remote server, no
 account, and nothing is uploaded.
 
-## Two builds
+## Part of the standard app
 
-| Flavor | Default | INTERNET | Tunnel code / card | Who builds it |
-|---|---|---|---|---|
-| `offline` | yes | **no** | absent (hub card hidden, no tunnel classes in the APK) | F-Droid, everyday use |
-| `tunnel` | no | yes (+ `ACCESS_NETWORK_STATE`) | present | built by hand: `./gradlew :app:assembleTunnelDebug` |
+Tunnel ships in the one Jaruri build (it used to be a separate `tunnel` flavor). Because of it,
+the app holds `INTERNET` and `ACCESS_NETWORK_STATE`; they are used only to forward allowed DNS
+lookups to the current network's resolvers. Its Room tables (rules, lists) are in the main
+schema (DB v14) and stay empty until Tunnel is used.
 
-Both flavors share one `applicationId`, so they install over each other (and share data).
-`versionName` gets a `-tunnel` suffix. The tunnel's Room tables (rules, lists) are in the
-shared schema (DB v14) so the two builds can swap without a migration problem; the offline
-build simply never uses them.
-
-Checks that keep this honest:
-- `OfflineFlavorTest`: no `FlavorFeatures.tunnel`, hub card gone, tunnel classes absent.
-- `NoNetworkOutsideTunnelTest` (both flavors): no sockets/URLs/HTTP clients outside `src/tunnel`.
-- `aapt2 dump permissions` of both APKs is kept in `/workspace/jaruri-listener/evidence/`.
+Check that keeps this honest:
+- `NoNetworkOutsideTunnelTest`: no sockets/URLs/HTTP clients outside the
+  `com.example.moneymanager.tunnel` package.
 
 ## How it works
 
@@ -47,13 +41,13 @@ Checks that keep this honest:
 ### Lists
 Two bundled lists; pick one (or none) on the Rules tab. **Licences** shows both notices.
 - **StevenBlack unified hosts** (snapshot 2026-11-08, 78,215 domains, 591 KB gzipped):
-  the default when present. Lives in `src/tunnelUnified/assets/`, which is added to the tunnel
-  flavor only when the Gradle property `jaruri.tunnel.unifiedList` is true (the default).
+  the default when present. Lives in `src/tunnelUnified/assets/`, which is added to the app's
+  assets only when the Gradle property `jaruri.tunnel.unifiedList` is true (the default).
 - **Permissive (licence-clean)** (18,902 domains, 118,573 B gzipped): built from the same
   StevenBlack commit (`6866cc6`), but only from sources under permissive licences:
   StevenBlack's own ad-hoc list, add.2o7Net, add.Dead, add.Risk, add.Spam, Badd-Boyz-Hosts,
   hostsVN, UncheckyAds (MIT), AdAway (CC BY 3.0), Tiuxo (CC BY 4.0), minecraft-hosts (CC0).
-  Always present. See `src/tunnel/assets/blocklists/PERMISSIVE-NOTICE.txt`.
+  Always present. See `src/main/assets/blocklists/PERMISSIVE-NOTICE.txt`.
 - Assets use `.gzip`, not `.gz`, because AGP inflates `.gz` assets at build time. Parsed off
   the main thread and cached per list. A 200k-domain matcher test bounds lookup time.
 - Import your own hosts/plain-domain lists (up to 1M entries each); exact and `*.suffix` rules.
@@ -65,7 +59,7 @@ Two bundled lists; pick one (or none) on the Rules tab. **Licences** shows both 
 - Excluded from both backup rule sets (`backup_rules.xml`, `data_extraction_rules.xml`).
 - Export the log as CSV (formula-injection guarded) or Markdown via the share sheet.
 
-## Licences: read before distributing the tunnel build
+## Licences: read before distributing a build
 StevenBlack's unified list is MIT, but it **merges sources with their own terms**
 (see `assets/blocklists/STEVENBLACK-NOTICE.txt`, shown in-app):
 - MVPS hosts: CC BY-NC-SA 4.0 (non-commercial)
@@ -73,21 +67,20 @@ StevenBlack's unified list is MIT, but it **merges sources with their own terms*
 - KADhosts: CC BY-SA
 - yoyo.org (Peter Lowe): no licence stated
 
-This is fine for personal use, but it is **not "free" in F-Droid's sense**. F-Droid builds the
-`offline` flavor (no list, no tunnel), so it is unaffected.
+This is fine for personal use, but it is **not "free" in F-Droid's sense**.
 
-**Publishable tunnel builds** leave the unified list out entirely:
+**Publishable builds** (F-Droid, any public release) leave the unified list out entirely:
 
-    ./gradlew -Pjaruri.tunnel.unifiedList=false :app:assembleTunnelRelease
+    ./gradlew -Pjaruri.tunnel.unifiedList=false :app:assembleRelease
 
 That build ships only the permissive list (`BuildConfig.TUNNEL_UNIFIED_LIST = false`), and a
 saved choice of the unified list falls back to it. The licences screen shows each bundled
 list's notice, including the full MIT text and the CC BY attributions.
 
 ## Size
-Debug APKs at 39bf3ec: offline 15,290,734 B, tunnel 16,714,618 B (+1.36 MiB). About
-0.59 MB is the list asset; the rest is unminified debug dex/resources for the tunnel code,
-which R8 shrinks a lot in release.
+Tunnel adds about 1.4 MiB to the debug APK (measured at 39bf3ec when it was a separate
+flavor). About 0.59 MB is the list asset; the rest is unminified debug dex/resources for the
+tunnel code, which R8 shrinks a lot in release.
 
 ## Hardening done in v1.1
 - Stop asks first when Tunnel is the **always-on VPN** (API 29+): Android may restart it, and

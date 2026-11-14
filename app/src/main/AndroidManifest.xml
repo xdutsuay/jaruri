@@ -11,11 +11,19 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <!-- Listener v2: long on-device transcription runs as a WorkManager foreground job. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    <!-- WorkManager merges this in for network constraints; no job here uses one,
-         and Listener never touches the network. -->
-    <uses-permission
-        android:name="android.permission.ACCESS_NETWORK_STATE"
-        tools:node="remove" />
+    <!-- Tunnel only: forward allowed DNS lookups to the current network's resolvers.
+         Nothing outside the tunnel package opens sockets (enforced by NoNetworkOutsideTunnelTest). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Tunnel only: find the current non-VPN network and its DNS servers (normal permission). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Tunnel per-app rules: launcher apps only (no QUERY_ALL_PACKAGES). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <!-- Special access: user grants via Settings → Usage access (AppOps OPSTR_GET_USAGE_STATS). -->
     <uses-permission
@@ -137,6 +145,45 @@
         <!-- "Cancel" on the transcription notification (explicit intent only). -->
         <receiver
             android:name=".listener.transcribe.TranscriptionCancelReceiver"
+            android:exported="false" />
+
+        <activity
+            android:name=".tunnel.ui.TunnelActivity"
+            android:exported="false"
+            android:label="@string/tunnel_title"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.MoneyManager" />
+
+        <!-- Bound by the system only (BIND_VPN_SERVICE). Not a foreground service:
+             an established VPN keeps foreground priority on its own. -->
+        <service
+            android:name=".tunnel.TunnelVpnService"
+            android:exported="false"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.net.VpnService.SUPPORTS_ALWAYS_ON"
+                android:value="true" />
+        </service>
+
+        <service
+            android:name=".tunnel.TunnelTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tunnel"
+            android:label="@string/tunnel_title"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
+
+        <receiver
+            android:name=".tunnel.TunnelActionReceiver"
             android:exported="false" />
 
         <!-- WorkManager's foreground service needs a declared type on Android 14+. -->

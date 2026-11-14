@@ -11,9 +11,8 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 /*
- * Tunnel rules live in the main DB (v14) so both flavors share one schema and
- * one migration path. Only the tunnel flavor reads or writes them; in the
- * offline flavor these tables simply stay empty.
+ * Tunnel rules live in the main DB (v14) with the rest of the app's tables;
+ * they stay empty until Tunnel is used.
  */
 
 /** Per-app rule. No row = default (filtered like everyone else). */

@@ -16,7 +16,7 @@ import com.example.moneymanager.tunnel.TunnelVpnService
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.tabs.TabLayout
 
-/** Tunnel screen (tunnel flavor only): Status · Apps · Blocklist · Log. */
+/** Tunnel screen: Status · Apps · Blocklist · Log. */
 class TunnelActivity : AppCompatActivity() {
     private val viewModel: TunnelViewModel by viewModels()
 

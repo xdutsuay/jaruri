@@ -2,7 +2,7 @@ package com.example.moneymanager.flavor
 
 import android.content.Context
 
-/** A feature that only some distribution flavors ship (see FlavorFeatures in src/<flavor>/). */
+/** A hub feature that opens its own screen (see [FlavorFeatures]). */
 interface FeatureEntry {
     fun open(context: Context)
 }

@@ -5,9 +5,9 @@ import org.junit.Test
 import java.io.File
 
 /**
- * The tunnel flavor holds INTERNET, which applies to the whole app. This keeps
- * the promise that only the Tunnel's DNS forwarder uses the network: no other
- * source set may open sockets or URLs. (Runs in both flavors.)
+ * The app holds INTERNET for Tunnel, and that permission applies to the whole app.
+ * This keeps the promise that only the Tunnel's DNS forwarder uses the network:
+ * no code outside the `tunnel` package may open sockets or URLs.
  */
 class NoNetworkOutsideTunnelTest {
     private val banned = listOf(
@@ -20,16 +20,20 @@ class NoNetworkOutsideTunnelTest {
 
     @Test
     fun onlyTunnelSourcesTouchTheNetwork() {
-        val roots = listOf("src/main/java", "src/offline/java").map(::File)
+        val roots = listOf("src/main/java").map(::File)
         assertTrue("run from the app module", roots[0].isDirectory)
+        val tunnelDir = File(roots[0], "com/example/moneymanager/tunnel").canonicalPath + File.separator
         val offenders = roots.filter { it.isDirectory }.flatMap { root ->
-            root.walkTopDown().filter { it.isFile && (it.extension == "kt" || it.extension == "java") }.flatMap { f ->
+            root.walkTopDown().filter {
+                it.isFile && (it.extension == "kt" || it.extension == "java") &&
+                    !it.canonicalPath.startsWith(tunnelDir)
+            }.flatMap { f ->
                 f.readLines().mapIndexedNotNull { i, line ->
                     val code = line.substringBefore("//")
                     if (banned.any { it.containsMatchIn(code) }) "${f.path}:${i + 1}: ${line.trim()}" else null
                 }
             }
         }
-        assertTrue("Network code outside src/tunnel:\n" + offenders.joinToString("\n"), offenders.isEmpty())
+        assertTrue("Network code outside the tunnel package:\n" + offenders.joinToString("\n"), offenders.isEmpty())
     }
 }

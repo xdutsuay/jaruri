@@ -24,7 +24,7 @@ A manual meeting recorder inside Jaruri. You turn it on, and it stays on until y
 | Safety auto-stop | 4 hours (`ListenerPolicy.DEFAULT_MAX_SESSION_MS`). It posts a notice, the audio is kept, and the session is marked "Auto-stopped at the time limit". |
 | No auto-start | No boot receiver, `START_NOT_STICKY`, and the service is not exported. |
 | Interrupted sessions | If the process dies or is force-stopped, the row stays `RECORDING`. The next time the Listener screen opens, it is reconciled to `INTERRUPTED` with its files kept. It is **never** silently restarted. A session that the service is still creating is protected by a `Starting` state, so the reconcile step can't close it. |
-| Privacy | No network permission and no network code (v2 also removes the `ACCESS_NETWORK_STATE` that WorkManager would merge in). `files/listener/` is excluded from cloud backup and device transfer (`data_extraction_rules.xml`); `backup_rules.xml` (Android ≤ 11) only includes prefs and the DB, so it already excludes the audio. Share/play goes through the existing FileProvider (`files-path name="listener"`). |
+| Privacy | No network code (`NoNetworkOutsideTunnelTest`). The app holds `INTERNET` / `ACCESS_NETWORK_STATE` only for Tunnel's DNS forwarding; Listener never uses them. `files/listener/` is excluded from cloud backup and device transfer (`data_extraction_rules.xml`); `backup_rules.xml` (Android ≤ 11) only includes prefs and the DB, so it already excludes the audio. Share/play goes through the existing FileProvider (`files-path name="listener"`). |
 
 ## Why the tile opens the app
 

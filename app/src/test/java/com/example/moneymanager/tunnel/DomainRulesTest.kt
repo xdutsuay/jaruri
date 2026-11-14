@@ -74,7 +74,7 @@ class DomainRulesTest {
     /** The permissive list: exact size, provenance header, and a subset of the unified list it was cut from. */
     @Test
     fun bundledPermissiveListParses_andIsASubsetOfUnified() {
-        val f = File("src/tunnel/assets/blocklists/permissive-hosts.gzip")
+        val f = File("src/main/assets/blocklists/permissive-hosts.gzip")
         val text = GZIPInputStream(f.inputStream()).bufferedReader().readText()
         assertTrue(text.contains("6866cc66859a4ba99d945f076a09bca74a496d4c"))
         assertTrue(text.contains("Excluded on purpose: MVPS"))
@@ -85,7 +85,7 @@ class DomainRulesTest {
         val outside = permissive.count { it !in unified }
         // StevenBlack applies a whitelist when unifying, so a few may differ; the bulk must overlap.
         assertTrue("$outside of ${permissive.size} not in unified", outside < permissive.size / 20)
-        val notice = File("src/tunnel/assets/blocklists/PERMISSIVE-NOTICE.txt").readText()
+        val notice = File("src/main/assets/blocklists/PERMISSIVE-NOTICE.txt").readText()
         for (src in listOf("AdAway", "CC BY 3.0", "Tiuxo", "CC BY 4.0", "MIT License")) assertTrue(src, notice.contains(src))
     }
 
